@@ -32,6 +32,8 @@ func run() error {
 		if err != nil {
 			return err
 		}
+		defer dev.Close()
+
 		listenChan := dev.Listen()
 		for {
 			uidBytes := <-listenChan
