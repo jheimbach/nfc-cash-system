@@ -89,14 +89,15 @@ func selectDevice() (string, error) {
 	if isArgsLongEnough(2) {
 		return os.Args[2], nil
 	}
-
+	fmt.Printf("no device in arguments found, please select one from this list:\n")
 	err := listDevices()
 	if err != nil {
 		return "", err
 	}
 
 	var selection = 0
-	_, err = fmt.Scanf("%d", selection)
+	fmt.Printf("device num:")
+	_, err = fmt.Scanf("%d", &selection)
 	if err != nil {
 		return "", err
 	}
