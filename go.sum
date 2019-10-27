@@ -1,0 +1,4 @@
+github.com/fuzxxl/nfc v0.0.0-20190417091618-0367c7e548d9 h1:YmnraLXfLW44zsTVNBDOcORFXQpQX9+hIniJ/rQuEk8=
+github.com/fuzxxl/nfc v0.0.0-20190417091618-0367c7e548d9/go.mod h1:0U2jcRxCoqW7jJDpqbW1EnWh4/nYR1v0e5ELyYHfPr0=
+github.com/google/go-cmp v0.3.1 h1:Xye71clBPdm5HgqGwUkwhbynsUJZhDbS20FvLhQ2izg=
+github.com/google/go-cmp v0.3.1/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
