@@ -1,0 +1,38 @@
+version: "3"
+services:
+  db:
+    image: mariadb:latest
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - 3306
+    networks:
+      - database
+    hostname: ${PROJECT}.db
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+      MYSQL_DATABASE: ${PROJECT}
+      MYSQL_USER: ${PROJECT}
+      MYSQL_PASSWORD: ${PROJECT}
+    volumes:
+      - db_data:/var/lib/mysql
+  db_test:
+    image: mariadb:latest
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - 3306
+    networks:
+      - database
+    hostname: ${PROJECT}-test.db
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+      MYSQL_DATABASE: ${PROJECT}
+      MYSQL_USER: ${PROJECT}
+      MYSQL_PASSWORD: ${PROJECT}
+    volumes:
+      - db_test_data:/var/lib/mysql
+networks:
+  database:
+
+volumes:
+  db_data:
+  db_test_data:
