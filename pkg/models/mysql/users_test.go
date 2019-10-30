@@ -8,7 +8,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 )
@@ -185,32 +184,4 @@ func TestUserModel_Authenticate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func getTestDb(t *testing.T) (*sql.DB, func()) {
-	t.Helper()
-	dsn := os.Getenv("TEST_DB_DSN")
-	if dsn == "" {
-		t.Skipf("no database dsn found, skipping test")
-	}
-
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		t.Skipf("could not connect to database, skipping test, err: %v", err)
-	}
-
-	if err = db.Ping(); err != nil {
-		t.Skipf("could not connect to database, skipping test, err: %v", err)
-	}
-	// todo: utilize migrations to init db
-	setup, _ := ioutil.ReadFile("../migrations/20191028204458_users.up.sql")
-	teardown, _ := ioutil.ReadFile("../migrations/20191028204458_users.down.sql")
-	db.Exec(string(setup))
-
-	teardownF := func() {
-		db.Exec(string(teardown))
-		db.Close()
-	}
-
-	return db, teardownF
 }
