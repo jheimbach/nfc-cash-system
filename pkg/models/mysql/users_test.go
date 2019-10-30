@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func TestUserModel_Insert(t *testing.T) {
+func TestUserModel_Create(t *testing.T) {
 	wantName, wantEmail, wantPassword := "test", "test@example.org", "test123!"
 	t.Run("inserts new user to database", func(t *testing.T) {
 		db, teardown := getTestDb(t)
@@ -22,7 +22,7 @@ func TestUserModel_Insert(t *testing.T) {
 			db: db,
 		}
 
-		err := model.Insert(wantName, wantEmail, wantPassword)
+		err := model.Create(wantName, wantEmail, wantPassword)
 		if err != nil {
 			t.Fatalf("got error from inserting in usermodel, did not expect one %v", err)
 		}
@@ -46,8 +46,8 @@ func TestUserModel_Insert(t *testing.T) {
 		}
 
 		// insert first user with same fields than insert again to test duplicate email errors
-		_ = model.Insert(wantName, wantEmail, wantPassword)
-		err := model.Insert(wantName, wantEmail, wantPassword)
+		_ = model.Create(wantName, wantEmail, wantPassword)
+		err := model.Create(wantName, wantEmail, wantPassword)
 		if err == nil {
 			t.Fatalf("got no error, expected one")
 		}

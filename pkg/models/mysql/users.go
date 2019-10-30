@@ -12,9 +12,9 @@ type UserModel struct {
 	db *sql.DB
 }
 
-// Insert creates a new user in the database.
-// if a user with the same email already exists, Insert will return a models.ErrDuplicateEmail
-func (u *UserModel) Insert(name, email, password string) error {
+// Create creates a new user in the database.
+// if a user with the same email already exists, Create will return a models.ErrDuplicateEmail
+func (u *UserModel) Create(name, email, password string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
 		return err
