@@ -42,14 +42,3 @@ func getTestDb(t *testing.T) (*sql.DB, func()) {
 
 	return db, teardownF
 }
-
-func assertErrIsNil(t *testing.T, err error, fatal bool) {
-	t.Helper()
-	errMsg := "got err %v, did not expected"
-	if err != nil {
-		if fatal {
-			t.Fatalf(errMsg, err)
-		}
-		t.Errorf(errMsg, err)
-	}
-}

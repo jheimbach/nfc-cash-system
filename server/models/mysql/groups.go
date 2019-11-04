@@ -2,7 +2,7 @@ package mysql
 
 import (
 	"database/sql"
-	"github.com/JHeimbach/nfc-cash-system/pkg/models"
+	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/go-sql-driver/mysql"
 )
 

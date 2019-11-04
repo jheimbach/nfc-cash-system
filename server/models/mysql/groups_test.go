@@ -2,7 +2,8 @@ package mysql
 
 import (
 	"database/sql"
-	"github.com/JHeimbach/nfc-cash-system/pkg/models"
+	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/matryer/is"
 	"testing"
 )
 
@@ -15,8 +16,9 @@ func TestGroupModel_Create(t *testing.T) {
 	}
 
 	t.Run("create group without description", func(t *testing.T) {
+		is := is.New(t)
 		err := model.Create("testgroup", "")
-		assertErrIsNil(t, err, false)
+		is.NoErr(err)
 
 		want := models.Group{
 			ID:          1,
@@ -28,7 +30,7 @@ func TestGroupModel_Create(t *testing.T) {
 
 		row := db.QueryRow("SELECT id, name, description FROM `groups` WHERE id = ?", want.ID)
 		err = row.Scan(&got.ID, &got.Name, &got.Description)
-		assertErrIsNil(t, err, false)
+		is.NoErr(err)
 
 		if got != want {
 			t.Errorf("got %v, want %v", got, want)
@@ -36,6 +38,7 @@ func TestGroupModel_Create(t *testing.T) {
 	})
 
 	t.Run("create group with description", func(t *testing.T) {
+		is := is.New(t)
 
 		want := models.Group{
 			ID:          2,
@@ -43,13 +46,13 @@ func TestGroupModel_Create(t *testing.T) {
 			Description: "with description",
 		}
 		err := model.Create(want.Name, want.Description)
-		assertErrIsNil(t, err, false)
+		is.NoErr(err)
 
 		var got models.Group
 
 		row := db.QueryRow("SELECT id, name, description FROM `groups` WHERE id = ?", want.ID)
 		err = row.Scan(&got.ID, &got.Name, &got.Description)
-		assertErrIsNil(t, err, false)
+		is.NoErr(err)
 
 		if got != want {
 			t.Errorf("got %v, want %v", got, want)
@@ -102,9 +105,10 @@ func TestGroupModel_Read(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
 			if tt.insertGroup {
 				_, err := db.Exec("INSERT INTO `groups` (name, description) VALUES (?,?)", tt.want.Name, tt.want.Description)
-				assertErrIsNil(t, err, false)
+				is.NoErr(err)
 			}
 
 			got, err := model.Read(tt.want.ID)
@@ -115,7 +119,7 @@ func TestGroupModel_Read(t *testing.T) {
 				}
 				return
 			}
-			assertErrIsNil(t, err, true)
+			is.NoErr(err)
 
 			if *got != *tt.want {
 				t.Errorf("got %v want %v", got, tt.want)
@@ -188,9 +192,10 @@ func TestGroupModel_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
 			if tt.insert.Name != "" {
 				_, err := db.Exec("INSERT INTO `groups` (name, description) VALUES (?,?)", tt.insert.Name, tt.insert.Description)
-				assertErrIsNil(t, err, true)
+				is.NoErr(err)
 			}
 
 			got, err := model.Update(tt.want)
@@ -202,7 +207,7 @@ func TestGroupModel_Update(t *testing.T) {
 				return
 			}
 
-			assertErrIsNil(t, err, true)
+			is.NoErr(err)
 
 			if *got != tt.want {
 				t.Errorf("got %v want %v", got, tt.want)
@@ -213,6 +218,7 @@ func TestGroupModel_Update(t *testing.T) {
 
 func TestGroupModel_Delete(t *testing.T) {
 	t.Run("empty group delete", func(t *testing.T) {
+		is := is.New(t)
 		db, teardown := getTestDb(t)
 		defer teardown()
 
@@ -220,13 +226,13 @@ func TestGroupModel_Delete(t *testing.T) {
 			db: db,
 		}
 		res, err := db.Exec("INSERT INTO `groups` (name) VALUES (?)", "test")
-		assertErrIsNil(t, err, true)
+		is.NoErr(err)
 
 		groupId, err := res.LastInsertId()
-		assertErrIsNil(t, err, true)
+		is.NoErr(err)
 
 		err = model.Delete(int(groupId))
-		assertErrIsNil(t, err, false)
+		is.NoErr(err)
 
 		var groupName string
 		err = db.QueryRow("SELECT name from `groups` WHERE id=?", int(groupId)).Scan(&groupName)
@@ -238,6 +244,7 @@ func TestGroupModel_Delete(t *testing.T) {
 		}
 	})
 	t.Run("trying to delete nonempty group, return err", func(t *testing.T) {
+		is := is.New(t)
 		db, teardown := getTestDb(t)
 		defer teardown()
 
@@ -245,13 +252,13 @@ func TestGroupModel_Delete(t *testing.T) {
 			db: db,
 		}
 		res, err := db.Exec("INSERT INTO `groups` (name) VALUES (?)", "test")
-		assertErrIsNil(t, err, true)
+		is.NoErr(err)
 
 		groupId, err := res.LastInsertId()
-		assertErrIsNil(t, err, true)
+		is.NoErr(err)
 
 		_, err = db.Exec("INSERT INTO `accounts` (name, group_id) VALUES (?,?)", "test", int(groupId))
-		assertErrIsNil(t, err, true)
+		is.NoErr(err)
 
 		err = model.Delete(int(groupId))
 		if err == nil {

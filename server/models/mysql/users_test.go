@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/JHeimbach/nfc-cash-system/pkg/models"
+	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
