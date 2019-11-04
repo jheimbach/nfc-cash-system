@@ -17,27 +17,20 @@ type Device struct {
 	PollingTimeOut       time.Duration
 	AllowMultipleTargets bool
 	Modulation           nfc.Modulation
+	LastErr              error
 }
 
 func (d *Device) Close() error {
 	return d.device.Close()
 }
 
-func (d *Device) Listen() <-chan []byte {
-	send := make(chan []byte, 0)
-	go func(send chan []byte) {
-		if err := d.listenForTargets(send); err != nil {
-			close(send)
-		}
-	}(send)
-	return send
-}
-
-func (d Device) listenForTargets(send chan []byte) error {
+func (d *Device) ListenForCardUids(send chan []byte) {
 	for {
 		targets, err := d.device.InitiatorListPassiveTargets(d.Modulation)
 		if err != nil {
-			return fmt.Errorf("could not listen for targets: %v", err)
+			d.LastErr = fmt.Errorf("could not listen for targets: %v", err)
+			close(send)
+			break
 		}
 
 		if len(targets) == 0 {
@@ -54,6 +47,10 @@ func (d Device) listenForTargets(send chan []byte) error {
 
 		sendTargetUid(targets[0], send)
 	}
+}
+
+func (d *Device) HasError() bool {
+	return d.LastErr != nil
 }
 
 func sendTargetUid(target nfc.Target, send chan []byte) {

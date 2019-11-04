@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/fuzxxl/nfc/dev/nfc"
 	"github.com/google/go-cmp/cmp"
+	isPkg "github.com/matryer/is"
 	"testing"
 	"time"
 )
@@ -43,8 +44,11 @@ func TestDevice_Listen(t *testing.T) {
 		},
 	}
 	t.Run("empty targets", func(t *testing.T) {
-		dev := Device{device: reader}
-		recv := dev.Listen()
+		is := isPkg.New(t)
+		dev := &Device{device: reader}
+
+		recv := makeChannelAndListen(t, dev)
+		is.NoErr(dev.LastErr)
 
 		got, ok := targetFromChannel(t, recv)
 		if ok {
@@ -52,12 +56,16 @@ func TestDevice_Listen(t *testing.T) {
 		}
 	})
 	t.Run("target recieved", func(t *testing.T) {
+		is := isPkg.New(t)
 		reader.concurrentTargets = 1
 		defer func() {
 			reader.concurrentTargets = 0
 		}()
-		dev := Device{device: reader}
-		recv := dev.Listen()
+		dev := &Device{device: reader}
+
+		recv := makeChannelAndListen(t, dev)
+		is.NoErr(dev.LastErr)
+
 		got, ok := targetFromChannel(t, recv)
 		if !ok {
 			t.Errorf("reciever timed out")
@@ -67,12 +75,16 @@ func TestDevice_Listen(t *testing.T) {
 		}
 	})
 	t.Run("multiple targets concurrently without AllowMultipleTargets", func(t *testing.T) {
+		is := isPkg.New(t)
 		reader.concurrentTargets = 2
 		defer func() {
 			reader.concurrentTargets = 0
 		}()
-		dev := Device{device: reader}
-		recv := dev.Listen()
+		dev := &Device{device: reader}
+
+		recv := makeChannelAndListen(t, dev)
+		is.NoErr(dev.LastErr)
+
 		got, ok := targetFromChannel(t, recv)
 		if !ok {
 			t.Errorf("reciever timed out")
@@ -83,15 +95,19 @@ func TestDevice_Listen(t *testing.T) {
 		}
 	})
 	t.Run("multiple targets concurrently with AllowMultipleTargets", func(t *testing.T) {
+		is := isPkg.New(t)
 		reader.concurrentTargets = 2
 		defer func() {
 			reader.concurrentTargets = 0
 		}()
-		dev := Device{
+		dev := &Device{
 			device:               reader,
 			AllowMultipleTargets: true,
 		}
-		recv := dev.Listen()
+
+		recv := makeChannelAndListen(t, dev)
+		is.NoErr(dev.LastErr)
+
 		for i := 0; i < 2; i++ {
 			got, _ := targetFromChannel(t, recv)
 			if got[0] != byte(i) {
@@ -100,12 +116,15 @@ func TestDevice_Listen(t *testing.T) {
 		}
 	})
 	t.Run("multiple targets consecutively", func(t *testing.T) {
+		is := isPkg.New(t)
 		reader.concurrentTargets = 1
 		defer func() {
 			reader.concurrentTargets = 0
 		}()
-		dev := Device{device: reader}
-		recv := dev.Listen()
+		dev := &Device{device: reader}
+		recv := makeChannelAndListen(t, dev)
+		is.NoErr(dev.LastErr)
+
 		targetsRecv := 0
 		for i := 0; i < 2; i++ {
 			_, ok := targetFromChannel(t, recv)
@@ -124,13 +143,21 @@ func TestDevice_Listen(t *testing.T) {
 				return nil, errors.New("test error")
 			},
 		}
-		dev := Device{
+		dev := &Device{
 			device: reader,
 		}
-		recv := dev.Listen()
-		_, ok := <-recv
-		if ok {
-			t.Errorf("channel got not closed")
+		recv := makeChannelAndListen(t, dev)
+
+		select {
+		case _, ok := <-recv:
+			if !dev.HasError() {
+				t.Errorf("device should have error")
+			}
+			if ok {
+				t.Errorf("channel got not closed")
+			}
+		case <-time.After(10 * time.Minute):
+			t.Errorf("timeout reciever")
 		}
 	})
 }
@@ -154,4 +181,14 @@ func targetFromChannel(t *testing.T, recv <-chan []byte) ([]byte, bool) {
 	case <-time.After(10 * time.Millisecond):
 		return nil, false
 	}
+}
+
+func makeChannelAndListen(t *testing.T, dev *Device) chan []byte {
+	t.Helper()
+	recv := make(chan []byte)
+	go func(chan []byte) {
+		dev.ListenForCardUids(recv)
+	}(recv)
+
+	return recv
 }

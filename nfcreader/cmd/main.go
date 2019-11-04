@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/JHeimbach/nfc-cash-system/pkg/nfcreader"
+	"github.com/JHeimbach/nfc-cash-system/nfcreader"
 	"github.com/fuzxxl/nfc/dev/nfc"
 	"log"
 	"os"
@@ -48,18 +48,30 @@ func pollingDevice() error {
 	//noinspection GoUnhandledErrorResult
 	defer dev.Close()
 
-	listenChan := dev.Listen()
+	// open channel to send uids to
+	listenChan := make(chan []byte)
+
+	// listen for targets in goroutine
+	go func(chan []byte) {
+		dev.ListenForCardUids(listenChan)
+	}(listenChan)
+
 	fmt.Printf("device %q ready, start polling...\n", deviceName)
 	for {
 		uidBytes, open := <-listenChan
 		if !open {
-			fmt.Printf("device %q: polling stopped", deviceName)
+			fmt.Printf("device %q: polling stopped \n", deviceName)
 			break
 		}
 		uidStr := binary.BigEndian.Uint32(uidBytes)
 		// todo do something with uid
 		fmt.Println(fmt.Sprint(uidStr))
 	}
+
+	if dev.HasError() {
+		return dev.LastErr
+	}
+
 	return nil
 }
 
