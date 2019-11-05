@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/google/go-cmp/cmp"
+	isPkg "github.com/matryer/is"
 	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"testing"
@@ -13,8 +14,11 @@ import (
 )
 
 func TestUserModel_Create(t *testing.T) {
+	isIntegrationTest(t)
+	is := isPkg.New(t)
 	wantName, wantEmail, wantPassword := "test", "test@example.org", "test123!"
 	t.Run("inserts new user to database", func(t *testing.T) {
+		is := is.New(t)
 		db, teardown := getTestDb(t)
 		defer teardown()
 
@@ -32,8 +36,9 @@ func TestUserModel_Create(t *testing.T) {
 		if err != nil {
 			t.Fatalf("got error from inserting in usermodel, did not expect one %v", err)
 		}
-		assertEqualStrings(t, gotName, wantName)
-		assertEqualStrings(t, gotEmail, wantEmail)
+
+		is.Equal(gotName, wantName)   // name is not the same
+		is.Equal(gotEmail, wantEmail) // email is not the same
 		assertEqualPasswords(t, gotPassword, wantPassword)
 	})
 
@@ -57,14 +62,6 @@ func TestUserModel_Create(t *testing.T) {
 	})
 }
 
-func assertEqualStrings(t *testing.T, got string, want string) {
-	t.Helper()
-
-	if got != want {
-		t.Errorf("got %q, want %q", got, want)
-	}
-}
-
 func assertEqualPasswords(t *testing.T, got, want string) {
 	t.Helper()
 	err := bcrypt.CompareHashAndPassword([]byte(got), []byte(want))
@@ -74,8 +71,9 @@ func assertEqualPasswords(t *testing.T, got, want string) {
 }
 
 func TestUserModel_Get(t *testing.T) {
+	isIntegrationTest(t)
 	t.Run("returns user struct if user with id exists", func(t *testing.T) {
-		db, teardown := getDbWithInitializedUser(t)
+		db, teardown := dbInitializedForUsers(t)
 		defer teardown()
 
 		want := &models.User{
@@ -117,7 +115,7 @@ func TestUserModel_Get(t *testing.T) {
 	})
 }
 
-func getDbWithInitializedUser(t *testing.T) (*sql.DB, func()) {
+func dbInitializedForUsers(t *testing.T) (*sql.DB, func()) {
 	t.Helper()
 
 	db, teardown := getTestDb(t)
@@ -130,7 +128,8 @@ func getDbWithInitializedUser(t *testing.T) (*sql.DB, func()) {
 }
 
 func TestUserModel_Authenticate(t *testing.T) {
-	db, teardown := getDbWithInitializedUser(t)
+	isIntegrationTest(t)
+	db, teardown := dbInitializedForUsers(t)
 	defer teardown()
 	model := &UserModel{
 		db: db,

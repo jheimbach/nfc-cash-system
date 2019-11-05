@@ -8,6 +8,7 @@ import (
 )
 
 func TestGroupModel_Create(t *testing.T) {
+	isIntegrationTest(t)
 	db, teardown := getTestDb(t)
 	defer teardown()
 
@@ -61,6 +62,7 @@ func TestGroupModel_Create(t *testing.T) {
 }
 
 func TestGroupModel_Read(t *testing.T) {
+	isIntegrationTest(t)
 	db, teardown := getTestDb(t)
 	defer teardown()
 
@@ -129,6 +131,7 @@ func TestGroupModel_Read(t *testing.T) {
 }
 
 func TestGroupModel_Update(t *testing.T) {
+	isIntegrationTest(t)
 	db, teardown := getTestDb(t)
 	defer teardown()
 
@@ -217,6 +220,7 @@ func TestGroupModel_Update(t *testing.T) {
 }
 
 func TestGroupModel_Delete(t *testing.T) {
+	isIntegrationTest(t)
 	t.Run("empty group delete", func(t *testing.T) {
 		is := is.New(t)
 		db, teardown := getTestDb(t)
