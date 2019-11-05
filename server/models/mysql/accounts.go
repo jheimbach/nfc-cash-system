@@ -81,3 +81,42 @@ func (a *AccountModel) UpdateSaldo(id int, newSaldo float64) error {
 
 	return err
 }
+
+func (a *AccountModel) GetAll() ([]*models.Account, error) {
+	rows, err := a.db.Query("SELECT id, name, description, saldo, group_id FROM accounts")
+	defer rows.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return scanAccountFromRows(rows)
+}
+
+func (a *AccountModel) GetAllByGroup(groupId int) ([]*models.Account, error) {
+	rows, err := a.db.Query("SELECT id, name, description, saldo, group_id FROM accounts WHERE group_id=?", groupId)
+	defer rows.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return scanAccountFromRows(rows)
+}
+
+func scanAccountFromRows(rows *sql.Rows) ([]*models.Account, error) {
+	var accounts []*models.Account
+
+	for rows.Next() {
+		s := &models.Account{Group: models.Group{}}
+
+		err := rows.Scan(&s.ID, &s.Name, &s.Description, &s.Saldo, &s.Group.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		accounts = append(accounts, s)
+	}
+
+	return accounts, nil
+}

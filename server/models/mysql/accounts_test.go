@@ -281,6 +281,7 @@ func TestAccountModel_Delete(t *testing.T) {
 }
 
 func TestAccountModel_UpdateSaldo(t *testing.T) {
+	isIntegrationTest(t)
 	is := isPkg.New(t)
 	tests := []struct {
 		name           string
@@ -339,6 +340,44 @@ func TestAccountModel_UpdateSaldo(t *testing.T) {
 	}
 }
 
+func TestAccountModel_GetAll(t *testing.T) {
+	isIntegrationTest(t)
+
+	is := isPkg.New(t)
+	db, teardown := dbInitializedForAccountLists(t)
+	defer teardown()
+
+	model := AccountModel{
+		db: db,
+	}
+
+	accounts, err := model.GetAll()
+	is.NoErr(err)
+
+	if len(accounts) != 10 {
+		t.Errorf("got not all accounts got %d, expected %d", len(accounts), 10)
+	}
+}
+
+func TestAccountModel_GetAllByGroup(t *testing.T) {
+	isIntegrationTest(t)
+
+	is := isPkg.New(t)
+	db, teardown := dbInitializedForAccountLists(t)
+	defer teardown()
+
+	model := AccountModel{
+		db: db,
+	}
+
+	accounts, err := model.GetAllByGroup(1)
+	is.NoErr(err)
+
+	if len(accounts) != 5 {
+		t.Errorf("got not all accounts got %d, expected %d", len(accounts), 5)
+	}
+}
+
 func insertTestAccount(t *testing.T, db *sql.DB, account models.Account) {
 	t.Helper()
 
@@ -352,10 +391,18 @@ func insertTestAccount(t *testing.T, db *sql.DB, account models.Account) {
 }
 
 func dbInitializedForAccount(t *testing.T) (*sql.DB, func()) {
+	return dbInitialized(t, "../testdata/account.sql")
+}
+
+func dbInitializedForAccountLists(t *testing.T) (*sql.DB, func()) {
+	return dbInitialized(t, "../testdata/account_lists.sql")
+}
+
+func dbInitialized(t *testing.T, setupScriptFileName string) (*sql.DB, func()) {
 	t.Helper()
 
 	db, teardown := getTestDb(t)
-	setupScript, _ := ioutil.ReadFile("../testdata/account.sql")
+	setupScript, _ := ioutil.ReadFile(setupScriptFileName)
 	_, err := db.Exec(string(setupScript))
 	if err != nil {
 		t.Fatalf("got error initializing account into database: %v", err)
