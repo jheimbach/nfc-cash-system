@@ -11,13 +11,13 @@ type GroupModel struct {
 }
 
 func (g *GroupModel) Create(name, description string) error {
-	createStmt := "INSERT INTO `groups` (name, description) VALUES (?,?)"
+	createStmt := "INSERT INTO `account_groups` (name, description) VALUES (?,?)"
 	_, err := g.db.Exec(createStmt, name, description)
 	return err
 }
 
 func (g *GroupModel) Read(id int) (*models.Group, error) {
-	readStmt := "SELECT * FROM `groups` WHERE id = ?"
+	readStmt := "SELECT * FROM `account_groups` WHERE id = ?"
 
 	var group models.Group
 	row := g.db.QueryRow(readStmt, id)
@@ -53,7 +53,7 @@ func (g *GroupModel) Update(group models.Group) (*models.Group, error) {
 	}
 
 	_, err = g.db.Exec(
-		"UPDATE `groups` SET name=?,description=? WHERE id=?",
+		"UPDATE `account_groups` SET name=?,description=? WHERE id=?",
 		current.Name,
 		current.Description,
 		current.ID,
@@ -67,7 +67,7 @@ func (g *GroupModel) Update(group models.Group) (*models.Group, error) {
 }
 
 func (g *GroupModel) Delete(id int) error {
-	_, err := g.db.Exec("DELETE FROM `groups` WHERE id=?", id)
+	_, err := g.db.Exec("DELETE FROM `account_groups` WHERE id=?", id)
 
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok {

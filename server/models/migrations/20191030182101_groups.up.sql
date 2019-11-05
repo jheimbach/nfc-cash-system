@@ -1,4 +1,4 @@
-CREATE TABLE `groups`
+CREATE TABLE `account_groups`
 (
     `id` integer PRIMARY KEY NOT NULL AUTO_INCREMENT,
     `name` varchar(255) NOT NULL,

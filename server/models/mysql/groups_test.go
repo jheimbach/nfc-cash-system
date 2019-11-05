@@ -28,7 +28,7 @@ func TestGroupModel_Create(t *testing.T) {
 
 		var got models.Group
 
-		row := db.QueryRow("SELECT id, name, description FROM `groups` WHERE id = ?", want.ID)
+		row := db.QueryRow("SELECT id, name, description FROM `account_groups` WHERE id = ?", want.ID)
 		err = row.Scan(&got.ID, &got.Name, &got.Description)
 		is.NoErr(err)
 
@@ -50,7 +50,7 @@ func TestGroupModel_Create(t *testing.T) {
 
 		var got models.Group
 
-		row := db.QueryRow("SELECT id, name, description FROM `groups` WHERE id = ?", want.ID)
+		row := db.QueryRow("SELECT id, name, description FROM `account_groups` WHERE id = ?", want.ID)
 		err = row.Scan(&got.ID, &got.Name, &got.Description)
 		is.NoErr(err)
 
@@ -107,7 +107,7 @@ func TestGroupModel_Read(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
 			if tt.insertGroup {
-				_, err := db.Exec("INSERT INTO `groups` (name, description) VALUES (?,?)", tt.want.Name, tt.want.Description)
+				_, err := db.Exec("INSERT INTO `account_groups` (name, description) VALUES (?,?)", tt.want.Name, tt.want.Description)
 				is.NoErr(err)
 			}
 
@@ -194,7 +194,7 @@ func TestGroupModel_Update(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
 			if tt.insert.Name != "" {
-				_, err := db.Exec("INSERT INTO `groups` (name, description) VALUES (?,?)", tt.insert.Name, tt.insert.Description)
+				_, err := db.Exec("INSERT INTO `account_groups` (name, description) VALUES (?,?)", tt.insert.Name, tt.insert.Description)
 				is.NoErr(err)
 			}
 
@@ -225,7 +225,7 @@ func TestGroupModel_Delete(t *testing.T) {
 		model := GroupModel{
 			db: db,
 		}
-		res, err := db.Exec("INSERT INTO `groups` (name) VALUES (?)", "test")
+		res, err := db.Exec("INSERT INTO `account_groups` (name) VALUES (?)", "test")
 		is.NoErr(err)
 
 		groupId, err := res.LastInsertId()
@@ -235,7 +235,7 @@ func TestGroupModel_Delete(t *testing.T) {
 		is.NoErr(err)
 
 		var groupName string
-		err = db.QueryRow("SELECT name from `groups` WHERE id=?", int(groupId)).Scan(&groupName)
+		err = db.QueryRow("SELECT name from `account_groups` WHERE id=?", int(groupId)).Scan(&groupName)
 		if err == nil {
 			t.Errorf("wanted err, got none")
 		}
@@ -251,7 +251,7 @@ func TestGroupModel_Delete(t *testing.T) {
 		model := GroupModel{
 			db: db,
 		}
-		res, err := db.Exec("INSERT INTO `groups` (name) VALUES (?)", "test")
+		res, err := db.Exec("INSERT INTO `account_groups` (name) VALUES (?)", "test")
 		is.NoErr(err)
 
 		groupId, err := res.LastInsertId()
