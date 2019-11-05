@@ -6,3 +6,5 @@ CREATE TABLE `accounts`
         `saldo` FLOAT NOT NULL DEFAULT 0,
         `group_id` INTEGER
 );
+
+ALTER TABLE `accounts` ADD FOREIGN KEY (`group_id`) REFERENCES `account_groups`(`id`);

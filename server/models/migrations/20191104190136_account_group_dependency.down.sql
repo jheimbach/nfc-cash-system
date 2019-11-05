@@ -1,1 +1,0 @@
-ALTER TABLE `accounts` DROP FOREIGN KEY `accounts_ibfk_1`

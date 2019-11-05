@@ -1,1 +1,0 @@
-ALTER TABLE `accounts` ADD FOREIGN KEY (`group_id`) REFERENCES `account_groups`(`id`)
