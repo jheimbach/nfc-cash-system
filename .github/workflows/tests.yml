@@ -16,15 +16,15 @@ jobs:
 
     - name: Get dependencies
       run: go get -v -t -d ./...
-      
+
     - name: Start Docker Container
       env:
         PROJECT: nfc-cash-system
       run: docker-compose up -d db_test
-      
+
     - name: Run tests
       env:
         RUN_INTEGRATION: 1
         TEST_DB_NAME: nfc-cash-system
         TEST_DB_DSN: "${TEST_DB_NAME}:${TEST_DB_NAME}@tcp(db_test)/${TEST_DB_NAME}?parseTime=true&multiStatements=true"
-      run: go test ./server/...
+      run: go test -v ./server/...
