@@ -5,6 +5,7 @@ import (
 	"github.com/JHeimbach/nfc-cash-system/internals/database"
 	"os"
 	"testing"
+	"time"
 )
 
 const (
@@ -36,6 +37,7 @@ func getTestDb(t *testing.T) (*sql.DB, func()) {
 	if err != nil {
 		t.Skipf("could not connect to database, skipping test, err: %v", err)
 	}
+	db.SetConnMaxLifetime(10 * time.Second)
 
 	if err = db.Ping(); err != nil {
 		t.Skipf("could not connect to database, skipping test, err: %v", err)

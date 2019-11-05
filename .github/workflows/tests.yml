@@ -25,6 +25,7 @@ jobs:
     - name: Run tests
       env:
         RUN_INTEGRATION: 1
+        PROJECT: nfc-cash-system
         TEST_DB_NAME: nfc-cash-system
         TEST_DB_DSN: "${TEST_DB_NAME}:${TEST_DB_NAME}@tcp(${DB_ADDRESS})/${TEST_DB_NAME}?parseTime=true&multiStatements=true"
       run: DB_ADDRESS=$(docker-compose port db_test 3306) go test -v ./server/...
