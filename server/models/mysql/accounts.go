@@ -104,6 +104,33 @@ func (a *AccountModel) GetAllByGroup(groupId int) ([]*models.Account, error) {
 	return scanAccountFromRows(rows)
 }
 
+func (a *AccountModel) GetAllWithPaging(page, size int) (*models.AccountPaging, error) {
+	getStmt := `SELECT id, name,description,saldo,group_id FROM accounts ORDER BY id DESC LIMIT ? OFFSET ?`
+	offset := (page - 1) * size
+	rows, err := a.db.Query(getStmt, size, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	accounts, err := scanAccountFromRows(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	var count int
+	err = a.db.QueryRow("SELECT COUNT(id) FROM accounts").Scan(&count)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.AccountPaging{
+		CurrentPage: page,
+		MaxPage:     (count + size - 1) / size,
+		Accounts:    accounts,
+	}, nil
+}
+
 func scanAccountFromRows(rows *sql.Rows) ([]*models.Account, error) {
 	var accounts []*models.Account
 

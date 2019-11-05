@@ -11,5 +11,4 @@ VALUES ('testuser1', 1),
        ('testuser6', 2),
        ('testuser7', 2),
        ('testuser8', 2),
-       ('testuser9', 2),
-       ('testuser10', 2);
+       ('testuser9', 2);

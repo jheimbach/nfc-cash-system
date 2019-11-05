@@ -353,10 +353,7 @@ func TestAccountModel_GetAll(t *testing.T) {
 
 	accounts, err := model.GetAll()
 	is.NoErr(err)
-
-	if len(accounts) != 10 {
-		t.Errorf("got not all accounts got %d, expected %d", len(accounts), 10)
-	}
+	is.Equal(len(accounts), 9) // expect 9 accounts
 }
 
 func TestAccountModel_GetAllByGroup(t *testing.T) {
@@ -372,9 +369,31 @@ func TestAccountModel_GetAllByGroup(t *testing.T) {
 
 	accounts, err := model.GetAllByGroup(1)
 	is.NoErr(err)
+	is.Equal(len(accounts), 5)
+}
 
-	if len(accounts) != 5 {
-		t.Errorf("got not all accounts got %d, expected %d", len(accounts), 5)
+func TestAccountModel_GetAllPaged(t *testing.T) {
+	isIntegrationTest(t)
+	is := isPkg.NewRelaxed(t)
+	db, teardown := dbInitializedForAccountLists(t)
+	defer teardown()
+
+	model := AccountModel{
+		db: db,
+	}
+
+	for i := 1; i <= 2; i++ {
+		accounts, err := model.GetAllWithPaging(i, 5)
+		is.NoErr(err)
+
+		is.Equal(accounts.CurrentPage, i) // currentpage
+		is.Equal(accounts.MaxPage, 2)     // maxpage
+
+		if i == 2 {
+			is.Equal(len(accounts.Accounts), 4) // account length
+		} else {
+			is.Equal(len(accounts.Accounts), 5) // account length
+		}
 	}
 }
 
