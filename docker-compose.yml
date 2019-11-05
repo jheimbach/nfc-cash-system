@@ -19,7 +19,7 @@ services:
     image: mariadb:latest
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     ports:
-      - 3306
+      - 3333:3306
     networks:
       - database
     hostname: ${PROJECT}-test.db
