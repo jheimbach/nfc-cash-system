@@ -75,3 +75,9 @@ func (a *AccountModel) Delete(id int) error {
 
 	return err
 }
+
+func (a *AccountModel) UpdateSaldo(id int, newSaldo float64) error {
+	_, err := a.db.Exec("UPDATE accounts SET saldo=? WHERE id=?", newSaldo, id)
+
+	return err
+}

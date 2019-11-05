@@ -280,6 +280,65 @@ func TestAccountModel_Delete(t *testing.T) {
 	}
 }
 
+func TestAccountModel_UpdateSaldo(t *testing.T) {
+	is := isPkg.New(t)
+	tests := []struct {
+		name           string
+		obj            models.Account
+		insertObj      bool
+		newSaldo       float64
+		expectDbChange bool
+	}{
+		{
+			name: "update saldo",
+			obj: models.Account{
+				ID:          1,
+				Name:        "tim",
+				Description: "",
+				Saldo:       50,
+				Group: models.Group{
+					ID:          1,
+					Name:        "testgroup1",
+					Description: "",
+				},
+			},
+			insertObj:      true,
+			newSaldo:       65,
+			expectDbChange: true,
+		},
+		{
+			name: "update saldo on undefined account",
+			obj: models.Account{
+				ID: 10,
+			},
+			newSaldo: 65,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			db, teardown := dbInitializedForAccount(t)
+			defer teardown()
+
+			if tt.insertObj {
+				insertTestAccount(t, db, tt.obj)
+			}
+
+			model := AccountModel{db: db}
+			err := model.UpdateSaldo(tt.obj.ID, tt.newSaldo)
+			is.NoErr(err)
+
+			if tt.expectDbChange {
+				var dbSaldo float64
+				err = db.QueryRow("SELECT saldo from accounts WHERE id=?", tt.obj.ID).Scan(&dbSaldo)
+				is.NoErr(err)
+				is.Equal(dbSaldo, tt.newSaldo)
+			}
+		})
+	}
+}
+
 func insertTestAccount(t *testing.T, db *sql.DB, account models.Account) {
 	t.Helper()
 
