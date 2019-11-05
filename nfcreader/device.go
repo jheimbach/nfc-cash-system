@@ -2,7 +2,7 @@ package nfcreader
 
 import (
 	"fmt"
-	"github.com/fuzxxl/nfc/dev/nfc"
+	"github.com/fuzxxl/nfc/2.0/nfc"
 	"io"
 	"time"
 )

@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/JHeimbach/nfc-cash-system/nfcreader"
-	"github.com/fuzxxl/nfc/dev/nfc"
+	"github.com/fuzxxl/nfc/2.0/nfc"
 	"log"
 	"os"
 )

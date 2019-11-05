@@ -2,7 +2,7 @@ package nfcreader
 
 import (
 	"errors"
-	"github.com/fuzxxl/nfc/dev/nfc"
+	"github.com/fuzxxl/nfc/2.0/nfc"
 	"github.com/google/go-cmp/cmp"
 	isPkg "github.com/matryer/is"
 	"testing"

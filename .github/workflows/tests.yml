@@ -28,7 +28,7 @@ jobs:
         PROJECT: nfc-cash-system
         TEST_DB_NAME: nfc-cash-system
         TEST_DB_DSN: "${TEST_DB_NAME}:${TEST_DB_NAME}@tcp(${DB_ADDRESS})/${TEST_DB_NAME}?parseTime=true&multiStatements=true"
-      run: DB_ADDRESS=$(docker-compose port db_test 3306) go test -v ./server/...
+      run: DB_ADDRESS=$(docker-compose port db_test 3306) echo $DB_ADDRESS && go test -v ./server/...
   nfcreader:
     name: NFC Reader Tests
     runs-on: ubuntu-latest
