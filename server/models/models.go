@@ -5,11 +5,14 @@ import (
 	"time"
 )
 
-var ErrDuplicateEmail = errors.New("models: duplicate user email")
-var ErrNotFound = errors.New("models: not found")
-var ErrInvalidCredentials = errors.New("models: email or password incorrect")
-var ErrModelNotSaved = errors.New("models: got no id on update, did you mean to create the group")
-var ErrNonEmptyDelete = errors.New("models: can not delete, item is still referenced")
+var (
+	ErrDuplicateEmail     = errors.New("models: duplicate user email")
+	ErrNotFound           = errors.New("models: not found")
+	ErrInvalidCredentials = errors.New("models: email or password incorrect")
+	ErrModelNotSaved      = errors.New("models: got no id on update, did you mean to create the group")
+	ErrNonEmptyDelete     = errors.New("models: can not delete, item is still referenced")
+	ErrGroupNotFound      = errors.New("models: group for given group id does not exist")
+)
 
 type User struct {
 	ID      int
@@ -28,6 +31,6 @@ type Account struct {
 	ID          int
 	Name        string
 	Description string
-	Saldo       int
+	Saldo       float64
 	Group       Group
 }
