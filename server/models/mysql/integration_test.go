@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"github.com/JHeimbach/nfc-cash-system/internals/database"
+	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -59,4 +60,16 @@ func getTestDb(t *testing.T) (*sql.DB, func()) {
 	}
 
 	return db, teardownF
+}
+
+func dbInitialized(t *testing.T, setupScriptFileName string) (*sql.DB, func()) {
+	t.Helper()
+
+	db, teardown := getTestDb(t)
+	setupScript, _ := ioutil.ReadFile(setupScriptFileName)
+	_, err := db.Exec(string(setupScript))
+	if err != nil {
+		t.Fatalf("got error initializing account into database: %v", err)
+	}
+	return db, teardown
 }

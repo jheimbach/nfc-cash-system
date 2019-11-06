@@ -11,7 +11,8 @@ var (
 	ErrInvalidCredentials = errors.New("models: email or password incorrect")
 	ErrModelNotSaved      = errors.New("models: got no id on update, did you mean to create the group")
 	ErrNonEmptyDelete     = errors.New("models: can not delete, item is still referenced")
-	ErrGroupNotFound      = errors.New("models: group for given group id does not exist")
+	ErrGroupNotFound      = errors.New("models: group for given id does not exist")
+	ErrAccountNotFound    = errors.New("models: account for given id does not exist")
 )
 
 type User struct {

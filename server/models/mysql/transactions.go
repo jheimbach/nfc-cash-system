@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/go-sql-driver/mysql"
 )
 
 type TransactionModel struct {
@@ -10,14 +11,17 @@ type TransactionModel struct {
 }
 
 func (t *TransactionModel) Create(amount, oldSaldo, newSaldo float64, accountId int) error {
-	return nil
-}
 
-func (t *TransactionModel) Read(id int) (*models.Transaction, error) {
-	return nil, nil
-}
+	insertStatement := `INSERT INTO transactions (new_saldo, old_saldo, amount, account_id, created) VALUES (?,?,?,?,UTC_TIMESTAMP)`
+	_, err := t.db.Exec(insertStatement, newSaldo, oldSaldo, amount, accountId)
 
-func (t *TransactionModel) Delete(id int) error {
+	if err != nil {
+		if err, ok := err.(*mysql.MySQLError); ok && err.Number == 1452 {
+			return models.ErrAccountNotFound
+		}
+		return err
+	}
+
 	return nil
 }
 
