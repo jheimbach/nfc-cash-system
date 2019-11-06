@@ -3,6 +3,10 @@ package mysql
 import "database/sql"
 
 func pageOffset(page int, size int) int {
+	if page <= 0 {
+		page = 1
+	}
+
 	offset := (page - 1) * size
 	return offset
 }

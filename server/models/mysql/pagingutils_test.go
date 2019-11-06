@@ -91,6 +91,11 @@ func Test_pageOffset(t *testing.T) {
 		want int
 	}{
 		{
+			page: 0,
+			size: 5,
+			want: 0,
+		},
+		{
 			page: 1,
 			size: 5,
 			want: 0,
