@@ -70,7 +70,7 @@ func TestDevice_Listen(t *testing.T) {
 		if !ok {
 			t.Errorf("reciever timed out")
 		}
-		if cmp.Equal(got, targetIdSlice) {
+		if !cmp.Equal(got, targetIdSlice) {
 			t.Errorf("got %v, expected %v", got, targetIdSlice)
 		}
 	})
@@ -90,7 +90,7 @@ func TestDevice_Listen(t *testing.T) {
 			t.Errorf("reciever timed out")
 		}
 
-		if cmp.Equal(got, targetIdSlice) {
+		if !cmp.Equal(got, targetIdSlice) {
 			t.Errorf("got %v, expected %v", got, targetIdSlice)
 		}
 	})

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"github.com/JHeimbach/nfc-cash-system/nfcreader"
 	"github.com/fuzxxl/nfc/2.0/nfc"
@@ -63,9 +63,10 @@ func pollingDevice() error {
 			fmt.Printf("device %q: polling stopped \n", deviceName)
 			break
 		}
-		uidStr := binary.BigEndian.Uint32(uidBytes)
+
+		uidStr := hex.EncodeToString(uidBytes)
 		// todo do something with uid
-		fmt.Println(fmt.Sprint(uidStr))
+		fmt.Printf("%014s\n", uidStr)
 	}
 
 	if dev.HasError() {

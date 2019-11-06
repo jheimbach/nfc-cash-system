@@ -56,7 +56,7 @@ func (d *Device) HasError() bool {
 func sendTargetUid(target nfc.Target, send chan []byte) {
 	card, ok := target.(*nfc.ISO14443aTarget)
 	if ok {
-		send <- card.UID[:card.UIDLen-1]
+		send <- card.UID[:card.UIDLen]
 	}
 }
 
