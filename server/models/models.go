@@ -26,6 +26,7 @@ type Group struct {
 	ID          int
 	Name        string
 	Description string
+	CanOverDraw bool
 }
 
 type Account struct {

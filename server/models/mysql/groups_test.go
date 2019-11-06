@@ -9,56 +9,83 @@ import (
 
 func TestGroupModel_Create(t *testing.T) {
 	isIntegrationTest(t)
-	db, teardown := getTestDb(t)
-	defer teardown()
+	is := isPkg.New(t)
 
-	model := GroupModel{
-		db: db,
+	type args struct {
+		name, description string
+		canOverdraw       bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want models.Group
+	}{
+		{
+			name: "create group without description",
+			args: args{
+				name: "testgroup",
+			},
+			want: models.Group{
+				ID:          1,
+				Name:        "testgroup",
+				Description: "",
+				CanOverDraw: false,
+			},
+		},
+		{
+			name: "create group with description",
+			args: args{
+				name:        "testgroup",
+				description: "with description",
+			},
+			want: models.Group{
+				ID:          1,
+				Name:        "testgroup",
+				Description: "with description",
+			},
+		},
+		{
+			name: "create group with canoverdraw",
+			args: args{
+				name:        "testgroup",
+				canOverdraw: true,
+			},
+			want: models.Group{
+				ID:          1,
+				Name:        "testgroup",
+				CanOverDraw: true,
+			},
+		},
 	}
 
-	t.Run("create group without description", func(t *testing.T) {
-		is := isPkg.New(t)
-		err := model.Create("testgroup", "")
-		is.NoErr(err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			db, teardown := getTestDb(t)
+			defer teardown()
 
-		want := models.Group{
-			ID:          1,
-			Name:        "testgroup",
-			Description: "",
-		}
+			model := GroupModel{
+				db: db,
+			}
 
-		var got models.Group
+			err := model.Create(tt.args.name, tt.args.description, tt.args.canOverdraw)
+			is.NoErr(err)
 
-		row := db.QueryRow("SELECT id, name, description FROM `account_groups` WHERE id = ?", want.ID)
-		err = row.Scan(&got.ID, &got.Name, &got.Description)
-		is.NoErr(err)
+			var got models.Group
+			var nullDesc sql.NullString
+			row := db.QueryRow("SELECT id, name, description,can_overdraw FROM `account_groups` WHERE id = ?", tt.want.ID)
+			err = row.Scan(&got.ID, &got.Name, &nullDesc, &got.CanOverDraw)
+			is.NoErr(err)
 
-		if got != want {
-			t.Errorf("got %v, want %v", got, want)
-		}
-	})
+			if nullDesc.Valid {
+				got.Description = nullDesc.String
+			}
 
-	t.Run("create group with description", func(t *testing.T) {
-		is := isPkg.New(t)
-
-		want := models.Group{
-			ID:          2,
-			Name:        "testgroup",
-			Description: "with description",
-		}
-		err := model.Create(want.Name, want.Description)
-		is.NoErr(err)
-
-		var got models.Group
-
-		row := db.QueryRow("SELECT id, name, description FROM `account_groups` WHERE id = ?", want.ID)
-		err = row.Scan(&got.ID, &got.Name, &got.Description)
-		is.NoErr(err)
-
-		if got != want {
-			t.Errorf("got %v, want %v", got, want)
-		}
-	})
+			if got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
 
 func TestGroupModel_Read(t *testing.T) {
@@ -72,7 +99,7 @@ func TestGroupModel_Read(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name: "insert group with no description",
+			name: "load group without description",
 			want: &models.Group{
 				ID:   1,
 				Name: "testgroup",
@@ -80,7 +107,7 @@ func TestGroupModel_Read(t *testing.T) {
 			insertGroup: true,
 		},
 		{
-			name: "insert group with description",
+			name: "load group with description",
 			want: &models.Group{
 				ID:          2,
 				Name:        "testgroup",
@@ -96,6 +123,15 @@ func TestGroupModel_Read(t *testing.T) {
 			insertGroup: false,
 			wantErr:     true,
 			expectedErr: models.ErrNotFound,
+		},
+		{
+			name: "load group with Canoverdraw",
+			want: &models.Group{
+				ID:          4,
+				Name:        "testgroup4",
+				CanOverDraw: true,
+			},
+			insertGroup: true,
 		},
 	}
 	for _, tt := range tests {
@@ -116,7 +152,7 @@ func TestGroupModel_Read(t *testing.T) {
 						t.Fatal(err)
 					}
 				}
-				_, err := db.Exec("INSERT INTO `account_groups` (id, name, description) VALUES (?,?,?)", tt.want.ID, tt.want.Name, desc)
+				_, err := db.Exec("INSERT INTO `account_groups` (id, name, description, can_overdraw) VALUES (?,?,?,?)", tt.want.ID, tt.want.Name, desc, tt.want.CanOverDraw)
 				is.NoErr(err)
 			}
 
@@ -139,12 +175,6 @@ func TestGroupModel_Read(t *testing.T) {
 
 func TestGroupModel_Update(t *testing.T) {
 	isIntegrationTest(t)
-	db, teardown := getTestDb(t)
-	defer teardown()
-
-	model := GroupModel{
-		db: db,
-	}
 
 	tests := []struct {
 		name        string
@@ -154,7 +184,7 @@ func TestGroupModel_Update(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			name: "insert group with no description, add description and return group",
+			name: "update group description",
 			insert: models.Group{
 				Name: "testgroup",
 			},
@@ -165,15 +195,27 @@ func TestGroupModel_Update(t *testing.T) {
 			},
 		},
 		{
-			name: "insert group and change name",
+			name: "update group name",
 			insert: models.Group{
 				Name:        "testgroup",
 				Description: "non empty",
 			},
 			want: models.Group{
-				ID:          2,
+				ID:          1,
 				Name:        "test",
 				Description: "non empty",
+			},
+		},
+		{
+			name: "update can_overdraw",
+			insert: models.Group{
+				Name:        "testgroup",
+				CanOverDraw: false,
+			},
+			want: models.Group{
+				ID:          1,
+				Name:        "testgroup",
+				CanOverDraw: true,
 			},
 		},
 		{
@@ -183,7 +225,7 @@ func TestGroupModel_Update(t *testing.T) {
 			expectedErr: models.ErrModelNotSaved,
 		},
 		{
-			name: "group with non existend id returns models.ErrNotFound",
+			name: "group with non existent id returns models.ErrNotFound",
 			want: models.Group{
 				ID: 12,
 			},
@@ -191,7 +233,7 @@ func TestGroupModel_Update(t *testing.T) {
 			expectedErr: models.ErrNotFound,
 		},
 		{
-			name: "group without a id will not be updated",
+			name: "group without id will not be updated",
 			want: models.Group{
 				Name:        "testgroup",
 				Description: "test description",
@@ -202,9 +244,16 @@ func TestGroupModel_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			db, teardown := getTestDb(t)
+			defer teardown()
+
+			model := GroupModel{
+				db: db,
+			}
+
 			is := isPkg.New(t)
 			if tt.insert.Name != "" {
-				_, err := db.Exec("INSERT INTO `account_groups` (name, description) VALUES (?,?)", tt.insert.Name, tt.insert.Description)
+				_, err := db.Exec("INSERT INTO `account_groups` (name, description,can_overdraw) VALUES (?,?,?)", tt.insert.Name, tt.insert.Description, tt.insert.CanOverDraw)
 				is.NoErr(err)
 			}
 

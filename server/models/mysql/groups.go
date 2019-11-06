@@ -10,20 +10,29 @@ type GroupModel struct {
 	db *sql.DB
 }
 
-func (g *GroupModel) Create(name, description string) error {
-	createStmt := "INSERT INTO `account_groups` (name, description) VALUES (?,?)"
-	_, err := g.db.Exec(createStmt, name, description)
+func (g *GroupModel) Create(name, description string, canOverdraw bool) error {
+	var nullDescription sql.NullString
+
+	if description != "" {
+		err := nullDescription.Scan(description)
+		if err != nil {
+			return err
+		}
+	}
+
+	createStmt := "INSERT INTO `account_groups` (name, description, can_overdraw) VALUES (?,?,?)"
+	_, err := g.db.Exec(createStmt, name, nullDescription, canOverdraw)
 	return err
 }
 
 func (g *GroupModel) Read(id int) (*models.Group, error) {
-	readStmt := "SELECT * FROM `account_groups` WHERE id = ?"
+	readStmt := "SELECT id, name, description, can_overdraw FROM `account_groups` WHERE id = ?"
 
 	var group models.Group
 	row := g.db.QueryRow(readStmt, id)
 
 	var nullDesc sql.NullString
-	err := row.Scan(&group.ID, &group.Name, &nullDesc)
+	err := row.Scan(&group.ID, &group.Name, &nullDesc, &group.CanOverDraw)
 
 	if nullDesc.Valid {
 		group.Description = nullDesc.String
@@ -44,31 +53,24 @@ func (g *GroupModel) Update(group models.Group) (*models.Group, error) {
 		return nil, models.ErrModelNotSaved
 	}
 
-	current, err := g.Read(group.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	if current.Name != group.Name {
-		current.Name = group.Name
-	}
-
-	if current.Description != group.Description {
-		current.Description = group.Description
-	}
-
-	_, err = g.db.Exec(
-		"UPDATE `account_groups` SET name=?,description=? WHERE id=?",
-		current.Name,
-		current.Description,
-		current.ID,
+	res, err := g.db.Exec(
+		"UPDATE `account_groups` SET name=?,description=?, can_overdraw=? WHERE id=?",
+		group.Name,
+		group.Description,
+		group.CanOverDraw,
+		group.ID,
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return current, nil
+	// check whether update has affected some rows, if not return models.ErrNotFound
+	if affected, err := res.RowsAffected(); affected == 0 || err != nil {
+		return nil, models.ErrNotFound
+	}
+
+	return &group, nil
 }
 
 func (g *GroupModel) Delete(id int) error {

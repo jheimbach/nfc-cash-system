@@ -1,0 +1,1 @@
+ALTER TABLE `account_groups` DROP COLUMN `can_overdraw`;
