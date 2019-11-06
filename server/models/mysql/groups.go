@@ -22,7 +22,12 @@ func (g *GroupModel) Read(id int) (*models.Group, error) {
 	var group models.Group
 	row := g.db.QueryRow(readStmt, id)
 
-	err := row.Scan(&group.ID, &group.Name, &group.Description)
+	var nullDesc sql.NullString
+	err := row.Scan(&group.ID, &group.Name, &nullDesc)
+
+	if nullDesc.Valid {
+		group.Description = nullDesc.String
+	}
 
 	if err != nil {
 		if err == sql.ErrNoRows {

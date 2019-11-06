@@ -37,7 +37,17 @@ func (a *AccountModel) Read(id int) (*models.Account, error) {
 		Group: models.Group{},
 	}
 	row := a.db.QueryRow(readStmt, id)
-	err := row.Scan(&m.ID, &m.Name, &m.Description, &m.Saldo, &m.Group.ID, &m.Group.Name, &m.Group.Description)
+	var nullDesc sql.NullString
+	var groupNullDesc sql.NullString
+	err := row.Scan(&m.ID, &m.Name, &nullDesc, &m.Saldo, &m.Group.ID, &m.Group.Name, &groupNullDesc)
+
+	if nullDesc.Valid {
+		m.Description = nullDesc.String
+	}
+
+	if groupNullDesc.Valid {
+		m.Group.Description = groupNullDesc.String
+	}
 
 	if err != nil {
 		return nil, err
@@ -137,7 +147,13 @@ func scanAccountFromRows(rows *sql.Rows) ([]*models.Account, error) {
 	for rows.Next() {
 		s := &models.Account{Group: models.Group{}}
 
-		err := rows.Scan(&s.ID, &s.Name, &s.Description, &s.Saldo, &s.Group.ID)
+		var nullDesc sql.NullString
+
+		err := rows.Scan(&s.ID, &s.Name, &nullDesc, &s.Saldo, &s.Group.ID)
+		if nullDesc.Valid {
+			s.Description = nullDesc.String
+		}
+
 		if err != nil {
 			return nil, err
 		}

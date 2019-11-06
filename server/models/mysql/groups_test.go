@@ -3,7 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
-	"github.com/matryer/is"
+	isPkg "github.com/matryer/is"
 	"testing"
 )
 
@@ -17,7 +17,7 @@ func TestGroupModel_Create(t *testing.T) {
 	}
 
 	t.Run("create group without description", func(t *testing.T) {
-		is := is.New(t)
+		is := isPkg.New(t)
 		err := model.Create("testgroup", "")
 		is.NoErr(err)
 
@@ -39,7 +39,7 @@ func TestGroupModel_Create(t *testing.T) {
 	})
 
 	t.Run("create group with description", func(t *testing.T) {
-		is := is.New(t)
+		is := isPkg.New(t)
 
 		want := models.Group{
 			ID:          2,
@@ -63,13 +63,7 @@ func TestGroupModel_Create(t *testing.T) {
 
 func TestGroupModel_Read(t *testing.T) {
 	isIntegrationTest(t)
-	db, teardown := getTestDb(t)
-	defer teardown()
-
-	model := GroupModel{
-		db: db,
-	}
-
+	is := isPkg.New(t)
 	tests := []struct {
 		name        string
 		want        *models.Group
@@ -80,9 +74,8 @@ func TestGroupModel_Read(t *testing.T) {
 		{
 			name: "insert group with no description",
 			want: &models.Group{
-				ID:          1,
-				Name:        "testgroup",
-				Description: "",
+				ID:   1,
+				Name: "testgroup",
 			},
 			insertGroup: true,
 		},
@@ -107,9 +100,23 @@ func TestGroupModel_Read(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			db, teardown := getTestDb(t)
+			defer teardown()
+
+			model := GroupModel{
+				db: db,
+			}
+
 			is := is.New(t)
 			if tt.insertGroup {
-				_, err := db.Exec("INSERT INTO `account_groups` (name, description) VALUES (?,?)", tt.want.Name, tt.want.Description)
+				var desc sql.NullString
+				if tt.want.Description != "" {
+					err := desc.Scan(tt.want.Description)
+					if err != nil {
+						t.Fatal(err)
+					}
+				}
+				_, err := db.Exec("INSERT INTO `account_groups` (id, name, description) VALUES (?,?,?)", tt.want.ID, tt.want.Name, desc)
 				is.NoErr(err)
 			}
 
@@ -195,7 +202,7 @@ func TestGroupModel_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			is := is.New(t)
+			is := isPkg.New(t)
 			if tt.insert.Name != "" {
 				_, err := db.Exec("INSERT INTO `account_groups` (name, description) VALUES (?,?)", tt.insert.Name, tt.insert.Description)
 				is.NoErr(err)
@@ -222,7 +229,7 @@ func TestGroupModel_Update(t *testing.T) {
 func TestGroupModel_Delete(t *testing.T) {
 	isIntegrationTest(t)
 	t.Run("empty group delete", func(t *testing.T) {
-		is := is.New(t)
+		is := isPkg.New(t)
 		db, teardown := getTestDb(t)
 		defer teardown()
 
@@ -248,7 +255,7 @@ func TestGroupModel_Delete(t *testing.T) {
 		}
 	})
 	t.Run("trying to delete nonempty group, return err", func(t *testing.T) {
-		is := is.New(t)
+		is := isPkg.New(t)
 		db, teardown := getTestDb(t)
 		defer teardown()
 

@@ -114,6 +114,38 @@ func TestAccountModel_Read(t *testing.T) {
 
 		is.Equal(*got, want)
 	})
+
+	t.Run("read account with null description", func(t *testing.T) {
+		is := is.New(t)
+		db, teardown := dbInitializedForAccount(t)
+		defer teardown()
+
+		want := models.Account{
+			ID:    1,
+			Name:  "tim",
+			Saldo: 12,
+			Group: models.Group{
+				ID:   1,
+				Name: "testgroup1",
+			},
+		}
+
+		_, _ = db.Exec("INSERT INTO accounts (id, name, saldo, group_id) VALUES (?,?,?,?)",
+			want.ID,
+			want.Name,
+			want.Saldo,
+			want.Group.ID,
+		)
+
+		model := AccountModel{
+			db: db,
+		}
+
+		got, err := model.Read(1)
+		is.NoErr(err) // got error from read, did not expect it
+
+		is.Equal(*got, want)
+	})
 }
 
 func TestAccountModel_Update(t *testing.T) {
