@@ -17,7 +17,7 @@ jobs:
       - name: Get dependencies
         run: go get -v -t -d ./...
 
-      - name: Creating Mysql Database
+      - name: Create Mysql Database
         env:
           TEST_DB_NAME: nfc-cash-system
         run: mysql -uroot -proot -e "CREATE DATABASE \`$TEST_DB_NAME\` CHARACTER SET UTF8mb4 COLLATE utf8mb4_bin"
@@ -33,7 +33,7 @@ jobs:
     name: NFC Reader Tests
     runs-on: ubuntu-latest
     steps:
-      - name: install nfclib
+      - name: Install nfclib
         run: sudo apt-get install libnfc-dev
 
       - name: Set up Go 1.13
