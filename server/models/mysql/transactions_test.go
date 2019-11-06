@@ -57,7 +57,7 @@ func TestTransactionModel_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			db, teardown := initializeForTransactions(t)
+			db, teardown := dbInitializeForTransactions(t)
 			defer teardown()
 
 			model := TransactionModel{
@@ -91,6 +91,70 @@ func TestTransactionModel_Create(t *testing.T) {
 	}
 }
 
-func initializeForTransactions(t *testing.T) (*sql.DB, func()) {
+func TestTransactionModel_GetAll(t *testing.T) {
+	isIntegrationTest(t)
+	is := isPkg.New(t)
+
+	t.Run("get all transactions", func(t *testing.T) {
+		is := is.New(t)
+		db, teardown := dbInitializeForTransactionsLists(t)
+		defer teardown()
+
+		model := TransactionModel{
+			db: db,
+		}
+		transactions, err := model.GetAll()
+		is.NoErr(err)
+
+		is.Equal(len(transactions), 9) // expected 9 transactions
+
+	})
+
+	t.Run("no transactions found", func(t *testing.T) {
+		db, teardown := getTestDb(t)
+		defer teardown()
+
+		model := TransactionModel{
+			db: db,
+		}
+		transactions, err := model.GetAll()
+		is.NoErr(err)
+
+		is.Equal(len(transactions), 0) // expected 0 transactions
+	})
+
+}
+
+func TestTransactionModel_GetAllPaged(t *testing.T) {
+	isIntegrationTest(t)
+	is := isPkg.New(t)
+
+	db, teardown := dbInitializeForTransactionsLists(t)
+	defer teardown()
+
+	model := TransactionModel{
+		db: db,
+	}
+
+	page1, err := model.GetAllPaged(1, 5)
+	is.NoErr(err)
+
+	is.Equal(page1.CurrentPage, 1)       // currentpage should be 1
+	is.Equal(page1.MaxPage, 2)           // maxpage should be 2
+	is.Equal(len(page1.Transactions), 5) // expected 5 transactions
+
+	page2, err := model.GetAllPaged(2, 5)
+	is.NoErr(err)
+
+	is.Equal(page2.CurrentPage, 2)       // currentpage should be 2
+	is.Equal(page2.MaxPage, 2)           // maxpage should be 2
+	is.Equal(len(page2.Transactions), 4) // expected 4 transactions
+}
+
+func dbInitializeForTransactions(t *testing.T) (*sql.DB, func()) {
 	return dbInitialized(t, "../testdata/transaction.sql")
+}
+
+func dbInitializeForTransactionsLists(t *testing.T) (*sql.DB, func()) {
+	return dbInitialized(t, "../testdata/transaction.sql", "../testdata/transaction_list.sql")
 }

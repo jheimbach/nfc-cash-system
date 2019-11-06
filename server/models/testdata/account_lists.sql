@@ -1,7 +1,3 @@
-INSERT INTO `account_groups` (id, name, description)
-VALUES (1, 'testgroup1', ''),
-       (2, 'testgroup2', 'with description');
-
 INSERT INTO accounts (name, group_id)
 VALUES ('testuser1', 1),
        ('testuser2', 1),

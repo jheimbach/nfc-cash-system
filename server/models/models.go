@@ -52,7 +52,7 @@ type Transaction struct {
 }
 
 type TransactionPaging struct {
-	CurrentPage int
-	MaxPage     int
-	Accounts    []*Transaction
+	CurrentPage  int
+	MaxPage      int
+	Transactions []*Transaction
 }

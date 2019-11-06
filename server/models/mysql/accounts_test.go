@@ -445,5 +445,5 @@ func dbInitializedForAccount(t *testing.T) (*sql.DB, func()) {
 }
 
 func dbInitializedForAccountLists(t *testing.T) (*sql.DB, func()) {
-	return dbInitialized(t, "../testdata/account_lists.sql")
+	return dbInitialized(t, "../testdata/account.sql", "../testdata/account_lists.sql")
 }

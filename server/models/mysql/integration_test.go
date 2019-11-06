@@ -62,14 +62,17 @@ func getTestDb(t *testing.T) (*sql.DB, func()) {
 	return db, teardownF
 }
 
-func dbInitialized(t *testing.T, setupScriptFileName string) (*sql.DB, func()) {
+func dbInitialized(t *testing.T, setupScriptFileNames ...string) (*sql.DB, func()) {
 	t.Helper()
 
 	db, teardown := getTestDb(t)
-	setupScript, _ := ioutil.ReadFile(setupScriptFileName)
-	_, err := db.Exec(string(setupScript))
-	if err != nil {
-		t.Fatalf("got error initializing account into database: %v", err)
+
+	for _, filename := range setupScriptFileNames {
+		setupScript, _ := ioutil.ReadFile(filename)
+		_, err := db.Exec(string(setupScript))
+		if err != nil {
+			t.Fatalf("got error initializing account into database: %v", err)
+		}
 	}
 	return db, teardown
 }
