@@ -1,1 +1,0 @@
-ALTER TABLE account_groups ADD COLUMN `can_overdraw` BOOLEAN NOT NULL DEFAULT false AFTER `description`;
