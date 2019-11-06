@@ -28,44 +28,13 @@ func (t *TransactionModel) Create(amount, oldSaldo, newSaldo float64, accountId 
 func (t *TransactionModel) GetAll() ([]*models.Transaction, error) {
 	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions ORDER BY created`
 
-	rows, err := t.db.Query(selectStmt)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	return scanRowsToTransactions(rows)
-}
-
-func scanRowsToTransactions(rows *sql.Rows) ([]*models.Transaction, error) {
-	var transactions []*models.Transaction
-	for rows.Next() {
-		s := &models.Transaction{Account: &models.Account{}}
-		err := rows.Scan(&s.ID, &s.NewSaldo, &s.OldSaldo, &s.Amount, &s.Account.ID, &s.Created)
-		if err != nil {
-			return nil, err
-		}
-		transactions = append(transactions, s)
-	}
-	if rows.Err() != nil {
-		return nil, rows.Err()
-	}
-	return transactions, nil
+	return t.loadTransactions(selectStmt)
 }
 
 func (t *TransactionModel) GetAllPaged(page, size int) (*models.TransactionPaging, error) {
-	getStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions ORDER BY created DESC LIMIT ? OFFSET ?`
+	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions ORDER BY created DESC LIMIT ? OFFSET ?`
 
-	rows, err := t.db.Query(getStmt, size, pageOffset(page, size))
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	transactions, err := scanRowsToTransactions(rows)
-	if err != nil {
-		return nil, err
-	}
+	transactions, err := t.loadTransactions(selectStmt, size, pageOffset(page, size))
 
 	count, err := countAllIds(t.db, "SELECT COUNT(id) FROM transactions")
 	if err != nil {
@@ -80,9 +49,49 @@ func (t *TransactionModel) GetAllPaged(page, size int) (*models.TransactionPagin
 }
 
 func (t *TransactionModel) GetAllByAccount(accountId int) ([]*models.Transaction, error) {
-	return nil, nil
+	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions WHERE account_id=? ORDER BY created DESC`
+
+	return t.loadTransactions(selectStmt, accountId)
 }
 
-func (t *TransactionModel) GetAllByAccountPaged(accountId int) (*models.TransactionPaging, error) {
-	return nil, nil
+func (t *TransactionModel) GetAllByAccountPaged(accountId, page, size int) (*models.TransactionPaging, error) {
+	getStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions WHERE account_id=? ORDER BY created DESC LIMIT ? OFFSET ?`
+
+	transactions, err := t.loadTransactions(getStmt, accountId, size, pageOffset(page, size))
+
+	count, err := countAllIds(t.db, "SELECT COUNT(id) FROM transactions WHERE account_id=?", accountId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.TransactionPaging{
+		CurrentPage:  page,
+		MaxPage:      maxPageCount(count, size),
+		Transactions: transactions,
+	}, nil
+}
+
+func (t *TransactionModel) loadTransactions(query string, args ...interface{}) ([]*models.Transaction, error) {
+	rows, err := t.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var transactions []*models.Transaction
+
+	for rows.Next() {
+		s := &models.Transaction{Account: &models.Account{}}
+		err := rows.Scan(&s.ID, &s.NewSaldo, &s.OldSaldo, &s.Amount, &s.Account.ID, &s.Created)
+		if err != nil {
+			return nil, err
+		}
+		transactions = append(transactions, s)
+	}
+
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return transactions, nil
 }

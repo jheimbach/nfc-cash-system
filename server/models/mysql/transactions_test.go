@@ -151,6 +151,66 @@ func TestTransactionModel_GetAllPaged(t *testing.T) {
 	is.Equal(len(page2.Transactions), 4) // expected 4 transactions
 }
 
+func TestTransactionModel_GetAllByAccount(t *testing.T) {
+	isIntegrationTest(t)
+	is := isPkg.New(t)
+
+	t.Run("get all transactions for accountId 1", func(t *testing.T) {
+		is := is.New(t)
+		db, teardown := dbInitializeForTransactionsLists(t)
+		defer teardown()
+
+		model := TransactionModel{
+			db: db,
+		}
+		transactions, err := model.GetAllByAccount(1)
+		is.NoErr(err)
+
+		is.Equal(len(transactions), 5) // expected 5 transactions
+	})
+
+	t.Run("no transactions found for account id 100", func(t *testing.T) {
+		db, teardown := getTestDb(t)
+		defer teardown()
+
+		model := TransactionModel{
+			db: db,
+		}
+
+		transactions, err := model.GetAllByAccount(100)
+		is.NoErr(err)
+
+		is.Equal(len(transactions), 0) // expected 0 transactions
+	})
+}
+
+func TestTransactionModel_GetAllByAccountPaged(t *testing.T) {
+	isIntegrationTest(t)
+	is := isPkg.New(t)
+
+	db, teardown := dbInitializeForTransactionsLists(t)
+	defer teardown()
+
+	model := TransactionModel{
+		db: db,
+	}
+
+	page1, err := model.GetAllByAccountPaged(1, 1, 3)
+	is.NoErr(err)
+
+	is.Equal(page1.CurrentPage, 1)       // currentpage should be 1
+	is.Equal(page1.MaxPage, 2)           // maxpage should be 2
+	is.Equal(len(page1.Transactions), 3) // expected 5 transactions
+
+	page2, err := model.GetAllByAccountPaged(1, 2, 3)
+	is.NoErr(err)
+
+	is.Equal(page2.CurrentPage, 2)       // currentpage should be 2
+	is.Equal(page2.MaxPage, 2)           // maxpage should be 2
+	is.Equal(len(page2.Transactions), 2) // expected 2 transactions
+
+}
+
 func dbInitializeForTransactions(t *testing.T) (*sql.DB, func()) {
 	return dbInitialized(t, "../testdata/transaction.sql")
 }
