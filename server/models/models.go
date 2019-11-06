@@ -14,11 +14,6 @@ var (
 	ErrGroupNotFound      = errors.New("models: group for given group id does not exist")
 )
 
-const (
-	DefaultPageSize = -1
-	DefaultPage     = 0
-)
-
 type User struct {
 	ID      int
 	Name    string
@@ -37,11 +32,26 @@ type Account struct {
 	Name        string
 	Description string
 	Saldo       float64
-	Group       Group
+	Group       *Group
 }
 
 type AccountPaging struct {
 	CurrentPage int
 	MaxPage     int
 	Accounts    []*Account
+}
+
+type Transaction struct {
+	ID       int
+	OldSaldo float64
+	NewSaldo float64
+	Amount   float64
+	Created  time.Time
+	Account  *Account
+}
+
+type TransactionPaging struct {
+	CurrentPage int
+	MaxPage     int
+	Accounts    []*Transaction
 }

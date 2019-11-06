@@ -34,7 +34,7 @@ func (a *AccountModel) Read(id int) (*models.Account, error) {
 				 WHERE a.id = ?`
 
 	m := &models.Account{
-		Group: models.Group{},
+		Group: &models.Group{},
 	}
 	row := a.db.QueryRow(readStmt, id)
 	var nullDesc sql.NullString
@@ -145,7 +145,7 @@ func scanAccountFromRows(rows *sql.Rows) ([]*models.Account, error) {
 	var accounts []*models.Account
 
 	for rows.Next() {
-		s := &models.Account{Group: models.Group{}}
+		s := &models.Account{Group: &models.Group{}}
 
 		var nullDesc sql.NullString
 

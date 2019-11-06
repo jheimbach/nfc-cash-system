@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	isPkg "github.com/matryer/is"
-	"io/ioutil"
 	"testing"
 )
 
@@ -97,7 +96,7 @@ func TestAccountModel_Read(t *testing.T) {
 			Name:        "tim",
 			Description: "",
 			Saldo:       12,
-			Group: models.Group{
+			Group: &models.Group{
 				ID:   1,
 				Name: "testgroup1",
 			},
@@ -124,7 +123,7 @@ func TestAccountModel_Read(t *testing.T) {
 			ID:    1,
 			Name:  "tim",
 			Saldo: 12,
-			Group: models.Group{
+			Group: &models.Group{
 				ID:   1,
 				Name: "testgroup1",
 			},
@@ -166,7 +165,7 @@ func TestAccountModel_Update(t *testing.T) {
 				Name:        "tim",
 				Description: "",
 				Saldo:       12,
-				Group: models.Group{
+				Group: &models.Group{
 					ID:          1,
 					Name:        "testgroup1",
 					Description: "",
@@ -177,7 +176,7 @@ func TestAccountModel_Update(t *testing.T) {
 				Name:        "tim",
 				Description: "descr",
 				Saldo:       123,
-				Group: models.Group{
+				Group: &models.Group{
 					ID:          1,
 					Name:        "testgroup1",
 					Description: "",
@@ -191,7 +190,7 @@ func TestAccountModel_Update(t *testing.T) {
 				Name:        "tim",
 				Description: "",
 				Saldo:       12,
-				Group: models.Group{
+				Group: &models.Group{
 					ID:          1,
 					Name:        "testgroup1",
 					Description: "",
@@ -202,7 +201,7 @@ func TestAccountModel_Update(t *testing.T) {
 				Name:        "tim",
 				Description: "",
 				Saldo:       12,
-				Group: models.Group{
+				Group: &models.Group{
 					ID:          12,
 					Name:        "testgroup1",
 					Description: "",
@@ -267,7 +266,7 @@ func TestAccountModel_Delete(t *testing.T) {
 				Name:        "tim",
 				Description: "",
 				Saldo:       12,
-				Group: models.Group{
+				Group: &models.Group{
 					ID: 1,
 				},
 			},
@@ -329,7 +328,7 @@ func TestAccountModel_UpdateSaldo(t *testing.T) {
 				Name:        "tim",
 				Description: "",
 				Saldo:       50,
-				Group: models.Group{
+				Group: &models.Group{
 					ID:          1,
 					Name:        "testgroup1",
 					Description: "",
@@ -447,16 +446,4 @@ func dbInitializedForAccount(t *testing.T) (*sql.DB, func()) {
 
 func dbInitializedForAccountLists(t *testing.T) (*sql.DB, func()) {
 	return dbInitialized(t, "../testdata/account_lists.sql")
-}
-
-func dbInitialized(t *testing.T, setupScriptFileName string) (*sql.DB, func()) {
-	t.Helper()
-
-	db, teardown := getTestDb(t)
-	setupScript, _ := ioutil.ReadFile(setupScriptFileName)
-	_, err := db.Exec(string(setupScript))
-	if err != nil {
-		t.Fatalf("got error initializing account into database: %v", err)
-	}
-	return db, teardown
 }
