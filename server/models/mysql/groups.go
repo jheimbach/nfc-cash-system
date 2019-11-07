@@ -6,10 +6,12 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
+// AccountModel provides API for the account_groups table
 type GroupModel struct {
 	db *sql.DB
 }
 
+// Creates inserts new group with given fields
 func (g *GroupModel) Create(name, description string, canOverdraw bool) error {
 	nullDescription := createNullableString(description)
 
@@ -18,6 +20,7 @@ func (g *GroupModel) Create(name, description string, canOverdraw bool) error {
 	return err
 }
 
+// Read returns models.Group struct for given id, will return models.ErrNotFound if no group is found
 func (g *GroupModel) Read(id int) (*models.Group, error) {
 	readStmt := "SELECT id, name, description, can_overdraw FROM `account_groups` WHERE id = ?"
 
@@ -37,6 +40,9 @@ func (g *GroupModel) Read(id int) (*models.Group, error) {
 	return &group, nil
 }
 
+// Update saves given (changed) group to the database
+// will return models.ErrNotFound if group is not found
+// NOTE: every field will be overwritten with given value
 func (g *GroupModel) Update(group models.Group) (*models.Group, error) {
 	if group.ID == 0 {
 		return nil, models.ErrModelNotSaved
@@ -62,6 +68,8 @@ func (g *GroupModel) Update(group models.Group) (*models.Group, error) {
 	return &group, nil
 }
 
+// Delete removes group with given id from the database
+// returns models.ErrNonEmptyDelete if accounts are associated with group
 func (g *GroupModel) Delete(id int) error {
 	_, err := g.db.Exec("DELETE FROM `account_groups` WHERE id=?", id)
 

@@ -6,10 +6,13 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
+// AccountModel provides API for the accounts table
 type AccountModel struct {
 	db *sql.DB
 }
 
+// Create inserts new account it returns error models.ErrGroupNotFound if the groupId is not associated with a group
+// it returns models.ErrDuplicateNfcChipId if the provided nfcchipid is already in the database present
 func (a *AccountModel) Create(name, description string, startSaldo float64, groupId int, nfcChipId string) error {
 	nullDescription := createNullableString(description)
 
@@ -32,6 +35,7 @@ func (a *AccountModel) Create(name, description string, startSaldo float64, grou
 	return nil
 }
 
+// Read returns account struct for given id
 func (a *AccountModel) Read(id int) (*models.Account, error) {
 	readStmt := `SELECT a.id, a.name, a.description, a.saldo, a.nfc_chip_uid, g.id, g.name, g.description
 				 FROM accounts a
@@ -54,6 +58,7 @@ func (a *AccountModel) Read(id int) (*models.Account, error) {
 	return m, nil
 }
 
+// Update saves the (changed) model in the database will return models.ErrGroupNotFound if group id is not associated with a group
 func (a *AccountModel) Update(m *models.Account) error {
 	updateStmt := `UPDATE accounts SET name=?, description=?, saldo=?, group_id=?, nfc_chip_uid=? WHERE id=?`
 
@@ -71,6 +76,7 @@ func (a *AccountModel) Update(m *models.Account) error {
 	return nil
 }
 
+// Delete deletes a account
 func (a *AccountModel) Delete(id int) error {
 
 	deleteStmt := `DELETE FROM accounts WHERE id=?`
@@ -84,12 +90,14 @@ func (a *AccountModel) Delete(id int) error {
 	return err
 }
 
+// UpdateSaldo provides a simpler update method for the saldo field
 func (a *AccountModel) UpdateSaldo(id int, newSaldo float64) error {
 	_, err := a.db.Exec("UPDATE accounts SET saldo=? WHERE id=?", newSaldo, id)
 
 	return err
 }
 
+// GetAll returns slice with all accounts in the database
 func (a *AccountModel) GetAll() ([]*models.Account, error) {
 	rows, err := a.db.Query("SELECT id, name, description, saldo, group_id FROM accounts")
 	defer rows.Close()
@@ -101,6 +109,7 @@ func (a *AccountModel) GetAll() ([]*models.Account, error) {
 	return scanRowsToAccounts(rows)
 }
 
+// GetAllByGroup returns slice with all accounts with given group id
 func (a *AccountModel) GetAllByGroup(groupId int) ([]*models.Account, error) {
 	rows, err := a.db.Query("SELECT id, name, description, saldo, group_id FROM accounts WHERE group_id=?", groupId)
 	defer rows.Close()
@@ -112,6 +121,7 @@ func (a *AccountModel) GetAllByGroup(groupId int) ([]*models.Account, error) {
 	return scanRowsToAccounts(rows)
 }
 
+// GetAllWithPaging returns all accounts in pages.
 func (a *AccountModel) GetAllWithPaging(page, size int) (*models.AccountPaging, error) {
 	getStmt := `SELECT id, name,description,saldo,group_id FROM accounts ORDER BY id DESC LIMIT ? OFFSET ?`
 	rows, err := a.db.Query(getStmt, size, pageOffset(page, size))
@@ -137,6 +147,7 @@ func (a *AccountModel) GetAllWithPaging(page, size int) (*models.AccountPaging, 
 	}, nil
 }
 
+// scanRowsToAccounts returns slice of Accounts from given sql.Rows
 func scanRowsToAccounts(rows *sql.Rows) ([]*models.Account, error) {
 	var accounts []*models.Account
 

@@ -14,12 +14,15 @@ const (
 	defaultMigrationDir = "../migrations"
 )
 
+// isIntegrationTest will check if envvar RUN_INTEGRATION is non zero.
+// if RUN_INTEGRATION is zero (or not set), tests that call isIntegrationTest will be skipped
 func isIntegrationTest(t *testing.T) {
 	if getEnvWithDefault("RUN_INTEGRATION", "0") == "0" {
 		t.Skipf("skipping integration tests")
 	}
 }
 
+// genEnvWithDefault is a helper function to get envvar or default value
 func getEnvWithDefault(envName, defaultVal string) string {
 	if val, ok := os.LookupEnv(envName); ok {
 		return os.ExpandEnv(val)
@@ -27,10 +30,13 @@ func getEnvWithDefault(envName, defaultVal string) string {
 	return defaultVal
 }
 
+// testDb will hold a db connection for multiple usages
 type testDb struct {
 	db *sql.DB
 }
 
+// initDb connects to the database. will skip the calling test if TEST_DB_DSN is not set
+// or connection to database is unsuccessful
 func (tdb testDb) initDb(t *testing.T) *sql.DB {
 	if tdb.db != nil {
 		return tdb.db
@@ -50,9 +56,15 @@ func (tdb testDb) initDb(t *testing.T) *sql.DB {
 
 var testDBconn testDb
 
-func getTestDb(t *testing.T) (*sql.DB, func(...string), func()) {
+// getTestDb connects to database and returns db (*sql.DB) a setup function and a teardown function
+// setup calls migration up scripts to bring database to latest and can
+// receive filenames (strings) for additional setup scripts (sql-files)
+// teardown calls migration down scripts
+//
+// setup and teardown can be called multiple times per test
+func getTestDb(t *testing.T) (db *sql.DB, setup func(...string), teardown func()) {
 	t.Helper()
-	db := testDBconn.initDb(t)
+	db = testDBconn.initDb(t)
 	db.SetConnMaxLifetime(10 * time.Second)
 
 	if err := db.Ping(); err != nil {
@@ -62,14 +74,14 @@ func getTestDb(t *testing.T) (*sql.DB, func(...string), func()) {
 	migrationDir := getEnvWithDefault("DB_MIGRATIONS_DIR", defaultMigrationDir)
 	dbName := getEnvWithDefault("TEST_DB_NAME", defaultDbName)
 
-	teardownF := func() {
+	teardown = func() {
 		err := database.DowngradeDatabase(db, dbName, migrationDir)
 		if err != nil {
 			t.Errorf("got error from teardown: %v", err)
 		}
 	}
 
-	setupF := func(setupScriptFileNames ...string) {
+	setup = func(setupScriptFileNames ...string) {
 		if err := database.UpdateDatabase(db, dbName, migrationDir, false); err != nil {
 			t.Skipf("could not migrate database, err: %v", err)
 		}
@@ -77,11 +89,11 @@ func getTestDb(t *testing.T) (*sql.DB, func(...string), func()) {
 			setupScript, _ := ioutil.ReadFile(filename)
 			_, err := db.Exec(string(setupScript))
 			if err != nil {
-				teardownF()
+				teardown()
 				t.Fatalf("got error initializing script %q: %v", filename, err)
 			}
 		}
 	}
 
-	return db, setupF, teardownF
+	return db, setup, teardown
 }
