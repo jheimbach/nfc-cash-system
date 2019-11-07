@@ -1,5 +1,5 @@
-INSERT INTO `accounts` (id, name, saldo, group_id)
-VALUES (2, 'testaccount1', 120,1);
+INSERT INTO `accounts` (id, name, saldo, group_id,nfc_chip_uid)
+VALUES (2, 'testaccount1', 120,1,'testchipid2');
 
 INSERT INTO `transactions` (new_saldo, old_saldo, amount, account_id, created)
 VALUES (115, 120, -5, 1, UTC_TIMESTAMP),

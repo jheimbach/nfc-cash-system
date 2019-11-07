@@ -11,6 +11,9 @@ func TestGroupModel_Create(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.New(t)
 
+	db, dbSetup, dbTeardown := getTestDb(t)
+	defer db.Close()
+
 	type args struct {
 		name, description string
 		canOverdraw       bool
@@ -61,8 +64,8 @@ func TestGroupModel_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			db, teardown := getTestDb(t)
-			defer teardown()
+			dbSetup()
+			defer dbTeardown()
 
 			model := GroupModel{
 				db: db,
@@ -89,6 +92,10 @@ func TestGroupModel_Create(t *testing.T) {
 func TestGroupModel_Read(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.New(t)
+
+	db, dbSetup, dbTeardown := getTestDb(t)
+	defer db.Close()
+
 	tests := []struct {
 		name        string
 		want        *models.Group
@@ -134,8 +141,8 @@ func TestGroupModel_Read(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db, teardown := getTestDb(t)
-			defer teardown()
+			dbSetup()
+			defer dbTeardown()
 
 			model := GroupModel{
 				db: db,
@@ -166,6 +173,9 @@ func TestGroupModel_Read(t *testing.T) {
 
 func TestGroupModel_Update(t *testing.T) {
 	isIntegrationTest(t)
+
+	db, dbSetup, dbTeardown := getTestDb(t)
+	defer db.Close()
 
 	tests := []struct {
 		name        string
@@ -238,15 +248,15 @@ func TestGroupModel_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db, teardown := getTestDb(t)
-			defer teardown()
+			dbSetup()
+			defer dbTeardown()
 
 			model := GroupModel{
 				db: db,
 			}
 
 			is := isPkg.New(t)
-			if tt.skipInsert {
+			if !tt.skipInsert {
 				_, err := db.Exec("INSERT INTO `account_groups` (name, description,can_overdraw) VALUES (?,?,?)", tt.insert.Name, createNullableString(tt.insert.Description), tt.insert.CanOverDraw)
 				is.NoErr(err)
 			}
@@ -272,10 +282,13 @@ func TestGroupModel_Update(t *testing.T) {
 func TestGroupModel_Delete(t *testing.T) {
 	isIntegrationTest(t)
 
+	db, dbSetup, dbTeardown := getTestDb(t)
+	defer db.Close()
+
 	t.Run("empty group delete", func(t *testing.T) {
 		is := isPkg.New(t)
-		db, teardown := getTestDb(t)
-		defer teardown()
+		dbSetup()
+		defer dbTeardown()
 
 		model := GroupModel{
 			db: db,
@@ -301,8 +314,8 @@ func TestGroupModel_Delete(t *testing.T) {
 
 	t.Run("trying to delete nonempty group, return err", func(t *testing.T) {
 		is := isPkg.New(t)
-		db, teardown := getTestDb(t)
-		defer teardown()
+		dbSetup()
+		defer dbTeardown()
 
 		model := GroupModel{
 			db: db,
@@ -313,7 +326,7 @@ func TestGroupModel_Delete(t *testing.T) {
 		groupId, err := res.LastInsertId()
 		is.NoErr(err)
 
-		_, err = db.Exec("INSERT INTO `accounts` (name, group_id) VALUES (?,?)", "test", int(groupId))
+		_, err = db.Exec("INSERT INTO `accounts` (name, group_id, nfc_chip_uid) VALUES (?,?,?)", "test", int(groupId), "testchipid")
 		is.NoErr(err)
 
 		err = model.Delete(int(groupId))

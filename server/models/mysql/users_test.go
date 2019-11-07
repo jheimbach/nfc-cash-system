@@ -1,14 +1,12 @@
 package mysql
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/google/go-cmp/cmp"
 	isPkg "github.com/matryer/is"
 	"golang.org/x/crypto/bcrypt"
-	"io/ioutil"
 	"testing"
 	"time"
 )
@@ -16,11 +14,15 @@ import (
 func TestUserModel_Create(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.New(t)
+	db, dbSetup, dbTeardown := getTestDb(t)
+	defer db.Close()
+
 	wantName, wantEmail, wantPassword := "test", "test@example.org", "test123!"
 	t.Run("inserts new user to database", func(t *testing.T) {
 		is := is.New(t)
-		db, teardown := getTestDb(t)
-		defer teardown()
+
+		dbSetup()
+		defer dbTeardown()
 
 		model := UserModel{
 			db: db,
@@ -43,8 +45,8 @@ func TestUserModel_Create(t *testing.T) {
 	})
 
 	t.Run("returns error if user with same email exists", func(t *testing.T) {
-		db, teardown := getTestDb(t)
-		defer teardown()
+		dbSetup()
+		defer dbTeardown()
 
 		model := UserModel{
 			db: db,
@@ -72,9 +74,12 @@ func assertEqualPasswords(t *testing.T, got, want string) {
 
 func TestUserModel_Get(t *testing.T) {
 	isIntegrationTest(t)
+	db, dbSetup, dbTeardown := getTestDb(t)
+	defer db.Close()
+
 	t.Run("returns user struct if user with id exists", func(t *testing.T) {
-		db, teardown := dbInitializedForUsers(t)
-		defer teardown()
+		dbSetup("../testdata/user.sql")
+		defer dbTeardown()
 
 		want := &models.User{
 			ID:      1,
@@ -97,8 +102,8 @@ func TestUserModel_Get(t *testing.T) {
 		}
 	})
 	t.Run("returns ErrNotFound if no user with id is found", func(t *testing.T) {
-		db, teardown := getTestDb(t)
-		defer teardown()
+		dbSetup()
+		defer dbTeardown()
 
 		model := &UserModel{
 			db: db,
@@ -115,22 +120,15 @@ func TestUserModel_Get(t *testing.T) {
 	})
 }
 
-func dbInitializedForUsers(t *testing.T) (*sql.DB, func()) {
-	t.Helper()
-
-	db, teardown := getTestDb(t)
-	setupScript, _ := ioutil.ReadFile("../testdata/user.sql")
-	_, err := db.Exec(string(setupScript))
-	if err != nil {
-		t.Fatalf("got error initializing user into database: %v", err)
-	}
-	return db, teardown
-}
-
 func TestUserModel_Authenticate(t *testing.T) {
 	isIntegrationTest(t)
-	db, teardown := dbInitializedForUsers(t)
-	defer teardown()
+	db, dbSetup, dbTeardown := getTestDb(t)
+	dbSetup("../testdata/user.sql")
+	defer func() {
+		dbTeardown()
+		db.Close()
+	}()
+
 	model := &UserModel{
 		db: db,
 	}

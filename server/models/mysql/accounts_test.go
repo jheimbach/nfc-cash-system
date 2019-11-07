@@ -414,8 +414,11 @@ func TestAccountModel_GetAll(t *testing.T) {
 	isIntegrationTest(t)
 
 	is := isPkg.New(t)
-	db, teardown := dbInitializedForAccountLists(t)
-	defer teardown()
+	db, dbTeardown := dbInitializedForAccountLists(t)
+	defer func() {
+		dbTeardown()
+		db.Close()
+	}()
 
 	model := AccountModel{
 		db: db,
@@ -430,8 +433,11 @@ func TestAccountModel_GetAllByGroup(t *testing.T) {
 	isIntegrationTest(t)
 
 	is := isPkg.New(t)
-	db, teardown := dbInitializedForAccountLists(t)
-	defer teardown()
+	db, dbTeardown := dbInitializedForAccountLists(t)
+	defer func() {
+		dbTeardown()
+		db.Close()
+	}()
 
 	model := AccountModel{
 		db: db,
@@ -445,8 +451,11 @@ func TestAccountModel_GetAllByGroup(t *testing.T) {
 func TestAccountModel_GetAllPaged(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.NewRelaxed(t)
-	db, teardown := dbInitializedForAccountLists(t)
-	defer teardown()
+	db, dbTeardown := dbInitializedForAccountLists(t)
+	defer func() {
+		dbTeardown()
+		db.Close()
+	}()
 
 	model := AccountModel{
 		db: db,
@@ -481,9 +490,14 @@ func insertTestAccount(t *testing.T, db *sql.DB, account models.Account) {
 }
 
 func dbInitializedForAccount(t *testing.T) (*sql.DB, func()) {
-	return dbInitialized(t, "../testdata/account.sql")
+	db, setup, teardown := getTestDb(t)
+	setup("../testdata/account.sql")
+	return db, teardown
 }
 
 func dbInitializedForAccountLists(t *testing.T) (*sql.DB, func()) {
-	return dbInitialized(t, "../testdata/account.sql", "../testdata/account_lists.sql")
+	db, setup, teardown := getTestDb(t)
+	setup("../testdata/account.sql", "../testdata/account_lists.sql")
+
+	return db, teardown
 }

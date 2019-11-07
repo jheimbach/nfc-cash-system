@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"database/sql"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	isPkg "github.com/matryer/is"
 	"testing"
@@ -10,6 +9,8 @@ import (
 func TestTransactionModel_Create(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.New(t)
+	db, dbSetup, dbTeardown := getTestDb(t)
+	defer db.Close()
 
 	type args struct {
 		amount    float64
@@ -57,8 +58,8 @@ func TestTransactionModel_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			db, teardown := dbInitializeForTransactions(t)
-			defer teardown()
+			dbSetup("../testdata/transaction.sql")
+			defer dbTeardown()
 
 			model := TransactionModel{
 				db: db,
@@ -95,10 +96,13 @@ func TestTransactionModel_GetAll(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.New(t)
 
+	db, dbSetup, dbTeardown := getTestDb(t)
+	defer db.Close()
+
 	t.Run("get all transactions", func(t *testing.T) {
 		is := is.New(t)
-		db, teardown := dbInitializeForTransactionsLists(t)
-		defer teardown()
+		dbSetup("../testdata/transaction.sql", "../testdata/transaction_list.sql")
+		defer dbTeardown()
 
 		model := TransactionModel{
 			db: db,
@@ -111,8 +115,8 @@ func TestTransactionModel_GetAll(t *testing.T) {
 	})
 
 	t.Run("no transactions found", func(t *testing.T) {
-		db, teardown := getTestDb(t)
-		defer teardown()
+		dbSetup()
+		defer dbTeardown()
 
 		model := TransactionModel{
 			db: db,
@@ -129,8 +133,12 @@ func TestTransactionModel_GetAllPaged(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.New(t)
 
-	db, teardown := dbInitializeForTransactionsLists(t)
-	defer teardown()
+	db, dbSetup, dbTeardown := getTestDb(t)
+	dbSetup("../testdata/transaction.sql", "../testdata/transaction_list.sql")
+	defer func() {
+		dbTeardown()
+		db.Close()
+	}()
 
 	model := TransactionModel{
 		db: db,
@@ -155,10 +163,14 @@ func TestTransactionModel_GetAllByAccount(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.New(t)
 
+	db, dbSetup, dbTeardown := getTestDb(t)
+	defer db.Close()
+
 	t.Run("get all transactions for accountId 1", func(t *testing.T) {
 		is := is.New(t)
-		db, teardown := dbInitializeForTransactionsLists(t)
-		defer teardown()
+
+		dbSetup("../testdata/transaction.sql", "../testdata/transaction_list.sql")
+		defer dbTeardown()
 
 		model := TransactionModel{
 			db: db,
@@ -170,8 +182,8 @@ func TestTransactionModel_GetAllByAccount(t *testing.T) {
 	})
 
 	t.Run("no transactions found for account id 100", func(t *testing.T) {
-		db, teardown := getTestDb(t)
-		defer teardown()
+		dbSetup()
+		defer dbTeardown()
 
 		model := TransactionModel{
 			db: db,
@@ -188,8 +200,12 @@ func TestTransactionModel_GetAllByAccountPaged(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.New(t)
 
-	db, teardown := dbInitializeForTransactionsLists(t)
-	defer teardown()
+	db, dbSetup, dbTeardown := getTestDb(t)
+	dbSetup("../testdata/transaction.sql", "../testdata/transaction_list.sql")
+	defer func() {
+		dbTeardown()
+		db.Close()
+	}()
 
 	model := TransactionModel{
 		db: db,
@@ -209,12 +225,4 @@ func TestTransactionModel_GetAllByAccountPaged(t *testing.T) {
 	is.Equal(page2.MaxPage, 2)           // maxpage should be 2
 	is.Equal(len(page2.Transactions), 2) // expected 2 transactions
 
-}
-
-func dbInitializeForTransactions(t *testing.T) (*sql.DB, func()) {
-	return dbInitialized(t, "../testdata/transaction.sql")
-}
-
-func dbInitializeForTransactionsLists(t *testing.T) (*sql.DB, func()) {
-	return dbInitialized(t, "../testdata/transaction.sql", "../testdata/transaction_list.sql")
 }
