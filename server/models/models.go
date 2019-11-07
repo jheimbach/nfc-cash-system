@@ -7,6 +7,7 @@ import (
 
 var (
 	ErrDuplicateEmail     = errors.New("models: duplicate user email")
+	ErrDuplicateNfcChipId = errors.New("models: duplicate account nfc chip id")
 	ErrNotFound           = errors.New("models: not found")
 	ErrInvalidCredentials = errors.New("models: email or password incorrect")
 	ErrModelNotSaved      = errors.New("models: got no id on update, did you mean to create the group")
@@ -34,6 +35,7 @@ type Account struct {
 	Name        string
 	Description string
 	Saldo       float64
+	NfcChipId   string
 	Group       *Group
 }
 

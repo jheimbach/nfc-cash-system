@@ -11,14 +11,7 @@ type GroupModel struct {
 }
 
 func (g *GroupModel) Create(name, description string, canOverdraw bool) error {
-	var nullDescription sql.NullString
-
-	if description != "" {
-		err := nullDescription.Scan(description)
-		if err != nil {
-			return err
-		}
-	}
+	nullDescription := createNullableString(description)
 
 	createStmt := "INSERT INTO `account_groups` (name, description, can_overdraw) VALUES (?,?,?)"
 	_, err := g.db.Exec(createStmt, name, nullDescription, canOverdraw)
@@ -33,17 +26,13 @@ func (g *GroupModel) Read(id int) (*models.Group, error) {
 
 	var nullDesc sql.NullString
 	err := row.Scan(&group.ID, &group.Name, &nullDesc, &group.CanOverDraw)
-
-	if nullDesc.Valid {
-		group.Description = nullDesc.String
-	}
-
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, models.ErrNotFound
 		}
 		return nil, err
 	}
+	group.Description = decodeNullableString(nullDesc)
 
 	return &group, nil
 }

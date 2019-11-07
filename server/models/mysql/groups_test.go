@@ -77,9 +77,7 @@ func TestGroupModel_Create(t *testing.T) {
 			err = row.Scan(&got.ID, &got.Name, &nullDesc, &got.CanOverDraw)
 			is.NoErr(err)
 
-			if nullDesc.Valid {
-				got.Description = nullDesc.String
-			}
+			got.Description = decodeNullableString(nullDesc)
 
 			if got != tt.want {
 				t.Errorf("got %v, want %v", got, tt.want)
@@ -145,14 +143,7 @@ func TestGroupModel_Read(t *testing.T) {
 
 			is := is.New(t)
 			if tt.insertGroup {
-				var desc sql.NullString
-				if tt.want.Description != "" {
-					err := desc.Scan(tt.want.Description)
-					if err != nil {
-						t.Fatal(err)
-					}
-				}
-				_, err := db.Exec("INSERT INTO `account_groups` (id, name, description, can_overdraw) VALUES (?,?,?,?)", tt.want.ID, tt.want.Name, desc, tt.want.CanOverDraw)
+				_, err := db.Exec("INSERT INTO `account_groups` (id, name, description, can_overdraw) VALUES (?,?,?,?)", tt.want.ID, tt.want.Name, createNullableString(tt.want.Description), tt.want.CanOverDraw)
 				is.NoErr(err)
 			}
 
@@ -182,6 +173,7 @@ func TestGroupModel_Update(t *testing.T) {
 		want        models.Group
 		wantErr     bool
 		expectedErr error
+		skipInsert  bool
 	}{
 		{
 			name: "update group description",
@@ -221,6 +213,7 @@ func TestGroupModel_Update(t *testing.T) {
 		{
 			name:        "empty group will not be updated",
 			want:        models.Group{},
+			skipInsert:  true,
 			wantErr:     true,
 			expectedErr: models.ErrModelNotSaved,
 		},
@@ -229,6 +222,7 @@ func TestGroupModel_Update(t *testing.T) {
 			want: models.Group{
 				ID: 12,
 			},
+			skipInsert:  true,
 			wantErr:     true,
 			expectedErr: models.ErrNotFound,
 		},
@@ -252,8 +246,8 @@ func TestGroupModel_Update(t *testing.T) {
 			}
 
 			is := isPkg.New(t)
-			if tt.insert.Name != "" {
-				_, err := db.Exec("INSERT INTO `account_groups` (name, description,can_overdraw) VALUES (?,?,?)", tt.insert.Name, tt.insert.Description, tt.insert.CanOverDraw)
+			if tt.skipInsert {
+				_, err := db.Exec("INSERT INTO `account_groups` (name, description,can_overdraw) VALUES (?,?,?)", tt.insert.Name, createNullableString(tt.insert.Description), tt.insert.CanOverDraw)
 				is.NoErr(err)
 			}
 
@@ -277,6 +271,7 @@ func TestGroupModel_Update(t *testing.T) {
 
 func TestGroupModel_Delete(t *testing.T) {
 	isIntegrationTest(t)
+
 	t.Run("empty group delete", func(t *testing.T) {
 		is := isPkg.New(t)
 		db, teardown := getTestDb(t)
@@ -303,6 +298,7 @@ func TestGroupModel_Delete(t *testing.T) {
 			t.Errorf("got %v but wanted %v err", sql.ErrNoRows, err)
 		}
 	})
+
 	t.Run("trying to delete nonempty group, return err", func(t *testing.T) {
 		is := isPkg.New(t)
 		db, teardown := getTestDb(t)

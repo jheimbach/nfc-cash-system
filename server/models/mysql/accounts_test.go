@@ -15,32 +15,27 @@ func TestAccountModel_Create(t *testing.T) {
 		name, description string
 		saldo             float64
 		groupId           int
+		nfcChipId         string
 	}
 	tests := []struct {
-		name        string
-		input       fields
-		want        fields
-		wantErr     bool
-		expectedErr error
+		name          string
+		accountFields fields
+		wantErr       bool
+		expectedErr   error
 	}{
 		{
 			name: "creates account",
-			input: fields{
+			accountFields: fields{
 				name:        "tim",
 				description: "",
 				saldo:       12,
 				groupId:     1,
-			},
-			want: fields{
-				name:        "tim",
-				description: "",
-				saldo:       12,
-				groupId:     1,
+				nfcChipId:   "teststringteststring",
 			},
 		},
 		{
 			name: "creates account but group does not exists",
-			input: fields{
+			accountFields: fields{
 				name:        "tim",
 				description: "",
 				saldo:       12,
@@ -59,7 +54,7 @@ func TestAccountModel_Create(t *testing.T) {
 			model := AccountModel{
 				db: db,
 			}
-			err := model.Create(tt.input.name, tt.input.description, tt.input.saldo, tt.input.groupId)
+			err := model.Create(tt.accountFields.name, tt.accountFields.description, tt.accountFields.saldo, tt.accountFields.groupId, tt.accountFields.nfcChipId)
 
 			if tt.wantErr {
 				is.Equal(err, tt.expectedErr) // got not the expected error
@@ -67,20 +62,44 @@ func TestAccountModel_Create(t *testing.T) {
 			}
 			is.NoErr(err) // got error, did not expect it
 
-			var gotName, gotDescription string
+			var gotName, gotNfcChipId string
+			var gotDescription sql.NullString
 			var gotSaldo float64
 			var gotGroupId int
 
-			err = db.QueryRow("SELECT name,description,saldo,group_id FROM accounts WHERE id=?", 1).Scan(
-				&gotName, &gotDescription, &gotSaldo, &gotGroupId)
+			err = db.QueryRow("SELECT name,description,saldo,group_id,nfc_chip_uid FROM accounts WHERE id=?", 1).Scan(
+				&gotName, &gotDescription, &gotSaldo, &gotGroupId, &gotNfcChipId)
 			is.NoErr(err) // got scan error
 
-			is.Equal(gotName, tt.want.name)
-			is.Equal(gotDescription, tt.want.description)
-			is.Equal(gotSaldo, tt.want.saldo)
-			is.Equal(gotGroupId, tt.want.groupId)
+			is.Equal(gotName, tt.accountFields.name)                                     // name does not match
+			is.Equal(decodeNullableString(gotDescription), tt.accountFields.description) // Description does not match
+			is.Equal(gotSaldo, tt.accountFields.saldo)                                   // Saldo does not match
+			is.Equal(gotGroupId, tt.accountFields.groupId)                               // GroupId does not match
+			is.Equal(gotNfcChipId, tt.accountFields.nfcChipId)                           // NfcChipId does not match
 		})
 	}
+
+	t.Run("try to insert new account with same NfcChipId", func(t *testing.T) {
+		db, teardown := dbInitializedForAccount(t)
+		defer teardown()
+
+		model := AccountModel{
+			db: db,
+		}
+
+		insertTestAccount(t, db, models.Account{
+			ID:          1,
+			Name:        "tim",
+			Description: "",
+			Saldo:       12,
+			NfcChipId:   "same_id",
+			Group:       &models.Group{ID: 1},
+		})
+		err := model.Create("another tim", "", 0, 1, "same_id")
+		if err != nil && err != models.ErrDuplicateNfcChipId {
+			t.Errorf("got err %q, expected %q", err, models.ErrDuplicateNfcChipId)
+		}
+	})
 }
 
 func TestAccountModel_Read(t *testing.T) {
@@ -96,6 +115,7 @@ func TestAccountModel_Read(t *testing.T) {
 			Name:        "tim",
 			Description: "",
 			Saldo:       12,
+			NfcChipId:   "testchipid",
 			Group: &models.Group{
 				ID:   1,
 				Name: "testgroup1",
@@ -129,12 +149,7 @@ func TestAccountModel_Read(t *testing.T) {
 			},
 		}
 
-		_, _ = db.Exec("INSERT INTO accounts (id, name, saldo, group_id) VALUES (?,?,?,?)",
-			want.ID,
-			want.Name,
-			want.Saldo,
-			want.Group.ID,
-		)
+		insertTestAccount(t, db, want)
 
 		model := AccountModel{
 			db: db,
@@ -161,10 +176,9 @@ func TestAccountModel_Update(t *testing.T) {
 		{
 			name: "update account",
 			inital: models.Account{
-				ID:          1,
-				Name:        "tim",
-				Description: "",
-				Saldo:       12,
+				ID:    1,
+				Name:  "tim",
+				Saldo: 12,
 				Group: &models.Group{
 					ID:          1,
 					Name:        "testgroup1",
@@ -184,12 +198,37 @@ func TestAccountModel_Update(t *testing.T) {
 			},
 		},
 		{
-			name: "update account with non existent group",
+			name: "update nfc chip id",
 			inital: models.Account{
+				ID:        1,
+				Name:      "tim",
+				Saldo:     12,
+				NfcChipId: "testnfcchip",
+				Group: &models.Group{
+					ID:          1,
+					Name:        "testgroup1",
+					Description: "",
+				},
+			},
+			want: models.Account{
 				ID:          1,
 				Name:        "tim",
-				Description: "",
-				Saldo:       12,
+				Description: "descr",
+				Saldo:       123,
+				NfcChipId:   "testnfcchip2",
+				Group: &models.Group{
+					ID:          1,
+					Name:        "testgroup1",
+					Description: "",
+				},
+			},
+		},
+		{
+			name: "update account with non existent group",
+			inital: models.Account{
+				ID:    1,
+				Name:  "tim",
+				Saldo: 12,
 				Group: &models.Group{
 					ID:          1,
 					Name:        "testgroup1",
@@ -233,19 +272,19 @@ func TestAccountModel_Update(t *testing.T) {
 
 			is.NoErr(err) // got error from read, did not expect it
 
-			var gotName, gotDescription string
-			var gotSaldo float64
-			var gotGroupId int
-
-			err = db.QueryRow("SELECT name,description,saldo,group_id FROM accounts WHERE id=?", 1).Scan(
-				&gotName, &gotDescription, &gotSaldo, &gotGroupId)
+			var got = models.Account{Group: &models.Group{}}
+			var nullDescription sql.NullString
+			err = db.QueryRow("SELECT name,description,saldo,group_id,nfc_chip_uid FROM accounts WHERE id=?", 1).Scan(
+				&got.Name, &nullDescription, &got.Saldo, &got.Group.ID, &got.NfcChipId)
 			is.NoErr(err) // got scan error
 
-			is.Equal(gotName, tt.want.Name)
-			is.Equal(gotDescription, tt.want.Description)
-			is.Equal(gotSaldo, tt.want.Saldo)
-			is.Equal(gotGroupId, tt.want.Group.ID)
+			got.Description = decodeNullableString(nullDescription)
 
+			is.Equal(got.Name, tt.want.Name)               // name does not match
+			is.Equal(got.Description, tt.want.Description) // description does not match
+			is.Equal(got.Saldo, tt.want.Saldo)             // saldo does not match
+			is.Equal(got.Group.ID, tt.want.Group.ID)       // groupId does not match
+			is.Equal(got.NfcChipId, tt.want.NfcChipId)     // nfcChipId does not match
 		})
 	}
 }
@@ -431,12 +470,13 @@ func TestAccountModel_GetAllPaged(t *testing.T) {
 func insertTestAccount(t *testing.T, db *sql.DB, account models.Account) {
 	t.Helper()
 
-	_, _ = db.Exec("INSERT INTO accounts (id, name, description, saldo, group_id) VALUES (?,?,?,?,?)",
+	_, _ = db.Exec("INSERT INTO accounts (id, name, description, saldo, group_id, nfc_chip_uid) VALUES (?,?,?,?,?,?)",
 		account.ID,
 		account.Name,
-		account.Description,
+		createNullableString(account.Description),
 		account.Saldo,
 		account.Group.ID,
+		account.NfcChipId,
 	)
 }
 

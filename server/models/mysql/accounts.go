@@ -10,15 +10,20 @@ type AccountModel struct {
 	db *sql.DB
 }
 
-func (a *AccountModel) Create(name, description string, startSaldo float64, groupId int) error {
-	createStmt := `INSERT INTO accounts (name, description, saldo, group_id) VALUES (?,?,?,?)`
+func (a *AccountModel) Create(name, description string, startSaldo float64, groupId int, nfcChipId string) error {
+	nullDescription := createNullableString(description)
 
-	_, err := a.db.Exec(createStmt, name, description, startSaldo, groupId)
+	createStmt := `INSERT INTO accounts (name, description, saldo, group_id, nfc_chip_uid) VALUES (?,?,?,?,?)`
+
+	_, err := a.db.Exec(createStmt, name, nullDescription, startSaldo, groupId, nfcChipId)
 
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok {
 			if err.Number == 1452 {
 				return models.ErrGroupNotFound
+			}
+			if err.Number == 1062 {
+				return models.ErrDuplicateNfcChipId
 			}
 		}
 		return err
@@ -28,7 +33,7 @@ func (a *AccountModel) Create(name, description string, startSaldo float64, grou
 }
 
 func (a *AccountModel) Read(id int) (*models.Account, error) {
-	readStmt := `SELECT a.id, a.name, a.description, saldo, g.id, g.name, g.description
+	readStmt := `SELECT a.id, a.name, a.description, a.saldo, a.nfc_chip_uid, g.id, g.name, g.description
 				 FROM accounts a
 				     LEFT JOIN account_groups g on a.group_id = g.id
 				 WHERE a.id = ?`
@@ -39,27 +44,20 @@ func (a *AccountModel) Read(id int) (*models.Account, error) {
 	row := a.db.QueryRow(readStmt, id)
 	var nullDesc sql.NullString
 	var groupNullDesc sql.NullString
-	err := row.Scan(&m.ID, &m.Name, &nullDesc, &m.Saldo, &m.Group.ID, &m.Group.Name, &groupNullDesc)
-
-	if nullDesc.Valid {
-		m.Description = nullDesc.String
-	}
-
-	if groupNullDesc.Valid {
-		m.Group.Description = groupNullDesc.String
-	}
-
+	err := row.Scan(&m.ID, &m.Name, &nullDesc, &m.Saldo, &m.NfcChipId, &m.Group.ID, &m.Group.Name, &groupNullDesc)
 	if err != nil {
 		return nil, err
 	}
+	m.Description = decodeNullableString(nullDesc)
+	m.Group.Description = decodeNullableString(groupNullDesc)
 
 	return m, nil
 }
 
 func (a *AccountModel) Update(m *models.Account) error {
-	updateStmt := `UPDATE accounts SET name=?, description=?, saldo=?, group_id=? WHERE id=?`
+	updateStmt := `UPDATE accounts SET name=?, description=?, saldo=?, group_id=?, nfc_chip_uid=? WHERE id=?`
 
-	_, err := a.db.Exec(updateStmt, m.Name, m.Description, m.Saldo, m.Group.ID, m.ID)
+	_, err := a.db.Exec(updateStmt, m.Name, m.Description, m.Saldo, m.Group.ID, m.NfcChipId, m.ID)
 
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok {
@@ -148,13 +146,11 @@ func scanRowsToAccounts(rows *sql.Rows) ([]*models.Account, error) {
 		var nullDesc sql.NullString
 
 		err := rows.Scan(&s.ID, &s.Name, &nullDesc, &s.Saldo, &s.Group.ID)
-		if nullDesc.Valid {
-			s.Description = nullDesc.String
-		}
-
 		if err != nil {
 			return nil, err
 		}
+
+		s.Description = decodeNullableString(nullDesc)
 
 		accounts = append(accounts, s)
 	}
