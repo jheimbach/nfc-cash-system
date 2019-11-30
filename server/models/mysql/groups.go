@@ -6,7 +6,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-// AccountModel provides API for the account_groups table
+// GroupModel provides API for the account_groups table
 type GroupModel struct {
 	db *sql.DB
 }
