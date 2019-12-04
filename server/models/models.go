@@ -63,4 +63,7 @@ type TransactionPaging struct {
 type AccountStorager interface {
 	Create(name, description string, startSaldo float64, groupId int, nfcChipId string) (int, error)
 	GetAll() ([]Account, error)
+	Read(id int) (Account, error)
+	Delete(id int) error
+	Update(m Account) error
 }
