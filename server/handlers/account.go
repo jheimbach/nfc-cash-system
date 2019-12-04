@@ -64,7 +64,7 @@ func (a AccountService) GetAccount(w http.ResponseWriter, r *http.Request) {
 func (a AccountService) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 	id, err := getAccountId(r.URL.Path)
 	if err != nil {
-		http.Error(w, ErrCouldNotParseId.Error(), http.StatusNotFound)
+		http.Error(w, ErrCouldNotParseId.Error(), http.StatusInternalServerError)
 		return
 	}
 	err = a.storage.Delete(id)
