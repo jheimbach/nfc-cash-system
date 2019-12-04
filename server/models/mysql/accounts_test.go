@@ -2,9 +2,10 @@ package mysql
 
 import (
 	"database/sql"
+	"testing"
+
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	isPkg "github.com/matryer/is"
-	"testing"
 )
 
 func TestAccountModel_Create(t *testing.T) {
@@ -154,6 +155,21 @@ func TestAccountModel_Read(t *testing.T) {
 
 		is.Equal(got, want)
 	})
+
+	t.Run("read account that does not exist", func(t *testing.T) {
+		db, teardown := dbInitializedForAccount(t)
+		defer teardown()
+
+		model := AccountModel{
+			db: db,
+		}
+
+		_, err := model.Read(100)
+
+		if err != models.ErrNotFound {
+			t.Errorf("got %v expected %v", err, models.ErrNotFound)
+		}
+	})
 }
 
 func TestAccountModel_Update(t *testing.T) {
@@ -233,7 +249,7 @@ func TestAccountModel_Update(t *testing.T) {
 				db: db,
 			}
 
-			err := model.Update(&tt.want)
+			err := model.Update(tt.want)
 
 			if tt.wantErr {
 				is.Equal(err, tt.expectedErr) // got not the expected error
@@ -265,12 +281,12 @@ func TestAccountModel_Delete(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		obj          *models.Account
+		obj          models.Account
 		insertBefore bool
 	}{
 		{
 			name: "delete account",
-			obj: &models.Account{
+			obj: models.Account{
 				ID:          1,
 				Name:        "tim",
 				Description: "",
@@ -281,7 +297,7 @@ func TestAccountModel_Delete(t *testing.T) {
 		},
 		{
 			name: "delete account that does not exist",
-			obj: &models.Account{
+			obj: models.Account{
 				ID: 1,
 			},
 			insertBefore: false,
@@ -295,7 +311,7 @@ func TestAccountModel_Delete(t *testing.T) {
 			defer teardown()
 
 			if tt.insertBefore {
-				insertTestAccount(t, db, *tt.obj)
+				insertTestAccount(t, db, tt.obj)
 			}
 
 			model := AccountModel{

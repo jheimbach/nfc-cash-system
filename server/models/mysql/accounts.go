@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/go-sql-driver/mysql"
 )
@@ -47,6 +48,9 @@ func (a *AccountModel) Read(id int) (models.Account, error) {
 	var nullDesc sql.NullString
 	err := row.Scan(&m.ID, &m.Name, &nullDesc, &m.Saldo, &m.GroupId, &m.NfcChipId)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return models.Account{}, models.ErrNotFound
+		}
 		return models.Account{}, err
 	}
 	m.Description = decodeNullableString(nullDesc)
@@ -55,7 +59,7 @@ func (a *AccountModel) Read(id int) (models.Account, error) {
 }
 
 // Update saves the (changed) model in the database will return models.ErrGroupNotFound if group id is not associated with a group
-func (a *AccountModel) Update(m *models.Account) error {
+func (a *AccountModel) Update(m models.Account) error {
 	updateStmt := `UPDATE accounts SET name=?, description=?, saldo=?, group_id=?, nfc_chip_uid=? WHERE id=?`
 
 	_, err := a.db.Exec(updateStmt, m.Name, m.Description, m.Saldo, m.GroupId, m.NfcChipId, m.ID)
