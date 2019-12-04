@@ -36,13 +36,13 @@ type Account struct {
 	Description string
 	Saldo       float64
 	NfcChipId   string
-	Group       *Group
+	GroupId     int
 }
 
 type AccountPaging struct {
 	CurrentPage int
 	MaxPage     int
-	Accounts    []*Account
+	Accounts    []Account
 }
 
 type Transaction struct {
@@ -51,11 +51,16 @@ type Transaction struct {
 	NewSaldo float64
 	Amount   float64
 	Created  time.Time
-	Account  *Account
+	Account  Account
 }
 
 type TransactionPaging struct {
 	CurrentPage  int
 	MaxPage      int
-	Transactions []*Transaction
+	Transactions []Transaction
+}
+
+type AccountStorager interface {
+	Create(name, description string, startSaldo float64, groupId int, nfcChipId string) (int, error)
+	GetAll() ([]Account, error)
 }

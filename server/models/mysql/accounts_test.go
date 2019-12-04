@@ -54,7 +54,7 @@ func TestAccountModel_Create(t *testing.T) {
 			model := AccountModel{
 				db: db,
 			}
-			err := model.Create(tt.accountFields.name, tt.accountFields.description, tt.accountFields.saldo, tt.accountFields.groupId, tt.accountFields.nfcChipId)
+			_, err := model.Create(tt.accountFields.name, tt.accountFields.description, tt.accountFields.saldo, tt.accountFields.groupId, tt.accountFields.nfcChipId)
 
 			if tt.wantErr {
 				is.Equal(err, tt.expectedErr) // got not the expected error
@@ -93,9 +93,9 @@ func TestAccountModel_Create(t *testing.T) {
 			Description: "",
 			Saldo:       12,
 			NfcChipId:   "same_id",
-			Group:       &models.Group{ID: 1},
+			GroupId:     1,
 		})
-		err := model.Create("another tim", "", 0, 1, "same_id")
+		_, err := model.Create("another tim", "", 0, 1, "same_id")
 		if err != nil && err != models.ErrDuplicateNfcChipId {
 			t.Errorf("got err %q, expected %q", err, models.ErrDuplicateNfcChipId)
 		}
@@ -116,10 +116,7 @@ func TestAccountModel_Read(t *testing.T) {
 			Description: "",
 			Saldo:       12,
 			NfcChipId:   "testchipid",
-			Group: &models.Group{
-				ID:   1,
-				Name: "testgroup1",
-			},
+			GroupId:     1,
 		}
 
 		insertTestAccount(t, db, want)
@@ -131,7 +128,7 @@ func TestAccountModel_Read(t *testing.T) {
 		got, err := model.Read(1)
 		is.NoErr(err) // got error from read, did not expect it
 
-		is.Equal(*got, want)
+		is.Equal(got, want)
 	})
 
 	t.Run("read account with null description", func(t *testing.T) {
@@ -140,13 +137,10 @@ func TestAccountModel_Read(t *testing.T) {
 		defer teardown()
 
 		want := models.Account{
-			ID:    1,
-			Name:  "tim",
-			Saldo: 12,
-			Group: &models.Group{
-				ID:   1,
-				Name: "testgroup1",
-			},
+			ID:      1,
+			Name:    "tim",
+			Saldo:   12,
+			GroupId: 1,
 		}
 
 		insertTestAccount(t, db, want)
@@ -158,7 +152,7 @@ func TestAccountModel_Read(t *testing.T) {
 		got, err := model.Read(1)
 		is.NoErr(err) // got error from read, did not expect it
 
-		is.Equal(*got, want)
+		is.Equal(got, want)
 	})
 }
 
@@ -176,25 +170,17 @@ func TestAccountModel_Update(t *testing.T) {
 		{
 			name: "update account",
 			inital: models.Account{
-				ID:    1,
-				Name:  "tim",
-				Saldo: 12,
-				Group: &models.Group{
-					ID:          1,
-					Name:        "testgroup1",
-					Description: "",
-				},
+				ID:      1,
+				Name:    "tim",
+				Saldo:   12,
+				GroupId: 1,
 			},
 			want: models.Account{
 				ID:          1,
 				Name:        "tim",
 				Description: "descr",
 				Saldo:       123,
-				Group: &models.Group{
-					ID:          1,
-					Name:        "testgroup1",
-					Description: "",
-				},
+				GroupId:     1,
 			},
 		},
 		{
@@ -204,11 +190,7 @@ func TestAccountModel_Update(t *testing.T) {
 				Name:      "tim",
 				Saldo:     12,
 				NfcChipId: "testnfcchip",
-				Group: &models.Group{
-					ID:          1,
-					Name:        "testgroup1",
-					Description: "",
-				},
+				GroupId:   1,
 			},
 			want: models.Account{
 				ID:          1,
@@ -216,35 +198,23 @@ func TestAccountModel_Update(t *testing.T) {
 				Description: "descr",
 				Saldo:       123,
 				NfcChipId:   "testnfcchip2",
-				Group: &models.Group{
-					ID:          1,
-					Name:        "testgroup1",
-					Description: "",
-				},
+				GroupId:     1,
 			},
 		},
 		{
 			name: "update account with non existent group",
 			inital: models.Account{
-				ID:    1,
-				Name:  "tim",
-				Saldo: 12,
-				Group: &models.Group{
-					ID:          1,
-					Name:        "testgroup1",
-					Description: "",
-				},
+				ID:      1,
+				Name:    "tim",
+				Saldo:   12,
+				GroupId: 1,
 			},
 			want: models.Account{
 				ID:          1,
 				Name:        "tim",
 				Description: "",
 				Saldo:       12,
-				Group: &models.Group{
-					ID:          12,
-					Name:        "testgroup1",
-					Description: "",
-				},
+				GroupId:     12,
 			},
 			wantErr:     true,
 			expectedErr: models.ErrGroupNotFound,
@@ -272,10 +242,10 @@ func TestAccountModel_Update(t *testing.T) {
 
 			is.NoErr(err) // got error from read, did not expect it
 
-			var got = models.Account{Group: &models.Group{}}
+			var got = models.Account{}
 			var nullDescription sql.NullString
 			err = db.QueryRow("SELECT name,description,saldo,group_id,nfc_chip_uid FROM accounts WHERE id=?", 1).Scan(
-				&got.Name, &nullDescription, &got.Saldo, &got.Group.ID, &got.NfcChipId)
+				&got.Name, &nullDescription, &got.Saldo, &got.GroupId, &got.NfcChipId)
 			is.NoErr(err) // got scan error
 
 			got.Description = decodeNullableString(nullDescription)
@@ -283,7 +253,7 @@ func TestAccountModel_Update(t *testing.T) {
 			is.Equal(got.Name, tt.want.Name)               // name does not match
 			is.Equal(got.Description, tt.want.Description) // description does not match
 			is.Equal(got.Saldo, tt.want.Saldo)             // saldo does not match
-			is.Equal(got.Group.ID, tt.want.Group.ID)       // groupId does not match
+			is.Equal(got.GroupId, tt.want.GroupId)         // groupId does not match
 			is.Equal(got.NfcChipId, tt.want.NfcChipId)     // nfcChipId does not match
 		})
 	}
@@ -305,9 +275,7 @@ func TestAccountModel_Delete(t *testing.T) {
 				Name:        "tim",
 				Description: "",
 				Saldo:       12,
-				Group: &models.Group{
-					ID: 1,
-				},
+				GroupId:     1,
 			},
 			insertBefore: true,
 		},
@@ -367,11 +335,7 @@ func TestAccountModel_UpdateSaldo(t *testing.T) {
 				Name:        "tim",
 				Description: "",
 				Saldo:       50,
-				Group: &models.Group{
-					ID:          1,
-					Name:        "testgroup1",
-					Description: "",
-				},
+				GroupId:     1,
 			},
 			insertObj:      true,
 			newSaldo:       65,
@@ -484,7 +448,7 @@ func insertTestAccount(t *testing.T, db *sql.DB, account models.Account) {
 		account.Name,
 		createNullableString(account.Description),
 		account.Saldo,
-		account.Group.ID,
+		account.GroupId,
 		account.NfcChipId,
 	)
 }

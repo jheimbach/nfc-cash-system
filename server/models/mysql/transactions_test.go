@@ -38,7 +38,7 @@ func TestTransactionModel_Create(t *testing.T) {
 				OldSaldo: 12,
 				NewSaldo: 6,
 				Amount:   -6,
-				Account: &models.Account{
+				Account: models.Account{
 					ID: 1,
 				},
 			},
@@ -76,7 +76,7 @@ func TestTransactionModel_Create(t *testing.T) {
 
 			is.NoErr(err)
 
-			got := models.Transaction{Account: &models.Account{}}
+			got := models.Transaction{Account: models.Account{}}
 
 			stmt := `SELECT id, new_saldo, old_saldo, amount,created, account_id from transactions WHERE id=?`
 			err = db.QueryRow(stmt, 1).Scan(&got.ID, &got.NewSaldo, &got.OldSaldo, &got.Amount, &got.Created, &got.Account.ID)
