@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	isPkg "github.com/matryer/is"
 	"testing"
@@ -38,8 +39,8 @@ func TestTransactionModel_Create(t *testing.T) {
 				OldSaldo: 12,
 				NewSaldo: 6,
 				Amount:   -6,
-				Account: models.Account{
-					ID: 1,
+				Account: api.Account{
+					Id: 1,
 				},
 			},
 		}, {
@@ -76,17 +77,19 @@ func TestTransactionModel_Create(t *testing.T) {
 
 			is.NoErr(err)
 
-			got := models.Transaction{Account: models.Account{}}
+			got := models.Transaction{Account: api.Account{}}
 
 			stmt := `SELECT id, new_saldo, old_saldo, amount,created, account_id from transactions WHERE id=?`
-			err = db.QueryRow(stmt, 1).Scan(&got.ID, &got.NewSaldo, &got.OldSaldo, &got.Amount, &got.Created, &got.Account.ID)
+			err = db.QueryRow(stmt, 1).Scan(
+				&got.ID, &got.NewSaldo, &got.OldSaldo, &got.Amount, &got.Created, &got.Account.Id,
+			)
 			is.NoErr(err)
 
 			is.Equal(got.ID, tt.want.ID)                 // id does not match
 			is.Equal(got.OldSaldo, tt.want.OldSaldo)     // oldSaldo does not match
 			is.Equal(got.NewSaldo, tt.want.NewSaldo)     // newSaldo does not match
 			is.True(!got.Created.IsZero())               // created is zero, should be timestamp
-			is.Equal(got.Account.ID, tt.want.Account.ID) // accountId does not match
+			is.Equal(got.Account.Id, tt.want.Account.Id) // accountId does not match
 
 		})
 	}

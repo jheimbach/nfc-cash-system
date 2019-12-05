@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	isPkg "github.com/matryer/is"
 )
@@ -88,8 +89,8 @@ func TestAccountModel_Create(t *testing.T) {
 			db: db,
 		}
 
-		insertTestAccount(t, db, models.Account{
-			ID:          1,
+		insertTestAccount(t, db, api.Account{
+			Id:          1,
 			Name:        "tim",
 			Description: "",
 			Saldo:       12,
@@ -111,8 +112,8 @@ func TestAccountModel_Read(t *testing.T) {
 		db, teardown := dbInitializedForAccount(t)
 		defer teardown()
 
-		want := models.Account{
-			ID:          1,
+		want := &api.Account{
+			Id:          1,
 			Name:        "tim",
 			Description: "",
 			Saldo:       12,
@@ -120,7 +121,7 @@ func TestAccountModel_Read(t *testing.T) {
 			GroupId:     1,
 		}
 
-		insertTestAccount(t, db, want)
+		insertTestAccount(t, db, *want)
 
 		model := AccountModel{
 			db: db,
@@ -137,14 +138,14 @@ func TestAccountModel_Read(t *testing.T) {
 		db, teardown := dbInitializedForAccount(t)
 		defer teardown()
 
-		want := models.Account{
-			ID:      1,
+		want := &api.Account{
+			Id:      1,
 			Name:    "tim",
 			Saldo:   12,
 			GroupId: 1,
 		}
 
-		insertTestAccount(t, db, want)
+		insertTestAccount(t, db, *want)
 
 		model := AccountModel{
 			db: db,
@@ -178,21 +179,21 @@ func TestAccountModel_Update(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		inital      models.Account
-		want        models.Account
+		inital      api.Account
+		want        api.Account
 		wantErr     bool
 		expectedErr error
 	}{
 		{
 			name: "update account",
-			inital: models.Account{
-				ID:      1,
+			inital: api.Account{
+				Id:      1,
 				Name:    "tim",
 				Saldo:   12,
 				GroupId: 1,
 			},
-			want: models.Account{
-				ID:          1,
+			want: api.Account{
+				Id:          1,
 				Name:        "tim",
 				Description: "descr",
 				Saldo:       123,
@@ -201,15 +202,15 @@ func TestAccountModel_Update(t *testing.T) {
 		},
 		{
 			name: "update nfc chip id",
-			inital: models.Account{
-				ID:        1,
+			inital: api.Account{
+				Id:        1,
 				Name:      "tim",
 				Saldo:     12,
 				NfcChipId: "testnfcchip",
 				GroupId:   1,
 			},
-			want: models.Account{
-				ID:          1,
+			want: api.Account{
+				Id:          1,
 				Name:        "tim",
 				Description: "descr",
 				Saldo:       123,
@@ -219,14 +220,14 @@ func TestAccountModel_Update(t *testing.T) {
 		},
 		{
 			name: "update account with non existent group",
-			inital: models.Account{
-				ID:      1,
+			inital: api.Account{
+				Id:      1,
 				Name:    "tim",
 				Saldo:   12,
 				GroupId: 1,
 			},
-			want: models.Account{
-				ID:          1,
+			want: api.Account{
+				Id:          1,
 				Name:        "tim",
 				Description: "",
 				Saldo:       12,
@@ -258,10 +259,10 @@ func TestAccountModel_Update(t *testing.T) {
 
 			is.NoErr(err) // got error from read, did not expect it
 
-			var got = models.Account{}
+			var got = api.Account{}
 			var nullDescription sql.NullString
-			err = db.QueryRow("SELECT name,description,saldo,group_id,nfc_chip_uid FROM accounts WHERE id=?", 1).Scan(
-				&got.Name, &nullDescription, &got.Saldo, &got.GroupId, &got.NfcChipId)
+			err = db.QueryRow("SELECT id,name,description,saldo,group_id,nfc_chip_uid FROM accounts WHERE id=?", 1).Scan(
+				&got.Id, &got.Name, &nullDescription, &got.Saldo, &got.GroupId, &got.NfcChipId)
 			is.NoErr(err) // got scan error
 
 			got.Description = decodeNullableString(nullDescription)
@@ -281,13 +282,13 @@ func TestAccountModel_Delete(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		obj          models.Account
+		obj          api.Account
 		insertBefore bool
 	}{
 		{
 			name: "delete account",
-			obj: models.Account{
-				ID:          1,
+			obj: api.Account{
+				Id:          1,
 				Name:        "tim",
 				Description: "",
 				Saldo:       12,
@@ -297,8 +298,8 @@ func TestAccountModel_Delete(t *testing.T) {
 		},
 		{
 			name: "delete account that does not exist",
-			obj: models.Account{
-				ID: 1,
+			obj: api.Account{
+				Id: 1,
 			},
 			insertBefore: false,
 		},
@@ -317,11 +318,11 @@ func TestAccountModel_Delete(t *testing.T) {
 			model := AccountModel{
 				db: db,
 			}
-			err := model.Delete(tt.obj.ID)
+			err := model.Delete(tt.obj.Id)
 			is.NoErr(err)
 
 			var dbName string
-			err = db.QueryRow("SELECT name from accounts WHERE id=?", tt.obj.ID).Scan(&dbName)
+			err = db.QueryRow("SELECT name from accounts WHERE id=?", tt.obj.Id).Scan(&dbName)
 
 			if err == nil {
 				t.Fatalf("expected err, got none")
@@ -339,15 +340,15 @@ func TestAccountModel_UpdateSaldo(t *testing.T) {
 	is := isPkg.New(t)
 	tests := []struct {
 		name           string
-		obj            models.Account
+		obj            api.Account
 		insertObj      bool
 		newSaldo       float64
 		expectDbChange bool
 	}{
 		{
 			name: "update saldo",
-			obj: models.Account{
-				ID:          1,
+			obj: api.Account{
+				Id:          1,
 				Name:        "tim",
 				Description: "",
 				Saldo:       50,
@@ -359,8 +360,8 @@ func TestAccountModel_UpdateSaldo(t *testing.T) {
 		},
 		{
 			name: "update saldo on undefined account",
-			obj: models.Account{
-				ID: 10,
+			obj: api.Account{
+				Id: 10,
 			},
 			newSaldo: 65,
 		},
@@ -377,12 +378,12 @@ func TestAccountModel_UpdateSaldo(t *testing.T) {
 			}
 
 			model := AccountModel{db: db}
-			err := model.UpdateSaldo(tt.obj.ID, tt.newSaldo)
+			err := model.UpdateSaldo(tt.obj.Id, tt.newSaldo)
 			is.NoErr(err)
 
 			if tt.expectDbChange {
 				var dbSaldo float64
-				err = db.QueryRow("SELECT saldo from accounts WHERE id=?", tt.obj.ID).Scan(&dbSaldo)
+				err = db.QueryRow("SELECT saldo from accounts WHERE id=?", tt.obj.Id).Scan(&dbSaldo)
 				is.NoErr(err)
 				is.Equal(dbSaldo, tt.newSaldo)
 			}
@@ -428,39 +429,11 @@ func TestAccountModel_GetAllByGroup(t *testing.T) {
 	is.Equal(len(accounts), 5)
 }
 
-func TestAccountModel_GetAllPaged(t *testing.T) {
-	isIntegrationTest(t)
-	is := isPkg.NewRelaxed(t)
-	db, dbTeardown := dbInitializedForAccountLists(t)
-	defer func() {
-		dbTeardown()
-		db.Close()
-	}()
-
-	model := AccountModel{
-		db: db,
-	}
-
-	for i := 1; i <= 2; i++ {
-		accounts, err := model.GetAllWithPaging(i, 5)
-		is.NoErr(err)
-
-		is.Equal(accounts.CurrentPage, i) // currentpage
-		is.Equal(accounts.MaxPage, 2)     // maxpage
-
-		if i == 2 {
-			is.Equal(len(accounts.Accounts), 4) // account length
-		} else {
-			is.Equal(len(accounts.Accounts), 5) // account length
-		}
-	}
-}
-
-func insertTestAccount(t *testing.T, db *sql.DB, account models.Account) {
+func insertTestAccount(t *testing.T, db *sql.DB, account api.Account) {
 	t.Helper()
 
 	_, _ = db.Exec("INSERT INTO accounts (id, name, description, saldo, group_id, nfc_chip_uid) VALUES (?,?,?,?,?,?)",
-		account.ID,
+		account.Id,
 		account.Name,
 		createNullableString(account.Description),
 		account.Saldo,

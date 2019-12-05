@@ -3,6 +3,8 @@ package models
 import (
 	"errors"
 	"time"
+
+	"github.com/JHeimbach/nfc-cash-system/server/api"
 )
 
 var (
@@ -30,28 +32,13 @@ type Group struct {
 	CanOverDraw bool
 }
 
-type Account struct {
-	ID          int
-	Name        string
-	Description string
-	Saldo       float64
-	NfcChipId   string
-	GroupId     int
-}
-
-type AccountPaging struct {
-	CurrentPage int
-	MaxPage     int
-	Accounts    []Account
-}
-
 type Transaction struct {
 	ID       int
 	OldSaldo float64
 	NewSaldo float64
 	Amount   float64
 	Created  time.Time
-	Account  Account
+	Account  api.Account
 }
 
 type TransactionPaging struct {
@@ -61,9 +48,9 @@ type TransactionPaging struct {
 }
 
 type AccountStorager interface {
-	Create(name, description string, startSaldo float64, groupId int, nfcChipId string) (int, error)
-	GetAll() ([]Account, error)
-	Read(id int) (Account, error)
+	Create(name, description string, startSaldo float64, groupId int, nfcChipId string) (*api.Account, error)
+	GetAll() ([]*api.Account, error)
+	Read(id int) (*api.Account, error)
 	Delete(id int) error
-	Update(m Account) error
+	Update(m *api.Account) error
 }

@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/go-sql-driver/mysql"
 )
@@ -89,8 +90,8 @@ func (t *TransactionModel) loadTransactions(query string, args ...interface{}) (
 	var transactions []models.Transaction
 
 	for rows.Next() {
-		s := models.Transaction{Account: models.Account{}}
-		err := rows.Scan(&s.ID, &s.NewSaldo, &s.OldSaldo, &s.Amount, &s.Account.ID, &s.Created)
+		s := models.Transaction{Account: api.Account{}}
+		err := rows.Scan(&s.ID, &s.NewSaldo, &s.OldSaldo, &s.Amount, &s.Account.Id, &s.Created)
 		if err != nil {
 			return nil, err
 		}

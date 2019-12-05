@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 
+	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/go-sql-driver/mysql"
 )
@@ -40,18 +41,18 @@ func (a *AccountModel) Create(name, description string, startSaldo float64, grou
 }
 
 // Read returns account struct for given id
-func (a *AccountModel) Read(id int) (models.Account, error) {
+func (a *AccountModel) Read(id int) (*api.Account, error) {
 	readStmt := `SELECT id, name, description, saldo, group_id, nfc_chip_uid FROM accounts WHERE id=?`
 
-	m := models.Account{}
+	m := &api.Account{}
 	row := a.db.QueryRow(readStmt, id)
 	var nullDesc sql.NullString
-	err := row.Scan(&m.ID, &m.Name, &nullDesc, &m.Saldo, &m.GroupId, &m.NfcChipId)
+	err := row.Scan(&m.Id, &m.Name, &nullDesc, &m.Saldo, &m.GroupId, &m.NfcChipId)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return models.Account{}, models.ErrNotFound
+			return nil, models.ErrNotFound
 		}
-		return models.Account{}, err
+		return nil, err
 	}
 	m.Description = decodeNullableString(nullDesc)
 
@@ -59,10 +60,10 @@ func (a *AccountModel) Read(id int) (models.Account, error) {
 }
 
 // Update saves the (changed) model in the database will return models.ErrGroupNotFound if group id is not associated with a group
-func (a *AccountModel) Update(m models.Account) error {
+func (a *AccountModel) Update(m api.Account) error {
 	updateStmt := `UPDATE accounts SET name=?, description=?, saldo=?, group_id=?, nfc_chip_uid=? WHERE id=?`
 
-	_, err := a.db.Exec(updateStmt, m.Name, m.Description, m.Saldo, m.GroupId, m.NfcChipId, m.ID)
+	_, err := a.db.Exec(updateStmt, m.Name, m.Description, m.Saldo, m.GroupId, m.NfcChipId, m.Id)
 
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok {
@@ -77,7 +78,7 @@ func (a *AccountModel) Update(m models.Account) error {
 }
 
 // Delete deletes a account
-func (a *AccountModel) Delete(id int) error {
+func (a *AccountModel) Delete(id int32) error {
 
 	deleteStmt := `DELETE FROM accounts WHERE id=?`
 
@@ -91,14 +92,14 @@ func (a *AccountModel) Delete(id int) error {
 }
 
 // UpdateSaldo provides a simpler update method for the saldo field
-func (a *AccountModel) UpdateSaldo(id int, newSaldo float64) error {
+func (a *AccountModel) UpdateSaldo(id int32, newSaldo float64) error {
 	_, err := a.db.Exec("UPDATE accounts SET saldo=? WHERE id=?", newSaldo, id)
 
 	return err
 }
 
 // GetAll returns slice with all accounts in the database
-func (a *AccountModel) GetAll() ([]models.Account, error) {
+func (a *AccountModel) GetAll() ([]*api.Account, error) {
 	rows, err := a.db.Query("SELECT id, name, description, saldo, group_id FROM accounts")
 	defer rows.Close()
 
@@ -110,7 +111,7 @@ func (a *AccountModel) GetAll() ([]models.Account, error) {
 }
 
 // GetAllByGroup returns slice with all accounts with given group id
-func (a *AccountModel) GetAllByGroup(groupId int) ([]models.Account, error) {
+func (a *AccountModel) GetAllByGroup(groupId int) ([]*api.Account, error) {
 	rows, err := a.db.Query("SELECT id, name, description, saldo, group_id FROM accounts WHERE group_id=?", groupId)
 	defer rows.Close()
 
@@ -121,49 +122,23 @@ func (a *AccountModel) GetAllByGroup(groupId int) ([]models.Account, error) {
 	return scanRowsToAccounts(rows)
 }
 
-// GetAllWithPaging returns all accounts in pages.
-func (a *AccountModel) GetAllWithPaging(page, size int) (*models.AccountPaging, error) {
-	getStmt := `SELECT id, name,description,saldo,group_id FROM accounts ORDER BY id DESC LIMIT ? OFFSET ?`
-	rows, err := a.db.Query(getStmt, size, pageOffset(page, size))
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	accounts, err := scanRowsToAccounts(rows)
-	if err != nil {
-		return nil, err
-	}
-
-	count, err := countAllIds(a.db, "SELECT COUNT(id) FROM accounts")
-	if err != nil {
-		return nil, err
-	}
-
-	return &models.AccountPaging{
-		CurrentPage: page,
-		MaxPage:     maxPageCount(count, size),
-		Accounts:    accounts,
-	}, nil
-}
-
 // scanRowsToAccounts returns slice of Accounts from given sql.Rows
-func scanRowsToAccounts(rows *sql.Rows) ([]models.Account, error) {
-	var accounts []models.Account
+func scanRowsToAccounts(rows *sql.Rows) ([]*api.Account, error) {
+	var accounts []*api.Account
 
 	for rows.Next() {
-		s := &models.Account{}
+		s := &api.Account{}
 
 		var nullDesc sql.NullString
 
-		err := rows.Scan(&s.ID, &s.Name, &nullDesc, &s.Saldo, &s.GroupId)
+		err := rows.Scan(&s.Id, &s.Name, &nullDesc, &s.Saldo, &s.GroupId)
 		if err != nil {
 			return nil, err
 		}
 
 		s.Description = decodeNullableString(nullDesc)
 
-		accounts = append(accounts, *s)
+		accounts = append(accounts, s)
 	}
 
 	return accounts, nil
