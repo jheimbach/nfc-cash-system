@@ -16,12 +16,13 @@ func TestAccountModel_Create(t *testing.T) {
 	type fields struct {
 		name, description string
 		saldo             float64
-		groupId           int
+		group             *api.Group
 		nfcChipId         string
 	}
 	tests := []struct {
 		name          string
 		accountFields fields
+		want          *api.Account
 		wantErr       bool
 		expectedErr   error
 	}{
@@ -31,7 +32,7 @@ func TestAccountModel_Create(t *testing.T) {
 				name:        "tim",
 				description: "",
 				saldo:       12,
-				groupId:     1,
+				group:       &api.Group{Id: 1},
 				nfcChipId:   "teststringteststring",
 			},
 		},
@@ -41,10 +42,28 @@ func TestAccountModel_Create(t *testing.T) {
 				name:        "tim",
 				description: "",
 				saldo:       12,
-				groupId:     100,
+				group:       &api.Group{Id: 100},
 			},
 			wantErr:     true,
 			expectedErr: models.ErrGroupNotFound,
+		},
+		{
+			name: "create account returned struct is correct",
+			accountFields: fields{
+				name:        "tim",
+				description: "",
+				saldo:       12,
+				group:       &api.Group{Id: 1},
+				nfcChipId:   "teststringteststring",
+			},
+			want: &api.Account{
+				Id:          1,
+				Name:        "tim",
+				Description: "",
+				Saldo:       12,
+				NfcChipId:   "teststringteststring",
+				Group:       &api.Group{Id: 1},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -56,7 +75,7 @@ func TestAccountModel_Create(t *testing.T) {
 			model := AccountModel{
 				db: db,
 			}
-			_, err := model.Create(tt.accountFields.name, tt.accountFields.description, tt.accountFields.saldo, tt.accountFields.groupId, tt.accountFields.nfcChipId)
+			account, err := model.Create(tt.accountFields.name, tt.accountFields.description, tt.accountFields.saldo, tt.accountFields.group, tt.accountFields.nfcChipId)
 
 			if tt.wantErr {
 				is.Equal(err, tt.expectedErr) // got not the expected error
@@ -64,20 +83,20 @@ func TestAccountModel_Create(t *testing.T) {
 			}
 			is.NoErr(err) // got error, did not expect it
 
-			var gotName, gotNfcChipId string
+			if tt.want != nil {
+				is.Equal(account, tt.want) // returned object is incorrect
+			}
+
+			got := fields{group: &api.Group{}}
 			var gotDescription sql.NullString
-			var gotSaldo float64
-			var gotGroupId int
 
 			err = db.QueryRow("SELECT name,description,saldo,group_id,nfc_chip_uid FROM accounts WHERE id=?", 1).Scan(
-				&gotName, &gotDescription, &gotSaldo, &gotGroupId, &gotNfcChipId)
+				&got.name, &gotDescription, &got.saldo, &got.group.Id, &got.nfcChipId)
 			is.NoErr(err) // got scan error
+			got.description = decodeNullableString(gotDescription)
 
-			is.Equal(gotName, tt.accountFields.name)                                     // name does not match
-			is.Equal(decodeNullableString(gotDescription), tt.accountFields.description) // Description does not match
-			is.Equal(gotSaldo, tt.accountFields.saldo)                                   // Saldo does not match
-			is.Equal(gotGroupId, tt.accountFields.groupId)                               // GroupId does not match
-			is.Equal(gotNfcChipId, tt.accountFields.nfcChipId)                           // NfcChipId does not match
+			is.Equal(got, tt.accountFields)
+
 		})
 	}
 
@@ -99,7 +118,7 @@ func TestAccountModel_Create(t *testing.T) {
 				Id: 1,
 			},
 		})
-		_, err := model.Create("another tim", "", 0, 1, "same_id")
+		_, err := model.Create("another tim", "", 0, &api.Group{Id: 1}, "same_id")
 		if err != nil && err != models.ErrDuplicateNfcChipId {
 			t.Errorf("got err %q, expected %q", err, models.ErrDuplicateNfcChipId)
 		}
@@ -268,7 +287,7 @@ func TestAccountModel_Update(t *testing.T) {
 				db: db,
 			}
 
-			err := model.Update(tt.want)
+			err := model.Update(&tt.want)
 
 			if tt.wantErr {
 				is.Equal(err, tt.expectedErr) // got not the expected error
@@ -429,7 +448,7 @@ func TestAccountModel_GetAll(t *testing.T) {
 
 	accounts, err := model.GetAll()
 	is.NoErr(err)
-	is.Equal(len(accounts), 9) // expect 9 accounts
+	is.Equal(len(accounts.Accounts), 9) // expect 9 accounts
 }
 
 func TestAccountModel_GetAllByGroup(t *testing.T) {

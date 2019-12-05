@@ -13,7 +13,7 @@ service AccountService {
             get: "/v1/accounts"
         };
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-            description: "Description Echo"
+            description: "Account service"
         };
     };
     rpc Create (Account) returns (Account) {

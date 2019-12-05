@@ -198,7 +198,7 @@
     },
     "/v1/accounts": {
       "get": {
-        "description": "Description Echo",
+        "description": "Account service",
         "operationId": "List",
         "responses": {
           "200": {

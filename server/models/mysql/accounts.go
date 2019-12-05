@@ -15,33 +15,40 @@ type AccountModel struct {
 
 // Create inserts new account it returns error models.ErrGroupNotFound if the groupId is not associated with a group
 // it returns models.ErrDuplicateNfcChipId if the provided nfcchipid is already in the database present
-func (a *AccountModel) Create(name, description string, startSaldo float64, groupId int, nfcChipId string) (int, error) {
+func (a *AccountModel) Create(name, description string, startSaldo float64, group *api.Group, nfcChipId string) (*api.Account, error) {
 	nullDescription := createNullableString(description)
 
 	createStmt := `INSERT INTO accounts (name, description, saldo, group_id, nfc_chip_uid) VALUES (?,?,?,?,?)`
 
-	res, err := a.db.Exec(createStmt, name, nullDescription, startSaldo, groupId, nfcChipId)
+	res, err := a.db.Exec(createStmt, name, nullDescription, startSaldo, group.Id, nfcChipId)
 
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok {
 			if err.Number == 1452 {
-				return 0, models.ErrGroupNotFound
+				return nil, models.ErrGroupNotFound
 			}
 			if err.Number == 1062 {
-				return 0, models.ErrDuplicateNfcChipId
+				return nil, models.ErrDuplicateNfcChipId
 			}
 		}
-		return 0, err
+		return nil, err
 	}
 
 	// mysql result returns no error, so we can ignore it
 	lastId, _ := res.LastInsertId()
 
-	return int(lastId), nil
+	return &api.Account{
+		Id:          int32(lastId),
+		Name:        name,
+		Description: description,
+		Saldo:       startSaldo,
+		NfcChipId:   nfcChipId,
+		Group:       group,
+	}, nil
 }
 
 // Read returns account struct for given id
-func (a *AccountModel) Read(id int) (*api.Account, error) {
+func (a *AccountModel) Read(id int32) (*api.Account, error) {
 	readStmt := `SELECT id, name, description, saldo, group_id, nfc_chip_uid FROM accounts WHERE id=?`
 
 	m := &api.Account{Group: &api.Group{}}
@@ -60,7 +67,7 @@ func (a *AccountModel) Read(id int) (*api.Account, error) {
 }
 
 // Update saves the (changed) model in the database will return models.ErrGroupNotFound if group id is not associated with a group
-func (a *AccountModel) Update(m api.Account) error {
+func (a *AccountModel) Update(m *api.Account) error {
 	updateStmt := `UPDATE accounts SET name=?, description=?, saldo=?, group_id=?, nfc_chip_uid=? WHERE id=?`
 
 	_, err := a.db.Exec(updateStmt, m.Name, m.Description, m.Saldo, m.Group.Id, m.NfcChipId, m.Id)
@@ -99,7 +106,7 @@ func (a *AccountModel) UpdateSaldo(id int32, newSaldo float64) error {
 }
 
 // GetAll returns slice with all accounts in the database
-func (a *AccountModel) GetAll() ([]*api.Account, error) {
+func (a *AccountModel) GetAll() (*api.Accounts, error) {
 	rows, err := a.db.Query("SELECT id, name, description, saldo, group_id FROM accounts")
 	defer rows.Close()
 
@@ -107,7 +114,8 @@ func (a *AccountModel) GetAll() ([]*api.Account, error) {
 		return nil, err
 	}
 
-	return scanRowsToAccounts(rows)
+	accounts, err := scanRowsToAccounts(rows)
+	return &api.Accounts{Accounts: accounts}, nil
 }
 
 // GetAllByGroup returns slice with all accounts with given group id
