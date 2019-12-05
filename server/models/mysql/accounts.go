@@ -44,10 +44,10 @@ func (a *AccountModel) Create(name, description string, startSaldo float64, grou
 func (a *AccountModel) Read(id int) (*api.Account, error) {
 	readStmt := `SELECT id, name, description, saldo, group_id, nfc_chip_uid FROM accounts WHERE id=?`
 
-	m := &api.Account{}
+	m := &api.Account{Group: &api.Group{}}
 	row := a.db.QueryRow(readStmt, id)
 	var nullDesc sql.NullString
-	err := row.Scan(&m.Id, &m.Name, &nullDesc, &m.Saldo, &m.GroupId, &m.NfcChipId)
+	err := row.Scan(&m.Id, &m.Name, &nullDesc, &m.Saldo, &m.Group.Id, &m.NfcChipId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, models.ErrNotFound
@@ -63,7 +63,7 @@ func (a *AccountModel) Read(id int) (*api.Account, error) {
 func (a *AccountModel) Update(m api.Account) error {
 	updateStmt := `UPDATE accounts SET name=?, description=?, saldo=?, group_id=?, nfc_chip_uid=? WHERE id=?`
 
-	_, err := a.db.Exec(updateStmt, m.Name, m.Description, m.Saldo, m.GroupId, m.NfcChipId, m.Id)
+	_, err := a.db.Exec(updateStmt, m.Name, m.Description, m.Saldo, m.Group.Id, m.NfcChipId, m.Id)
 
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok {
@@ -127,11 +127,11 @@ func scanRowsToAccounts(rows *sql.Rows) ([]*api.Account, error) {
 	var accounts []*api.Account
 
 	for rows.Next() {
-		s := &api.Account{}
+		s := &api.Account{Group: &api.Group{}}
 
 		var nullDesc sql.NullString
 
-		err := rows.Scan(&s.Id, &s.Name, &nullDesc, &s.Saldo, &s.GroupId)
+		err := rows.Scan(&s.Id, &s.Name, &nullDesc, &s.Saldo, &s.Group.Id)
 		if err != nil {
 			return nil, err
 		}

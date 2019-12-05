@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	isPkg "github.com/matryer/is"
 	"testing"
@@ -21,18 +22,18 @@ func TestGroupModel_Create(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want models.Group
+		want api.Group
 	}{
 		{
 			name: "create group without description",
 			args: args{
 				name: "testgroup",
 			},
-			want: models.Group{
-				ID:          1,
+			want: api.Group{
+				Id:          1,
 				Name:        "testgroup",
 				Description: "",
-				CanOverDraw: false,
+				CanOverdraw: false,
 			},
 		},
 		{
@@ -41,8 +42,8 @@ func TestGroupModel_Create(t *testing.T) {
 				name:        "testgroup",
 				description: "with description",
 			},
-			want: models.Group{
-				ID:          1,
+			want: api.Group{
+				Id:          1,
 				Name:        "testgroup",
 				Description: "with description",
 			},
@@ -53,10 +54,10 @@ func TestGroupModel_Create(t *testing.T) {
 				name:        "testgroup",
 				canOverdraw: true,
 			},
-			want: models.Group{
-				ID:          1,
+			want: api.Group{
+				Id:          1,
 				Name:        "testgroup",
-				CanOverDraw: true,
+				CanOverdraw: true,
 			},
 		},
 	}
@@ -74,17 +75,15 @@ func TestGroupModel_Create(t *testing.T) {
 			err := model.Create(tt.args.name, tt.args.description, tt.args.canOverdraw)
 			is.NoErr(err)
 
-			var got models.Group
+			var got api.Group
 			var nullDesc sql.NullString
-			row := db.QueryRow("SELECT id, name, description,can_overdraw FROM `account_groups` WHERE id = ?", tt.want.ID)
-			err = row.Scan(&got.ID, &got.Name, &nullDesc, &got.CanOverDraw)
+			row := db.QueryRow("SELECT id, name, description,can_overdraw FROM `account_groups` WHERE id = ?", tt.want.Id)
+			err = row.Scan(&got.Id, &got.Name, &nullDesc, &got.CanOverdraw)
 			is.NoErr(err)
 
 			got.Description = decodeNullableString(nullDesc)
 
-			if got != tt.want {
-				t.Errorf("got %v, want %v", got, tt.want)
-			}
+			is.Equal(got, tt.want)
 		})
 	}
 }
@@ -98,23 +97,23 @@ func TestGroupModel_Read(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		want        *models.Group
+		want        *api.Group
 		insertGroup bool
 		wantErr     bool
 		expectedErr error
 	}{
 		{
 			name: "load group without description",
-			want: &models.Group{
-				ID:   1,
+			want: &api.Group{
+				Id:   1,
 				Name: "testgroup",
 			},
 			insertGroup: true,
 		},
 		{
 			name: "load group with description",
-			want: &models.Group{
-				ID:          2,
+			want: &api.Group{
+				Id:          2,
 				Name:        "testgroup",
 				Description: "with description",
 			},
@@ -122,8 +121,8 @@ func TestGroupModel_Read(t *testing.T) {
 		},
 		{
 			name: "if group id does not exist, return models.ErrNotFound",
-			want: &models.Group{
-				ID: 3,
+			want: &api.Group{
+				Id: 3,
 			},
 			insertGroup: false,
 			wantErr:     true,
@@ -131,10 +130,10 @@ func TestGroupModel_Read(t *testing.T) {
 		},
 		{
 			name: "load group with Canoverdraw",
-			want: &models.Group{
-				ID:          4,
+			want: &api.Group{
+				Id:          4,
 				Name:        "testgroup4",
-				CanOverDraw: true,
+				CanOverdraw: true,
 			},
 			insertGroup: true,
 		},
@@ -150,11 +149,11 @@ func TestGroupModel_Read(t *testing.T) {
 
 			is := is.New(t)
 			if tt.insertGroup {
-				_, err := db.Exec("INSERT INTO `account_groups` (id, name, description, can_overdraw) VALUES (?,?,?,?)", tt.want.ID, tt.want.Name, createNullableString(tt.want.Description), tt.want.CanOverDraw)
+				_, err := db.Exec("INSERT INTO `account_groups` (id, name, description, can_overdraw) VALUES (?,?,?,?)", tt.want.Id, tt.want.Name, createNullableString(tt.want.Description), tt.want.CanOverdraw)
 				is.NoErr(err)
 			}
 
-			got, err := model.Read(tt.want.ID)
+			got, err := model.Read(tt.want.Id)
 
 			if tt.wantErr {
 				if err != tt.expectedErr {
@@ -164,9 +163,7 @@ func TestGroupModel_Read(t *testing.T) {
 			}
 			is.NoErr(err)
 
-			if *got != *tt.want {
-				t.Errorf("got %v want %v", got, tt.want)
-			}
+			is.Equal(got, tt.want)
 		})
 	}
 }
@@ -179,58 +176,58 @@ func TestGroupModel_Update(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		insert      models.Group
-		want        models.Group
+		insert      api.Group
+		want        api.Group
 		wantErr     bool
 		expectedErr error
 		skipInsert  bool
 	}{
 		{
 			name: "update group description",
-			insert: models.Group{
+			insert: api.Group{
 				Name: "testgroup",
 			},
-			want: models.Group{
-				ID:          1,
+			want: api.Group{
+				Id:          1,
 				Name:        "testgroup",
 				Description: "test description",
 			},
 		},
 		{
 			name: "update group name",
-			insert: models.Group{
+			insert: api.Group{
 				Name:        "testgroup",
 				Description: "non empty",
 			},
-			want: models.Group{
-				ID:          1,
+			want: api.Group{
+				Id:          1,
 				Name:        "test",
 				Description: "non empty",
 			},
 		},
 		{
 			name: "update can_overdraw",
-			insert: models.Group{
+			insert: api.Group{
 				Name:        "testgroup",
-				CanOverDraw: false,
+				CanOverdraw: false,
 			},
-			want: models.Group{
-				ID:          1,
+			want: api.Group{
+				Id:          1,
 				Name:        "testgroup",
-				CanOverDraw: true,
+				CanOverdraw: true,
 			},
 		},
 		{
 			name:        "empty group will not be updated",
-			want:        models.Group{},
+			want:        api.Group{},
 			skipInsert:  true,
 			wantErr:     true,
 			expectedErr: models.ErrModelNotSaved,
 		},
 		{
 			name: "group with non existent id returns models.ErrNotFound",
-			want: models.Group{
-				ID: 12,
+			want: api.Group{
+				Id: 12,
 			},
 			skipInsert:  true,
 			wantErr:     true,
@@ -238,7 +235,7 @@ func TestGroupModel_Update(t *testing.T) {
 		},
 		{
 			name: "group without id will not be updated",
-			want: models.Group{
+			want: api.Group{
 				Name:        "testgroup",
 				Description: "test description",
 			},
@@ -257,7 +254,7 @@ func TestGroupModel_Update(t *testing.T) {
 
 			is := isPkg.New(t)
 			if !tt.skipInsert {
-				_, err := db.Exec("INSERT INTO `account_groups` (name, description,can_overdraw) VALUES (?,?,?)", tt.insert.Name, createNullableString(tt.insert.Description), tt.insert.CanOverDraw)
+				_, err := db.Exec("INSERT INTO `account_groups` (name, description,can_overdraw) VALUES (?,?,?)", tt.insert.Name, createNullableString(tt.insert.Description), tt.insert.CanOverdraw)
 				is.NoErr(err)
 			}
 
@@ -272,9 +269,8 @@ func TestGroupModel_Update(t *testing.T) {
 
 			is.NoErr(err)
 
-			if *got != tt.want {
-				t.Errorf("got %v want %v", got, tt.want)
-			}
+			is.Equal(got, &tt.want)
+
 		})
 	}
 }

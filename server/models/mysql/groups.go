@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/go-sql-driver/mysql"
 )
@@ -21,14 +22,14 @@ func (g *GroupModel) Create(name, description string, canOverdraw bool) error {
 }
 
 // Read returns models.Group struct for given id, will return models.ErrNotFound if no group is found
-func (g *GroupModel) Read(id int) (*models.Group, error) {
+func (g *GroupModel) Read(id int32) (*api.Group, error) {
 	readStmt := "SELECT id, name, description, can_overdraw FROM `account_groups` WHERE id = ?"
 
-	var group models.Group
+	var group api.Group
 	row := g.db.QueryRow(readStmt, id)
 
 	var nullDesc sql.NullString
-	err := row.Scan(&group.ID, &group.Name, &nullDesc, &group.CanOverDraw)
+	err := row.Scan(&group.Id, &group.Name, &nullDesc, &group.CanOverdraw)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, models.ErrNotFound
@@ -43,8 +44,8 @@ func (g *GroupModel) Read(id int) (*models.Group, error) {
 // Update saves given (changed) group to the database
 // will return models.ErrNotFound if group is not found
 // NOTE: every field will be overwritten with given value
-func (g *GroupModel) Update(group models.Group) (*models.Group, error) {
-	if group.ID == 0 {
+func (g *GroupModel) Update(group api.Group) (*api.Group, error) {
+	if group.Id == 0 {
 		return nil, models.ErrModelNotSaved
 	}
 
@@ -52,8 +53,8 @@ func (g *GroupModel) Update(group models.Group) (*models.Group, error) {
 		"UPDATE `account_groups` SET name=?,description=?, can_overdraw=? WHERE id=?",
 		group.Name,
 		group.Description,
-		group.CanOverDraw,
-		group.ID,
+		group.CanOverdraw,
+		group.Id,
 	)
 
 	if err != nil {

@@ -25,13 +25,6 @@ type User struct {
 	Created time.Time
 }
 
-type Group struct {
-	ID          int
-	Name        string
-	Description string
-	CanOverDraw bool
-}
-
 type Transaction struct {
 	ID       int
 	OldSaldo float64

@@ -95,7 +95,9 @@ func TestAccountModel_Create(t *testing.T) {
 			Description: "",
 			Saldo:       12,
 			NfcChipId:   "same_id",
-			GroupId:     1,
+			Group: &api.Group{
+				Id: 1,
+			},
 		})
 		_, err := model.Create("another tim", "", 0, 1, "same_id")
 		if err != nil && err != models.ErrDuplicateNfcChipId {
@@ -118,7 +120,9 @@ func TestAccountModel_Read(t *testing.T) {
 			Description: "",
 			Saldo:       12,
 			NfcChipId:   "testchipid",
-			GroupId:     1,
+			Group: &api.Group{
+				Id: 1,
+			},
 		}
 
 		insertTestAccount(t, db, *want)
@@ -139,10 +143,12 @@ func TestAccountModel_Read(t *testing.T) {
 		defer teardown()
 
 		want := &api.Account{
-			Id:      1,
-			Name:    "tim",
-			Saldo:   12,
-			GroupId: 1,
+			Id:    1,
+			Name:  "tim",
+			Saldo: 12,
+			Group: &api.Group{
+				Id: 1,
+			},
 		}
 
 		insertTestAccount(t, db, *want)
@@ -187,17 +193,21 @@ func TestAccountModel_Update(t *testing.T) {
 		{
 			name: "update account",
 			inital: api.Account{
-				Id:      1,
-				Name:    "tim",
-				Saldo:   12,
-				GroupId: 1,
+				Id:    1,
+				Name:  "tim",
+				Saldo: 12,
+				Group: &api.Group{
+					Id: 1,
+				},
 			},
 			want: api.Account{
 				Id:          1,
 				Name:        "tim",
 				Description: "descr",
 				Saldo:       123,
-				GroupId:     1,
+				Group: &api.Group{
+					Id: 1,
+				},
 			},
 		},
 		{
@@ -207,7 +217,9 @@ func TestAccountModel_Update(t *testing.T) {
 				Name:      "tim",
 				Saldo:     12,
 				NfcChipId: "testnfcchip",
-				GroupId:   1,
+				Group: &api.Group{
+					Id: 1,
+				},
 			},
 			want: api.Account{
 				Id:          1,
@@ -215,23 +227,29 @@ func TestAccountModel_Update(t *testing.T) {
 				Description: "descr",
 				Saldo:       123,
 				NfcChipId:   "testnfcchip2",
-				GroupId:     1,
+				Group: &api.Group{
+					Id: 1,
+				},
 			},
 		},
 		{
 			name: "update account with non existent group",
 			inital: api.Account{
-				Id:      1,
-				Name:    "tim",
-				Saldo:   12,
-				GroupId: 1,
+				Id:    1,
+				Name:  "tim",
+				Saldo: 12,
+				Group: &api.Group{
+					Id: 1,
+				},
 			},
 			want: api.Account{
 				Id:          1,
 				Name:        "tim",
 				Description: "",
 				Saldo:       12,
-				GroupId:     12,
+				Group: &api.Group{
+					Id: 12,
+				},
 			},
 			wantErr:     true,
 			expectedErr: models.ErrGroupNotFound,
@@ -259,10 +277,10 @@ func TestAccountModel_Update(t *testing.T) {
 
 			is.NoErr(err) // got error from read, did not expect it
 
-			var got = api.Account{}
+			var got = api.Account{Group: &api.Group{}}
 			var nullDescription sql.NullString
 			err = db.QueryRow("SELECT id,name,description,saldo,group_id,nfc_chip_uid FROM accounts WHERE id=?", 1).Scan(
-				&got.Id, &got.Name, &nullDescription, &got.Saldo, &got.GroupId, &got.NfcChipId)
+				&got.Id, &got.Name, &nullDescription, &got.Saldo, &got.Group.Id, &got.NfcChipId)
 			is.NoErr(err) // got scan error
 
 			got.Description = decodeNullableString(nullDescription)
@@ -270,7 +288,7 @@ func TestAccountModel_Update(t *testing.T) {
 			is.Equal(got.Name, tt.want.Name)               // name does not match
 			is.Equal(got.Description, tt.want.Description) // description does not match
 			is.Equal(got.Saldo, tt.want.Saldo)             // saldo does not match
-			is.Equal(got.GroupId, tt.want.GroupId)         // groupId does not match
+			is.Equal(got.Group.Id, tt.want.Group.Id)       // groupId does not match
 			is.Equal(got.NfcChipId, tt.want.NfcChipId)     // nfcChipId does not match
 		})
 	}
@@ -292,7 +310,9 @@ func TestAccountModel_Delete(t *testing.T) {
 				Name:        "tim",
 				Description: "",
 				Saldo:       12,
-				GroupId:     1,
+				Group: &api.Group{
+					Id: 1,
+				},
 			},
 			insertBefore: true,
 		},
@@ -352,7 +372,9 @@ func TestAccountModel_UpdateSaldo(t *testing.T) {
 				Name:        "tim",
 				Description: "",
 				Saldo:       50,
-				GroupId:     1,
+				Group: &api.Group{
+					Id: 1,
+				},
 			},
 			insertObj:      true,
 			newSaldo:       65,
@@ -437,7 +459,7 @@ func insertTestAccount(t *testing.T, db *sql.DB, account api.Account) {
 		account.Name,
 		createNullableString(account.Description),
 		account.Saldo,
-		account.GroupId,
+		account.Group.Id,
 		account.NfcChipId,
 	)
 }
