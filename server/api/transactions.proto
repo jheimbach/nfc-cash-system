@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package api;
+
+import "globals.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+service TransactionsService {
+    rpc List (TransactionListRequest) returns (Transactions) {
+        option (google.api.http) = {
+            get: "/v1/account/{account_id}/transactions"
+        };
+    };
+    rpc Create (Transaction) returns (Transaction) {
+        option (google.api.http) = {
+            post: "/v1/account/{account_id}/transactions"
+            body: "*"
+        };
+    };
+    rpc Get (TransactionRequest) returns (Transaction) {
+        option (google.api.http) = {
+            get: "/v1/account/{account_id}/transactions/{id}"
+        };
+    };
+}
+
+message TransactionListRequest {
+    int64 account_id = 1;
+    Paging paging = 2;
+}
+
+message TransactionRequest {
+    int32 id = 1;
+    int32 account_id = 2;
+}
+
+message Transactions {
+    repeated Transaction transactions = 1;
+}
+
+message Transaction {
+    int32 id = 1;
+    double old_saldo = 2;
+    double new_saldo = 3;
+    double amount = 4;
+    google.protobuf.Timestamp created = 5;
+    int32 account_id = 7;
+}

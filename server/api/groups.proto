@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package api;
+
+import "globals.proto";
+import "google/api/annotations.proto";
+
+service GroupsService {
+    rpc List (GroupListRequest) returns (Groups) {
+        option (google.api.http) = {
+            get: "/v1/groups"
+        };
+    };
+    rpc Create (Group) returns (Group) {
+        option (google.api.http) = {
+            post: "/v1/groups"
+            body: "*"
+        };
+    };
+    rpc Get (IdRequest) returns (Group) {
+        option (google.api.http) = {
+            get: "/v1/group/{id}"
+        };
+    };
+    rpc Update (Group) returns (Group) {
+        option (google.api.http) = {
+            put: "/v1/group/{id}"
+            body: "*"
+        };
+    };
+    rpc Delete (IdRequest) returns (Status) {
+        option (google.api.http) = {
+            delete: "/v1/group/{id}"
+        };
+    };
+}
+
+message GroupListRequest {
+    Paging paging = 1;
+}
+
+message Groups {
+    repeated Group groups = 1;
+}
+
+message Group {
+    int32 id = 1;
+    string name = 2;
+    string description = 3;
+    bool can_overdraw = 4;
+}

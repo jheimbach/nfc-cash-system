@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package api;
+
+import "globals.proto";
+import "google/api/annotations.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+service AccountService {
+    rpc List (AccountListRequest) returns (Accounts) {
+        option (google.api.http) = {
+            get: "/v1/accounts"
+        };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            description: "Description Echo"
+        };
+    };
+    rpc Create (Account) returns (Account) {
+        option (google.api.http) = {
+            post: "/v1/accounts"
+            body: "*"
+        };
+    };
+    rpc Get (IdRequest) returns (Account) {
+        option (google.api.http) = {
+            get: "/v1/account/{id}"
+        };
+    };
+    rpc Update (Account) returns (Account) {
+        option (google.api.http) = {
+            put: "/v1/account/{id}"
+        };
+    };
+    rpc Delete (IdRequest) returns (Status) {
+        option (google.api.http) = {
+            delete: "/v1/account/{id}"
+        };
+    };
+}
+
+message AccountListRequest {
+    int32 group_filter = 1;
+    Paging paging = 2;
+}
+
+message Accounts {
+    repeated Account accounts = 1;
+}
+
+message Account {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        example: { value: '{ "id": "1", "name": "test name", "description":"string", "saldo":120, "nfc_chip_id":"nfc-chip-id", "group_id": 1 }' }
+    };
+    int32 id = 1 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account ID"}];
+    string name = 2 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account name"}];
+    string description = 3 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account description"}];
+    double saldo = 4 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account Saldo"}];
+    string nfc_chip_id = 5 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account Nfc Chip Uuid"}];
+    int32 group_id = 6 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account Group ID"}];
+}

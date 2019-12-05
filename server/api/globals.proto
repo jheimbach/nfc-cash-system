@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package api;
+
+import "protoc-gen-swagger/options/annotations.proto";
+
+message Status {
+    bool success = 1;
+    string error_message = 2;
+}
+
+message Paging {
+    int32 Limit = 1;
+    int32 Offset = 2;
+}
+
+message IdRequest {
+    int32 id = 1;
+}
+
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+	info: {
+		title: "NFC Cash System";
+        version: "1.0";
+        contact:
+        {
+            name:"Johannes Heimbach";
+            url:"https://github.com/jheimbach/nfc-cash-system";
+            email:"nfccashsystem@medienstalt.de";
+        };
+    };
+    host: "nfc-cash.evjp.de";
+    schemes: HTTP;
+    schemes: HTTPS;
+    consumes: "application/json";
+    produces: "application/json";
+};
