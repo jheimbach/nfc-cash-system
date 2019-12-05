@@ -2,8 +2,12 @@ package mysql
 
 import (
 	"database/sql"
+	"time"
+
+	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/go-sql-driver/mysql"
+	"github.com/golang/protobuf/ptypes"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,16 +38,21 @@ func (u *UserModel) Create(name, email, password string) error {
 }
 
 // Get returns a models.User from given id, if id does not exists Get will return a models.ErrNotFound
-func (u *UserModel) Get(id int) (*models.User, error) {
-	m := &models.User{}
-
+func (u *UserModel) Get(id int) (*api.User, error) {
+	m := &api.User{}
+	var t time.Time
 	getSql := `SELECT id,name,email,created FROM users WHERE id = ?`
-	err := u.db.QueryRow(getSql, id).Scan(&m.ID, &m.Name, &m.Email, &m.Created)
+	err := u.db.QueryRow(getSql, id).Scan(&m.Id, &m.Name, &m.Email, &t)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, models.ErrNotFound
 		}
+		return nil, err
+	}
+
+	m.Created, err = ptypes.TimestampProto(t)
+	if err != nil {
 		return nil, err
 	}
 

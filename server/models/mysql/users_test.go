@@ -3,7 +3,9 @@ package mysql
 import (
 	"errors"
 	"fmt"
+	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/google/go-cmp/cmp"
 	isPkg "github.com/matryer/is"
 	"golang.org/x/crypto/bcrypt"
@@ -81,11 +83,13 @@ func TestUserModel_Get(t *testing.T) {
 		dbSetup("../testdata/user.sql")
 		defer dbTeardown()
 
-		want := &models.User{
-			ID:      1,
+		created, _ := ptypes.TimestampProto(time.Date(2003, 8, 14, 18, 0, 0, 0, time.UTC))
+
+		want := &api.User{
+			Id:      1,
 			Name:    "test",
 			Email:   "test@example.org",
-			Created: time.Date(2003, 8, 14, 18, 0, 0, 0, time.UTC),
+			Created: created,
 		}
 
 		model := &UserModel{

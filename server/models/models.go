@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"time"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 )
@@ -17,13 +16,6 @@ var (
 	ErrGroupNotFound      = errors.New("models: group for given id does not exist")
 	ErrAccountNotFound    = errors.New("models: account for given id does not exist")
 )
-
-type User struct {
-	ID      int
-	Name    string
-	Email   string
-	Created time.Time
-}
 
 type AccountStorager interface {
 	Create(name, description string, startSaldo float64, groupId int, nfcChipId string) (*api.Account, error)

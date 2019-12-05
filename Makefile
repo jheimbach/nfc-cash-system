@@ -20,4 +20,4 @@ generateSwagger:
     		-I=$(GOPATH)/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@v1.12.1 \
     		--swagger_out=logtostderr=true,allow_merge=true:$(DST_DIR) $(SRC_DIR)/*.proto
 
-generateApi: generateGrpc generateGateway generateSwagger
+api: generateGrpc generateGateway generateSwagger
