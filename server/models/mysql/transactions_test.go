@@ -3,8 +3,10 @@ package mysql
 import (
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/golang/protobuf/ptypes"
 	isPkg "github.com/matryer/is"
 	"testing"
+	"time"
 )
 
 func TestTransactionModel_Create(t *testing.T) {
@@ -22,7 +24,7 @@ func TestTransactionModel_Create(t *testing.T) {
 	tests := []struct {
 		name        string
 		args        args
-		want        *models.Transaction
+		want        *api.Transaction
 		wantErr     bool
 		expectedErr error
 	}{
@@ -34,12 +36,12 @@ func TestTransactionModel_Create(t *testing.T) {
 				newSaldo:  6,
 				accountId: 1,
 			},
-			want: &models.Transaction{
-				ID:       1,
+			want: &api.Transaction{
+				Id:       1,
 				OldSaldo: 12,
 				NewSaldo: 6,
 				Amount:   -6,
-				Account: api.Account{
+				Account: &api.Account{
 					Id: 1,
 				},
 			},
@@ -77,18 +79,20 @@ func TestTransactionModel_Create(t *testing.T) {
 
 			is.NoErr(err)
 
-			got := models.Transaction{Account: api.Account{}}
+			got := api.Transaction{Account: &api.Account{}}
+			var created time.Time
 
 			stmt := `SELECT id, new_saldo, old_saldo, amount,created, account_id from transactions WHERE id=?`
 			err = db.QueryRow(stmt, 1).Scan(
-				&got.ID, &got.NewSaldo, &got.OldSaldo, &got.Amount, &got.Created, &got.Account.Id,
+				&got.Id, &got.NewSaldo, &got.OldSaldo, &got.Amount, &created, &got.Account.Id,
 			)
 			is.NoErr(err)
+			got.Created, _ = ptypes.TimestampProto(created)
 
-			is.Equal(got.ID, tt.want.ID)                 // id does not match
+			is.Equal(got.Id, tt.want.Id)                 // id does not match
 			is.Equal(got.OldSaldo, tt.want.OldSaldo)     // oldSaldo does not match
 			is.Equal(got.NewSaldo, tt.want.NewSaldo)     // newSaldo does not match
-			is.True(!got.Created.IsZero())               // created is zero, should be timestamp
+			is.True(!created.IsZero())                   // created is zero, should be timestamp
 			is.Equal(got.Account.Id, tt.want.Account.Id) // accountId does not match
 
 		})
@@ -132,36 +136,6 @@ func TestTransactionModel_GetAll(t *testing.T) {
 
 }
 
-func TestTransactionModel_GetAllPaged(t *testing.T) {
-	isIntegrationTest(t)
-	is := isPkg.New(t)
-
-	db, dbSetup, dbTeardown := getTestDb(t)
-	dbSetup("../testdata/transaction.sql", "../testdata/transaction_list.sql")
-	defer func() {
-		dbTeardown()
-		db.Close()
-	}()
-
-	model := TransactionModel{
-		db: db,
-	}
-
-	page1, err := model.GetAllPaged(1, 5)
-	is.NoErr(err)
-
-	is.Equal(page1.CurrentPage, 1)       // currentpage should be 1
-	is.Equal(page1.MaxPage, 2)           // maxpage should be 2
-	is.Equal(len(page1.Transactions), 5) // expected 5 transactions
-
-	page2, err := model.GetAllPaged(2, 5)
-	is.NoErr(err)
-
-	is.Equal(page2.CurrentPage, 2)       // currentpage should be 2
-	is.Equal(page2.MaxPage, 2)           // maxpage should be 2
-	is.Equal(len(page2.Transactions), 4) // expected 4 transactions
-}
-
 func TestTransactionModel_GetAllByAccount(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.New(t)
@@ -197,35 +171,4 @@ func TestTransactionModel_GetAllByAccount(t *testing.T) {
 
 		is.Equal(len(transactions), 0) // expected 0 transactions
 	})
-}
-
-func TestTransactionModel_GetAllByAccountPaged(t *testing.T) {
-	isIntegrationTest(t)
-	is := isPkg.New(t)
-
-	db, dbSetup, dbTeardown := getTestDb(t)
-	dbSetup("../testdata/transaction.sql", "../testdata/transaction_list.sql")
-	defer func() {
-		dbTeardown()
-		db.Close()
-	}()
-
-	model := TransactionModel{
-		db: db,
-	}
-
-	page1, err := model.GetAllByAccountPaged(1, 1, 3)
-	is.NoErr(err)
-
-	is.Equal(page1.CurrentPage, 1)       // currentpage should be 1
-	is.Equal(page1.MaxPage, 2)           // maxpage should be 2
-	is.Equal(len(page1.Transactions), 3) // expected 5 transactions
-
-	page2, err := model.GetAllByAccountPaged(1, 2, 3)
-	is.NoErr(err)
-
-	is.Equal(page2.CurrentPage, 2)       // currentpage should be 2
-	is.Equal(page2.MaxPage, 2)           // maxpage should be 2
-	is.Equal(len(page2.Transactions), 2) // expected 2 transactions
-
 }

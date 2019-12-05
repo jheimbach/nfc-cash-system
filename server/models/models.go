@@ -25,21 +25,6 @@ type User struct {
 	Created time.Time
 }
 
-type Transaction struct {
-	ID       int
-	OldSaldo float64
-	NewSaldo float64
-	Amount   float64
-	Created  time.Time
-	Account  api.Account
-}
-
-type TransactionPaging struct {
-	CurrentPage  int
-	MaxPage      int
-	Transactions []Transaction
-}
-
 type AccountStorager interface {
 	Create(name, description string, startSaldo float64, groupId int, nfcChipId string) (*api.Account, error)
 	GetAll() ([]*api.Account, error)
