@@ -21,6 +21,39 @@
     "application/json"
   ],
   "paths": {
+    "/v1/account/{account.id}/transactions": {
+      "post": {
+        "operationId": "Create",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiTransaction"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "account.id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiTransaction"
+            }
+          }
+        ],
+        "tags": [
+          "TransactionsService"
+        ]
+      }
+    },
     "/v1/account/{account_id}/transactions": {
       "get": {
         "operationId": "List",
@@ -53,37 +86,6 @@
             "required": false,
             "type": "integer",
             "format": "int32"
-          }
-        ],
-        "tags": [
-          "TransactionsService"
-        ]
-      },
-      "post": {
-        "operationId": "Create",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/apiTransaction"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "account_id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/apiTransaction"
-            }
           }
         ],
         "tags": [
@@ -230,7 +232,7 @@
           }
         ],
         "tags": [
-          "lists"
+          "AccountService"
         ]
       },
       "post": {
@@ -397,14 +399,6 @@
   "definitions": {
     "apiAccount": {
       "type": "object",
-      "example": {
-        "id": "1",
-        "name": "test name",
-        "description": "string",
-        "saldo": 120,
-        "nfc_chip_id": "nfc-chip-id",
-        "group_id": 1
-      },
       "properties": {
         "id": {
           "type": "integer",
@@ -428,10 +422,9 @@
           "type": "string",
           "title": "Account Nfc Chip Uuid"
         },
-        "group_id": {
-          "type": "integer",
-          "format": "int32",
-          "title": "Account Group ID"
+        "group": {
+          "$ref": "#/definitions/apiGroup",
+          "title": "Account Group"
         }
       }
     },
@@ -524,9 +517,8 @@
           "type": "string",
           "format": "date-time"
         },
-        "account_id": {
-          "type": "integer",
-          "format": "int32"
+        "account": {
+          "$ref": "#/definitions/apiAccount"
         }
       }
     },

@@ -119,15 +119,15 @@ func request_TransactionsService_Create_0(ctx context.Context, marshaler runtime
 		_   = err
 	)
 
-	val, ok = pathParams["account_id"]
+	val, ok = pathParams["account.id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "account_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "account.id")
 	}
 
-	protoReq.AccountId, err = runtime.Int32(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "account.id", val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "account_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "account.id", err)
 	}
 
 	msg, err := client.Create(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -154,15 +154,15 @@ func local_request_TransactionsService_Create_0(ctx context.Context, marshaler r
 		_   = err
 	)
 
-	val, ok = pathParams["account_id"]
+	val, ok = pathParams["account.id"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "account_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "account.id")
 	}
 
-	protoReq.AccountId, err = runtime.Int32(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "account.id", val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "account_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "account.id", err)
 	}
 
 	msg, err := server.Create(ctx, &protoReq)
@@ -418,7 +418,7 @@ func RegisterTransactionsServiceHandlerClient(ctx context.Context, mux *runtime.
 var (
 	pattern_TransactionsService_List_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "account", "account_id", "transactions"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_TransactionsService_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "account", "account_id", "transactions"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_TransactionsService_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3}, []string{"v1", "account", "account.id", "transactions"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_TransactionsService_Get_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v1", "account", "account_id", "transactions", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 )

@@ -3,6 +3,7 @@ syntax = "proto3";
 package api;
 
 import "globals.proto";
+import "accounts.proto";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 
@@ -14,7 +15,7 @@ service TransactionsService {
     };
     rpc Create (Transaction) returns (Transaction) {
         option (google.api.http) = {
-            post: "/v1/account/{account_id}/transactions"
+            post: "/v1/account/{account.id}/transactions"
             body: "*"
         };
     };
@@ -45,5 +46,5 @@ message Transaction {
     double new_saldo = 3;
     double amount = 4;
     google.protobuf.Timestamp created = 5;
-    int32 account_id = 7;
+    Account account=6;
 }
