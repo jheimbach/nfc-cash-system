@@ -491,7 +491,7 @@ func dbInitializedForAccount(t *testing.T) (*sql.DB, func()) {
 
 func dbInitializedForAccountLists(t *testing.T) (*sql.DB, func()) {
 	db, setup, teardown := getTestDb(t)
-	setup("../testdata/account.sql", "../testdata/account_lists.sql")
+	setup("../testdata/account.sql", "../testdata/account_list.sql")
 
 	return db, teardown
 }
