@@ -13,6 +13,10 @@ type AccountModel struct {
 	db *sql.DB
 }
 
+func NewAccountModel(db *sql.DB) *AccountModel {
+	return &AccountModel{db: db}
+}
+
 // Create inserts new account it returns error models.ErrGroupNotFound if the groupId is not associated with a group
 // it returns models.ErrDuplicateNfcChipId if the provided nfcchipid is already in the database present
 func (a *AccountModel) Create(name, description string, startSaldo float64, group *api.Group, nfcChipId string) (*api.Account, error) {

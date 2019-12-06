@@ -6,6 +6,7 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -17,6 +18,10 @@ var (
 
 type accountserver struct {
 	storage models.AccountStorager
+}
+
+func RegisterAccountServer(s *grpc.Server, storage models.AccountStorager) {
+	api.RegisterAccountServiceServer(s, &accountserver{storage: storage})
 }
 
 func (a *accountserver) List(ctx context.Context, req *api.AccountListRequest) (*api.Accounts, error) {
