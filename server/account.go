@@ -62,9 +62,14 @@ func (a *accountserver) Delete(ctw context.Context, req *api.IdRequest) (*api.St
 	err := a.storage.Delete(req.Id)
 
 	if err != nil {
+		retErr := ErrSomethingWentWrong
+		if err == models.ErrNotFound {
+			retErr = ErrNotFound
+		}
+
 		return &api.Status{
 			Success:      false,
-			ErrorMessage: err.Error(),
+			ErrorMessage: retErr.Error(),
 		}, nil
 	}
 
