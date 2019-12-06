@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
+	isPkg "github.com/matryer/is"
 )
 
 type accountMockStorager struct {
@@ -38,7 +39,7 @@ func (a accountMockStorager) Update(m *api.Account) error {
 	return a.update(m)
 }
 
-func Test_accountserver_List(t *testing.T) {
+func TestAccountserver_List(t *testing.T) {
 	type args struct {
 		ctx         context.Context
 		listRequest *api.AccountListRequest
@@ -96,6 +97,127 @@ func Test_accountserver_List(t *testing.T) {
 	}
 }
 
+func TestAccountserver_Get(t *testing.T) {
+	is := isPkg.New(t)
+
+	want := &api.Account{
+		Id:          1,
+		Name:        "tim",
+		Description: "",
+		Saldo:       120,
+		NfcChipId:   "asdf",
+		Group:       &api.Group{Id: 1},
+	}
+	server := accountserver{storage: accountMockStorager{
+		read: func(id int32) (account *api.Account, err error) {
+			want.Id = id
+			return want, nil
+		},
+	}}
+
+	got, err := server.Get(context.Background(), &api.IdRequest{Id: 1})
+	is.NoErr(err)
+	is.Equal(got, want)
+}
+
+func TestAccountserver_Create(t *testing.T) {
+	mockStorage := make(map[int32]*api.Account)
+	var mockId int32 = 1
+
+	is := isPkg.New(t)
+
+	server := accountserver{
+		storage: accountMockStorager{
+			create: func(name, description string, startSaldo float64, group *api.Group, nfcChipId string) (account *api.Account, err error) {
+				acc := &api.Account{
+					Id:          mockId,
+					Name:        name,
+					Description: description,
+					Saldo:       startSaldo,
+					NfcChipId:   nfcChipId,
+					Group:       group,
+				}
+
+				mockStorage[mockId] = acc
+				mockId = mockId + 1
+
+				return acc, nil
+			},
+		},
+	}
+
+	want := &api.Account{
+		Name:        "test",
+		Description: "",
+		Saldo:       120,
+		NfcChipId:   "nfcchip",
+		Group: &api.Group{
+			Id: 1,
+		},
+	}
+
+	got, err := server.Create(context.Background(), want)
+	is.NoErr(err)
+
+	want.Id = mockId - 1
+
+	is.Equal(got, want)                  // got wrong account back
+	is.Equal(want, mockStorage[want.Id]) // account was not created
+}
+
+func TestAccountserver_Update(t *testing.T) {
+	mockStorage := genMapModels(3)
+	is := isPkg.New(t)
+
+	server := accountserver{
+		storage: accountMockStorager{
+			update: func(m *api.Account) error {
+				mockStorage[m.Id] = m
+				return nil
+			},
+		},
+	}
+
+	updateAccount := &api.Account{
+		Id:          1,
+		Name:        "test",
+		Description: "test",
+		Saldo:       145,
+		NfcChipId:   "nfc_chip_1",
+		Group: &api.Group{
+			Id: 1,
+		},
+	}
+
+	got, err := server.Update(context.Background(), updateAccount)
+	is.NoErr(err)
+	is.Equal(got, updateAccount)       // returned account is not the same
+	is.Equal(got, mockStorage[got.Id]) // account was not updated
+}
+
+func TestAccountserver_Delete(t *testing.T) {
+	mockStorage := genMapModels(3)
+	is := isPkg.New(t)
+
+	server := accountserver{
+		storage: accountMockStorager{
+			delete: func(id int32) error {
+				delete(mockStorage, id)
+				return nil
+			},
+		},
+	}
+
+	want := &api.Status{
+		Success:      true,
+		ErrorMessage: "",
+	}
+
+	got, err := server.Delete(context.Background(), &api.IdRequest{Id: 1})
+	is.NoErr(err)
+	is.Equal(got, want) // status is not correct
+}
+
 func genListModels(num int) []*api.Account {
 	accounts := make([]*api.Account, 0, num)
 
@@ -112,4 +234,13 @@ func genListModels(num int) []*api.Account {
 		})
 	}
 	return accounts
+}
+
+func genMapModels(num int) map[int32]*api.Account {
+	accounts := genListModels(num)
+	m := make(map[int32]*api.Account)
+	for _, account := range accounts {
+		m[account.Id] = account
+	}
+	return m
 }
