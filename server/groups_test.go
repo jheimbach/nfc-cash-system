@@ -12,7 +12,7 @@ import (
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 )
 
-type groupstorage struct {
+type groupMockStorage struct {
 	create func(name, description string, canOverdraw bool) (*api.Group, error)
 	getAll func() (*api.Groups, error)
 	read   func(id int32) (*api.Group, error)
@@ -20,23 +20,23 @@ type groupstorage struct {
 	delete func(id int32) error
 }
 
-func (g *groupstorage) Create(name, description string, canOverdraw bool) (*api.Group, error) {
+func (g *groupMockStorage) Create(name, description string, canOverdraw bool) (*api.Group, error) {
 	return g.create(name, description, canOverdraw)
 }
 
-func (g *groupstorage) GetAll() (*api.Groups, error) {
+func (g *groupMockStorage) GetAll() (*api.Groups, error) {
 	return g.getAll()
 }
 
-func (g *groupstorage) Read(id int32) (*api.Group, error) {
+func (g *groupMockStorage) Read(id int32) (*api.Group, error) {
 	return g.read(id)
 }
 
-func (g *groupstorage) Update(group *api.Group) (*api.Group, error) {
+func (g *groupMockStorage) Update(group *api.Group) (*api.Group, error) {
 	return g.update(group)
 }
 
-func (g *groupstorage) Delete(id int32) error {
+func (g *groupMockStorage) Delete(id int32) error {
 	return g.delete(id)
 }
 
@@ -63,7 +63,7 @@ func TestGroupserver_List(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &groupserver{
-				storage: &groupstorage{getAll: func() (*api.Groups, error) {
+				storage: &groupMockStorage{getAll: func() (*api.Groups, error) {
 					if tt.wantErr != nil {
 						return nil, sql.ErrNoRows
 					}
@@ -120,7 +120,7 @@ func TestGroupserver_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := groupserver{
-				storage: &groupstorage{
+				storage: &groupMockStorage{
 					create: func(name, description string, canOverdraw bool) (*api.Group, error) {
 						if tt.wantErr != nil {
 							return nil, tt.wantErr
@@ -182,7 +182,7 @@ func TestGroupserver_Update(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := groupserver{
-				storage: &groupstorage{
+				storage: &groupMockStorage{
 					update: func(group *api.Group) (*api.Group, error) {
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
@@ -234,7 +234,7 @@ func TestGroupserver_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := groupserver{
-				storage: &groupstorage{
+				storage: &groupMockStorage{
 					delete: func(id int32) error {
 						if tt.wantErr != nil {
 							return errors.New("test error")
