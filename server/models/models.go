@@ -7,14 +7,15 @@ import (
 )
 
 var (
-	ErrDuplicateEmail     = errors.New("models: duplicate user email")
-	ErrDuplicateNfcChipId = errors.New("models: duplicate account nfc chip id")
-	ErrNotFound           = errors.New("models: not found")
-	ErrInvalidCredentials = errors.New("models: email or password incorrect")
-	ErrModelNotSaved      = errors.New("models: got no id on update, did you mean to create the group")
-	ErrNonEmptyDelete     = errors.New("models: can not delete, item is still referenced")
-	ErrGroupNotFound      = errors.New("models: group for given id does not exist")
-	ErrAccountNotFound    = errors.New("models: account for given id does not exist")
+	ErrDuplicateEmail      = errors.New("duplicate user email")
+	ErrDuplicateNfcChipId  = errors.New("duplicate account nfc chip id")
+	ErrNotFound            = errors.New("not found")
+	ErrInvalidCredentials  = errors.New("email or password incorrect")
+	ErrModelNotSaved       = errors.New("got no id on update, did you mean to create the group")
+	ErrNonEmptyDelete      = errors.New("can not delete, item is still referenced")
+	ErrGroupNotFound       = errors.New("group for given id does not exist")
+	ErrAccountNotFound     = errors.New("account for given id does not exist")
+	ErrTransactionNotFound = errors.New("transaction for given id does not exist")
 )
 
 type AccountStorager interface {
