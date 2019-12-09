@@ -45,7 +45,7 @@ func (g *groupserver) Get(ctx context.Context, req *api.IdRequest) (*api.Group, 
 }
 
 func (g *groupserver) Update(ctx context.Context, req *api.Group) (*api.Group, error) {
-	group, err := g.storage.Update(*req)
+	group, err := g.storage.Update(req)
 	if err != nil {
 		return nil, ErrSomethingWentWrong
 	}

@@ -3,11 +3,13 @@ package server
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
+	"github.com/JHeimbach/nfc-cash-system/server/models"
 )
 
 type groupstorage struct {
@@ -30,7 +32,7 @@ func (g *groupstorage) Read(id int32) (*api.Group, error) {
 	return g.read(id)
 }
 
-func (g *groupstorage) Update(group api.Group) (*api.Group, error) {
+func (g *groupstorage) Update(group *api.Group) (*api.Group, error) {
 	return g.update(group)
 }
 
@@ -139,6 +141,119 @@ func TestGroupserver_Create(t *testing.T) {
 			}
 			if err != nil {
 				t.Fatalf("did not expect error, got %v", err)
+			}
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("got %v, expected %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGroupserver_Update(t *testing.T) {
+	tests := []struct {
+		name      string
+		want      *api.Group
+		returnErr error // specifies the error which will be returned from storager
+		wantErr   error
+	}{
+		{
+			name: "update group",
+			want: &api.Group{
+				Id:          1,
+				Name:        "testgroup",
+				Description: "with description",
+				CanOverdraw: false,
+			},
+			wantErr: nil,
+		},
+		{
+			name:      "update group with id 0 returns error",
+			returnErr: models.ErrModelNotSaved,
+			wantErr:   ErrSomethingWentWrong,
+		},
+		{
+			name:      "other error occured",
+			returnErr: errors.New("some test error"),
+			wantErr:   ErrSomethingWentWrong,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := groupserver{
+				storage: &groupstorage{
+					update: func(group *api.Group) (*api.Group, error) {
+						if tt.returnErr != nil {
+							return nil, tt.returnErr
+						}
+						return group, nil
+					},
+				},
+			}
+			got, err := server.Update(context.Background(), tt.want)
+
+			if tt.wantErr != nil {
+				if err != tt.wantErr {
+					t.Errorf("got err %v, expected %v", err, tt.wantErr)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("expected no error but got %v", err)
+			}
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("got %v, expected %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGroupserver_Delete(t *testing.T) {
+	tests := []struct {
+		name    string
+		request *api.IdRequest
+		want    *api.Status
+		wantErr error
+	}{
+		{
+			name:    "delete group",
+			request: &api.IdRequest{Id: 1},
+			want:    &api.Status{Success: true},
+		},
+		{
+			name:    "delete group with error",
+			request: &api.IdRequest{Id: 1},
+			want:    &api.Status{Success: false, ErrorMessage: ErrSomethingWentWrong.Error()},
+			wantErr: ErrSomethingWentWrong,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := groupserver{
+				storage: &groupstorage{
+					delete: func(id int32) error {
+						if tt.wantErr != nil {
+							return errors.New("test error")
+						}
+						return nil
+					},
+				},
+			}
+
+			got, err := server.Delete(context.Background(), tt.request)
+
+			if tt.wantErr != nil {
+				if err != tt.wantErr {
+					t.Errorf("got err %v expected %v", err, tt.wantErr)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("got unexpected err %v", err)
+				}
 			}
 
 			if !reflect.DeepEqual(got, tt.want) {
