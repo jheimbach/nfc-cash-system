@@ -32,3 +32,10 @@ type GroupStorager interface {
 	Update(group *api.Group) (*api.Group, error)
 	Delete(id int32) error
 }
+
+type TransactionStorager interface {
+	GetAll() (*api.Transactions, error)
+	Read(id int32) (*api.Transaction, error)
+	Create(amount, oldSaldo, newSaldo float64, account *api.Account) (*api.Transaction, error)
+	GetAllByAccount(accountId int32) (*api.Transactions, error)
+}

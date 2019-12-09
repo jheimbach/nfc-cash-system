@@ -15,39 +15,76 @@ type TransactionModel struct {
 	db *sql.DB
 }
 
-// Create inserts new Transaction to database will return models.ErrAccountNotFound if accountId is not associated with account
-func (t *TransactionModel) Create(amount, oldSaldo, newSaldo float64, accountId int) error {
+// Create inserts new Transaction to database will return models.ErrAccountNotFound if account is not associated with account
+func (t *TransactionModel) Create(amount, oldSaldo, newSaldo float64, account *api.Account) (*api.Transaction, error) {
 
-	insertStatement := `INSERT INTO transactions (new_saldo, old_saldo, amount, account_id, created) VALUES (?,?,?,?,UTC_TIMESTAMP)`
-	_, err := t.db.Exec(insertStatement, newSaldo, oldSaldo, amount, accountId)
+	now := time.Now()
+	nowProto, _ := ptypes.TimestampProto(now)
+	insertStatement := `INSERT INTO transactions (new_saldo, old_saldo, amount, account_id, created) VALUES (?,?,?,?,?)`
+	res, err := t.db.Exec(insertStatement, newSaldo, oldSaldo, amount, account.Id, now)
 
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok && err.Number == 1452 {
-			return models.ErrAccountNotFound
+			return nil, models.ErrAccountNotFound
 		}
-		return err
+		return nil, err
 	}
 
-	return nil
+	lastId, _ := res.LastInsertId()
+	transaction := &api.Transaction{
+		Id:       int32(lastId),
+		OldSaldo: oldSaldo,
+		NewSaldo: newSaldo,
+		Amount:   amount,
+		Created:  nowProto,
+		Account:  account,
+	}
+
+	return transaction, nil
 }
 
-// GetAll will returns slice with all transactions
+// Read returns Transaction with given id, returns models.ErrNotFound if transaction with id does not exist
+func (t *TransactionModel) Read(id int32) (*api.Transaction, error) {
+	getSmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions WHERE id=?`
+
+	transaction := &api.Transaction{Account: &api.Account{}}
+	var created time.Time
+
+	err := t.db.QueryRow(getSmt, id).Scan(
+		&transaction.Id, &transaction.NewSaldo, &transaction.OldSaldo,
+		&transaction.Amount, &transaction.Account.Id, &created,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, models.ErrNotFound
+		}
+		return nil, err
+	}
+
+	createdProto, _ := ptypes.TimestampProto(created)
+	transaction.Created = createdProto
+
+	return transaction, nil
+}
+
+// GetAll returns all transactions
 // CAUTION: due to the nature of Transactions, this could be a lot
-func (t *TransactionModel) GetAll() ([]*api.Transaction, error) {
+func (t *TransactionModel) GetAll() (*api.Transactions, error) {
 	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions ORDER BY created`
 
 	return t.loadTransactions(selectStmt)
 }
 
-// GetAllByAccount returns slice with transactions for given account id
-func (t *TransactionModel) GetAllByAccount(accountId int) ([]*api.Transaction, error) {
+// GetAllByAccount returns transactions for given account id
+func (t *TransactionModel) GetAllByAccount(accountId int32) (*api.Transactions, error) {
 	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions WHERE account_id=? ORDER BY created DESC`
 
 	return t.loadTransactions(selectStmt, accountId)
 }
 
-// loadTransactions will return slice of Transactions for given query
-func (t *TransactionModel) loadTransactions(query string, args ...interface{}) ([]*api.Transaction, error) {
+// loadTransactions will Transactions for given query
+func (t *TransactionModel) loadTransactions(query string, args ...interface{}) (*api.Transactions, error) {
 	rows, err := t.db.Query(query, args...)
 	if err != nil {
 		return nil, err
@@ -77,5 +114,7 @@ func (t *TransactionModel) loadTransactions(query string, args ...interface{}) (
 		return nil, rows.Err()
 	}
 
-	return transactions, nil
+	return &api.Transactions{
+		Transactions: transactions,
+	}, nil
 }
