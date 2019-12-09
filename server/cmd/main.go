@@ -13,17 +13,17 @@ import (
 )
 
 func main() {
-	url := flag.String("grpc-host", "localhost", "Host for grpc server")
+	host := flag.String("grpc-host", "", "Host for grpc server")
 	port := flag.String("grpc-port", "50051", "Port for grpc server")
 	flag.Parse()
 
-	if err := startGrpcServer(*port); err != nil {
+	if err := startGrpcServer(*host, *port); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func startGrpcServer(port string) error {
-	lis, err := net.Listen("tcp", port)
+func startGrpcServer(host, port string) error {
+	lis, err := net.Listen("tcp", net.JoinHostPort(host, port))
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
