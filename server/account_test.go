@@ -42,32 +42,22 @@ func (a accountMockStorager) Update(m *api.Account) error {
 }
 
 func TestAccountserver_List(t *testing.T) {
-	type args struct {
-		ctx         context.Context
-		listRequest *api.AccountListRequest
-	}
 	tests := []struct {
 		name    string
-		args    args
+		input   *api.AccountListRequest
 		want    *api.Accounts
 		wantErr error
 	}{
 		{
-			name: "get simple list of accounts",
-			args: args{
-				ctx:         context.Background(),
-				listRequest: &api.AccountListRequest{},
-			},
+			name:  "get simple list of accounts",
+			input: &api.AccountListRequest{},
 			want: &api.Accounts{
-				Accounts: genListModels(2),
+				Accounts: getAccountModels(2),
 			},
 		},
 		{
-			name: "has error",
-			args: args{
-				ctx:         context.Background(),
-				listRequest: &api.AccountListRequest{},
-			},
+			name:    "has error",
+			input:   &api.AccountListRequest{},
 			want:    nil,
 			wantErr: ErrGetAll,
 		},
@@ -85,7 +75,7 @@ func TestAccountserver_List(t *testing.T) {
 				},
 				},
 			}
-			got, err := a.List(tt.args.ctx, tt.args.listRequest)
+			got, err := a.List(context.Background(), tt.input)
 
 			if err != tt.wantErr {
 				t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
