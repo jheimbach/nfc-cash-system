@@ -334,3 +334,29 @@ func TestGroupModel_Delete(t *testing.T) {
 		}
 	})
 }
+
+func TestGroupModel_GetAll(t *testing.T) {
+	isIntegrationTest(t)
+
+	is := isPkg.New(t)
+	db, dbTeardown := dbInitializedForGroupList(t)
+	defer func() {
+		dbTeardown()
+		db.Close()
+	}()
+
+	model := GroupModel{
+		db: db,
+	}
+
+	groups, err := model.GetAll()
+	is.NoErr(err)
+	is.Equal(len(groups.Groups), 4) // expected 4 groups
+}
+
+func dbInitializedForGroupList(t *testing.T) (*sql.DB, func()) {
+	db, setup, teardown := getTestDb(t)
+	setup("../testdata/group_list.sql")
+
+	return db, teardown
+}
