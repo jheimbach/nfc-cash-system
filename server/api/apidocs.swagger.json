@@ -394,6 +394,38 @@
           "GroupsService"
         ]
       }
+    },
+    "/v1/transactions": {
+      "get": {
+        "operationId": "All",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiTransactions"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "paging.Limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "paging.Offset",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "TransactionsService"
+        ]
+      }
     }
   },
   "definitions": {

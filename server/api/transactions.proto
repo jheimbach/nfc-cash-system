@@ -8,6 +8,11 @@ import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 
 service TransactionsService {
+    rpc All (TransactionAllRequest) returns (Transactions) {
+        option (google.api.http) = {
+            get: "/v1/transactions"
+        };
+    };
     rpc List (TransactionListRequest) returns (Transactions) {
         option (google.api.http) = {
             get: "/v1/account/{account_id}/transactions"
@@ -24,6 +29,10 @@ service TransactionsService {
             get: "/v1/account/{account_id}/transactions/{id}"
         };
     };
+}
+
+message TransactionAllRequest {
+    Paging paging = 1;
 }
 
 message TransactionListRequest {
@@ -46,5 +55,5 @@ message Transaction {
     double new_saldo = 3;
     double amount = 4;
     google.protobuf.Timestamp created = 5;
-    Account account=6;
+    Account account = 6;
 }
