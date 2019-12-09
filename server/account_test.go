@@ -70,7 +70,7 @@ func TestAccountserver_List(t *testing.T) {
 						return nil, sql.ErrNoRows
 					}
 					return &api.Accounts{
-						Accounts: genListModels(2),
+						Accounts: getAccountModels(2),
 					}, nil
 				},
 				},
@@ -91,7 +91,7 @@ func TestAccountserver_List(t *testing.T) {
 
 func TestAccountserver_Get(t *testing.T) {
 	is := isPkg.New(t)
-	db := genMapModels(3)
+	db := genAccountMap(3)
 
 	tests := []struct {
 		name    string
@@ -236,7 +236,7 @@ func TestAccountserver_Create(t *testing.T) {
 }
 
 func TestAccountserver_Update(t *testing.T) {
-	mockStorage := genMapModels(3)
+	mockStorage := genAccountMap(3)
 	is := isPkg.New(t)
 
 	tests := []struct {
@@ -306,7 +306,7 @@ func TestAccountserver_Update(t *testing.T) {
 }
 
 func TestAccountserver_Delete(t *testing.T) {
-	mockStorage := genMapModels(3)
+	mockStorage := genAccountMap(3)
 	is := isPkg.New(t)
 
 	tests := []struct {
@@ -365,7 +365,7 @@ func TestAccountserver_Delete(t *testing.T) {
 
 }
 
-func genListModels(num int) []*api.Account {
+func getAccountModels(num int) []*api.Account {
 	accounts := make([]*api.Account, 0, num)
 
 	for i := 1; i <= num; i++ {
@@ -383,8 +383,8 @@ func genListModels(num int) []*api.Account {
 	return accounts
 }
 
-func genMapModels(num int) map[int32]*api.Account {
-	accounts := genListModels(num)
+func genAccountMap(num int) map[int32]*api.Account {
+	accounts := getAccountModels(num)
 	m := make(map[int32]*api.Account)
 	for _, account := range accounts {
 		m[account.Id] = account
