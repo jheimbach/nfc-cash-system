@@ -72,18 +72,19 @@ func TestGroupModel_Create(t *testing.T) {
 				db: db,
 			}
 
-			err := model.Create(tt.args.name, tt.args.description, tt.args.canOverdraw)
+			got, err := model.Create(tt.args.name, tt.args.description, tt.args.canOverdraw)
 			is.NoErr(err)
+			is.Equal(got, &tt.want) // does not return expected group
 
-			var got api.Group
+			var dbGroup api.Group
 			var nullDesc sql.NullString
 			row := db.QueryRow("SELECT id, name, description,can_overdraw FROM `account_groups` WHERE id = ?", tt.want.Id)
-			err = row.Scan(&got.Id, &got.Name, &nullDesc, &got.CanOverdraw)
+			err = row.Scan(&dbGroup.Id, &dbGroup.Name, &nullDesc, &dbGroup.CanOverdraw)
 			is.NoErr(err)
 
-			got.Description = decodeNullableString(nullDesc)
+			dbGroup.Description = decodeNullableString(nullDesc)
 
-			is.Equal(got, tt.want)
+			is.Equal(dbGroup, tt.want)
 		})
 	}
 }
@@ -177,7 +178,7 @@ func TestGroupModel_Update(t *testing.T) {
 	tests := []struct {
 		name        string
 		insert      api.Group
-		want        api.Group
+		want        *api.Group
 		wantErr     bool
 		expectedErr error
 		skipInsert  bool
@@ -187,7 +188,7 @@ func TestGroupModel_Update(t *testing.T) {
 			insert: api.Group{
 				Name: "testgroup",
 			},
-			want: api.Group{
+			want: &api.Group{
 				Id:          1,
 				Name:        "testgroup",
 				Description: "test description",
@@ -199,9 +200,22 @@ func TestGroupModel_Update(t *testing.T) {
 				Name:        "testgroup",
 				Description: "non empty",
 			},
-			want: api.Group{
+			want: &api.Group{
 				Id:          1,
 				Name:        "test",
+				Description: "non empty",
+			},
+		},
+		{
+			name: "update nothing",
+			insert: api.Group{
+				Id:          1,
+				Name:        "testgroup",
+				Description: "non empty",
+			},
+			want: &api.Group{
+				Id:          1,
+				Name:        "testgroup",
 				Description: "non empty",
 			},
 		},
@@ -211,7 +225,7 @@ func TestGroupModel_Update(t *testing.T) {
 				Name:        "testgroup",
 				CanOverdraw: false,
 			},
-			want: api.Group{
+			want: &api.Group{
 				Id:          1,
 				Name:        "testgroup",
 				CanOverdraw: true,
@@ -219,23 +233,14 @@ func TestGroupModel_Update(t *testing.T) {
 		},
 		{
 			name:        "empty group will not be updated",
-			want:        api.Group{},
+			want:        &api.Group{},
 			skipInsert:  true,
 			wantErr:     true,
 			expectedErr: models.ErrModelNotSaved,
 		},
 		{
-			name: "group with non existent id returns models.ErrNotFound",
-			want: api.Group{
-				Id: 12,
-			},
-			skipInsert:  true,
-			wantErr:     true,
-			expectedErr: models.ErrNotFound,
-		},
-		{
 			name: "group without id will not be updated",
-			want: api.Group{
+			want: &api.Group{
 				Name:        "testgroup",
 				Description: "test description",
 			},
@@ -269,7 +274,7 @@ func TestGroupModel_Update(t *testing.T) {
 
 			is.NoErr(err)
 
-			is.Equal(got, &tt.want)
+			is.Equal(got, tt.want)
 
 		})
 	}
@@ -295,7 +300,7 @@ func TestGroupModel_Delete(t *testing.T) {
 		groupId, err := res.LastInsertId()
 		is.NoErr(err)
 
-		err = model.Delete(int(groupId))
+		err = model.Delete(int32(groupId))
 		is.NoErr(err)
 
 		var groupName string
@@ -325,7 +330,7 @@ func TestGroupModel_Delete(t *testing.T) {
 		_, err = db.Exec("INSERT INTO `accounts` (name, group_id, nfc_chip_uid) VALUES (?,?,?)", "test", int(groupId), "testchipid")
 		is.NoErr(err)
 
-		err = model.Delete(int(groupId))
+		err = model.Delete(int32(groupId))
 		if err == nil {
 			t.Errorf("expected error, got none")
 		}
