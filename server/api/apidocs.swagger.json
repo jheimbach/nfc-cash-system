@@ -70,8 +70,8 @@
             "name": "account_id",
             "in": "path",
             "required": true,
-            "type": "string",
-            "format": "int64"
+            "type": "integer",
+            "format": "int32"
           },
           {
             "name": "paging.Limit",

@@ -36,7 +36,7 @@ message TransactionAllRequest {
 }
 
 message TransactionListRequest {
-    int64 account_id = 1;
+    int32 account_id = 1;
     Paging paging = 2;
 }
 
