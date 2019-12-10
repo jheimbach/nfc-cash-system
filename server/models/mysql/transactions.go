@@ -15,6 +15,10 @@ type TransactionModel struct {
 	db *sql.DB
 }
 
+func NewTransactionModel(db *sql.DB) *TransactionModel {
+	return &TransactionModel{db: db}
+}
+
 // Create inserts new Transaction to database will return models.ErrAccountNotFound if account is not associated with account
 func (t *TransactionModel) Create(amount, oldSaldo, newSaldo float64, account *api.Account) (*api.Transaction, error) {
 

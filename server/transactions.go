@@ -5,10 +5,15 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"google.golang.org/grpc"
 )
 
 type transactionServer struct {
 	storage models.TransactionStorager
+}
+
+func RegisterTransactionServer(server *grpc.Server, storage models.TransactionStorager) {
+	api.RegisterTransactionsServiceServer(server, &transactionServer{storage: storage})
 }
 
 func (t *transactionServer) All(ctx context.Context, req *api.TransactionAllRequest) (*api.Transactions, error) {

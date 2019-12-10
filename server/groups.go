@@ -6,6 +6,7 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -14,6 +15,10 @@ var (
 
 type groupserver struct {
 	storage models.GroupStorager
+}
+
+func RegisterGroupServer(s *grpc.Server, storage models.GroupStorager) {
+	api.RegisterGroupsServiceServer(s, &groupserver{storage: storage})
 }
 
 func (g *groupserver) List(ctx context.Context, req *api.GroupListRequest) (*api.Groups, error) {

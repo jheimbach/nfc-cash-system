@@ -29,7 +29,10 @@ func startGrpcServer(host, port string) error {
 	}
 
 	s := grpc.NewServer()
+
 	server.RegisterAccountServer(s, mysql.NewAccountModel(&sql.DB{}))
+	server.RegisterGroupServer(s, mysql.NewGroupModel(&sql.DB{}))
+	server.RegisterTransactionServer(s, mysql.NewTransactionModel(&sql.DB{}))
 
 	if err := s.Serve(lis); err != nil {
 		return fmt.Errorf("failed to serve: %v", err)

@@ -12,6 +12,10 @@ type GroupModel struct {
 	db *sql.DB
 }
 
+func NewGroupModel(db *sql.DB) *GroupModel {
+	return &GroupModel{db: db}
+}
+
 // Creates inserts new group with given fields
 func (g *GroupModel) Create(name, description string, canOverdraw bool) (*api.Group, error) {
 	nullDescription := createNullableString(description)
