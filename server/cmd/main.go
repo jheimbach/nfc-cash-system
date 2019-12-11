@@ -52,9 +52,12 @@ func startGrpcServer(host, port string, database *sql.DB) error {
 
 	s := grpc.NewServer()
 
-	server.RegisterAccountServer(s, mysql.NewAccountModel(database))
-	server.RegisterGroupServer(s, mysql.NewGroupModel(database))
-	server.RegisterTransactionServer(s, mysql.NewTransactionModel(database))
+	groupModel := mysql.NewGroupModel(database)
+	accountModel := mysql.NewAccountModel(database, groupModel)
+	transactionModel := mysql.NewTransactionModel(database, accountModel)
+	server.RegisterGroupServer(s, groupModel)
+	server.RegisterAccountServer(s, accountModel)
+	server.RegisterTransactionServer(s, transactionModel)
 
 	if err := s.Serve(lis); err != nil {
 		return fmt.Errorf("failed to serve: %v", err)
@@ -73,8 +76,17 @@ func startRestGatewayServer(grpcHost, grpcPort, restHost, restPort string) error
 
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	err := api.RegisterAccountServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts)
+	err := api.RegisterGroupsServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts)
+	if err != nil {
+		return err
+	}
 
+	err = api.RegisterAccountServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts)
+	if err != nil {
+		return err
+	}
+
+	err = api.RegisterTransactionsServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts)
 	if err != nil {
 		return err
 	}
