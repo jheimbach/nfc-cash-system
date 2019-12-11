@@ -16,7 +16,7 @@ service AccountService {
             description: "Account service"
         };
     };
-    rpc Create (Account) returns (Account) {
+    rpc Create (AccountCreate) returns (Account) {
         option (google.api.http) = {
             post: "/v1/accounts"
             body: "*"
@@ -55,4 +55,12 @@ message Account {
     double saldo = 4 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account Saldo"}];
     string nfc_chip_id = 5 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account Nfc Chip Uuid"}];
     Group group = 6 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account Group"}];
+}
+
+message AccountCreate {
+    string name = 2 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account name"}];
+    string description = 3 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account description"}];
+    double saldo = 4 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account Startsaldo"}];
+    string nfc_chip_id = 5 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account Nfc Chip Uuid"}];
+    int32 group_id = 6[(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account Group ID"}];
 }

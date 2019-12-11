@@ -34,8 +34,8 @@ func (a *accountserver) List(ctx context.Context, req *api.AccountListRequest) (
 	return accounts, nil
 }
 
-func (a *accountserver) Create(ctx context.Context, req *api.Account) (*api.Account, error) {
-	account, err := a.storage.Create(req.Name, req.Description, req.Saldo, req.Group, req.NfcChipId)
+func (a *accountserver) Create(ctx context.Context, req *api.AccountCreate) (*api.Account, error) {
+	account, err := a.storage.Create(req.Name, req.Description, req.Saldo, req.GroupId, req.NfcChipId)
 	if err != nil {
 		return nil, ErrCouldNotCreateAccount
 	}

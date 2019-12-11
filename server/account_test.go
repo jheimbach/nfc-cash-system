@@ -14,15 +14,15 @@ import (
 )
 
 type accountMockStorager struct {
-	create func(name, description string, startSaldo float64, group *api.Group, nfcChipId string) (*api.Account, error)
+	create func(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error)
 	list   func() (*api.Accounts, error)
 	read   func(id int32) (*api.Account, error)
 	delete func(id int32) error
 	update func(m *api.Account) error
 }
 
-func (a accountMockStorager) Create(name, description string, startSaldo float64, group *api.Group, nfcChipId string) (*api.Account, error) {
-	return a.create(name, description, startSaldo, group, nfcChipId)
+func (a accountMockStorager) Create(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
+	return a.create(name, description, startSaldo, groupId, nfcChipId)
 }
 
 func (a accountMockStorager) GetAll() (*api.Accounts, error) {
@@ -146,15 +146,22 @@ func TestAccountserver_Create(t *testing.T) {
 	is := isPkg.New(t)
 	tests := []struct {
 		name      string
-		input     *api.Account
+		input     *api.AccountCreate
+		want      *api.Account
 		returnErr error
 		wantErr   error
 	}{
 		{
 			name: "create account",
-			input: &api.Account{
-				Id:          1,
+			input: &api.AccountCreate{
 				Name:        "test",
+				Description: "",
+				Saldo:       120,
+				NfcChipId:   "nfcchip",
+				GroupId:     1,
+			},
+			want: &api.Account{
+				Id:          1,
 				Description: "",
 				Saldo:       120,
 				NfcChipId:   "nfcchip",
@@ -165,30 +172,24 @@ func TestAccountserver_Create(t *testing.T) {
 		},
 		{
 			name: "create account with same nfcchip",
-			input: &api.Account{
-				Id:          1,
+			input: &api.AccountCreate{
 				Name:        "test",
 				Description: "",
 				Saldo:       120,
 				NfcChipId:   "nfcchip",
-				Group: &api.Group{
-					Id: 1,
-				},
+				GroupId:     1,
 			},
 			returnErr: models.ErrDuplicateNfcChipId,
 			wantErr:   ErrCouldNotCreateAccount,
 		},
 		{
 			name: "create account with unknown group",
-			input: &api.Account{
-				Id:          1,
+			input: &api.AccountCreate{
 				Name:        "test",
 				Description: "",
 				Saldo:       120,
 				NfcChipId:   "nfcchip",
-				Group: &api.Group{
-					Id: 1,
-				},
+				GroupId:     100,
 			},
 			returnErr: models.ErrGroupNotFound,
 			wantErr:   ErrCouldNotCreateAccount,
@@ -198,25 +199,14 @@ func TestAccountserver_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			created := false
 
 			server := accountserver{
 				storage: accountMockStorager{
-					create: func(name, description string, startSaldo float64, group *api.Group, nfcChipId string) (account *api.Account, err error) {
+					create: func(name, description string, startSaldo float64, groupId int32, nfcChipId string) (account *api.Account, err error) {
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
 						}
-
-						acc := &api.Account{
-							Id:          tt.input.Id,
-							Name:        name,
-							Description: description,
-							Saldo:       startSaldo,
-							NfcChipId:   nfcChipId,
-							Group:       group,
-						}
-						created = true
-						return acc, nil
+						return tt.want, nil
 					},
 				},
 			}
@@ -229,8 +219,7 @@ func TestAccountserver_Create(t *testing.T) {
 			}
 
 			is.NoErr(err)
-			is.Equal(got, tt.input) // got wrong account back
-			is.True(created)        // account was not created
+			is.Equal(got, tt.want) // got wrong account back
 		})
 	}
 }

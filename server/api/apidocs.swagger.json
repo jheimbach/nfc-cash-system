@@ -251,7 +251,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/apiAccount"
+              "$ref": "#/definitions/apiAccountCreate"
             }
           }
         ],
@@ -457,6 +457,33 @@
         "group": {
           "$ref": "#/definitions/apiGroup",
           "title": "Account Group"
+        }
+      }
+    },
+    "apiAccountCreate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Account name"
+        },
+        "description": {
+          "type": "string",
+          "title": "Account description"
+        },
+        "saldo": {
+          "type": "number",
+          "format": "double",
+          "title": "Account Startsaldo"
+        },
+        "nfc_chip_id": {
+          "type": "string",
+          "title": "Account Nfc Chip Uuid"
+        },
+        "group_id": {
+          "type": "integer",
+          "format": "int32",
+          "title": "Account Group ID"
         }
       }
     },
