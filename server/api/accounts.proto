@@ -67,6 +67,7 @@ message Accounts {
         json_schema: {title:"Accounts"}
     };
     repeated Account accounts = 1;
+    int32 total_count = 2;
 }
 
 message Account {

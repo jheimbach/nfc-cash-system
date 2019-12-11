@@ -67,6 +67,7 @@ message Transactions {
         json_schema: {title:"Transactions"}
     };
     repeated Transaction transactions = 1;
+    int32 total_count = 2;
 }
 
 message Transaction {
