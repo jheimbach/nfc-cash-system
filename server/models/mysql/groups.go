@@ -2,6 +2,8 @@ package mysql
 
 import (
 	"database/sql"
+	"strings"
+
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/go-sql-driver/mysql"
@@ -104,12 +106,58 @@ func (g *GroupModel) Delete(id int32) error {
 
 func (g *GroupModel) GetAll() (*api.Groups, error) {
 
-	var groups []*api.Group
 	rows, err := g.db.Query("SELECT id, name, description, can_overdraw FROM account_groups")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
+	groups, err := scanGroups(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.Groups{Groups: groups}, nil
+}
+
+func (g *GroupModel) GetAllByIds(ids []int32) (map[int32]*api.Group, error) {
+	if len(ids) == 0 {
+		return nil, models.ErrNotFound //todo maybe own error?
+	}
+
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+
+	readStmt := `SELECT id,name,description,can_overdraw FROM account_groups WHERE id IN (?` + strings.Repeat(",?", len(ids)-1) + `)`
+	rows, err := g.db.Query(readStmt, args...)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	groups, err := scanGroups(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	if groups == nil {
+		return nil, nil
+	}
+
+	m := make(map[int32]*api.Group, len(groups))
+
+	for _, group := range groups {
+		m[group.Id] = group
+	}
+
+	return m, nil
+}
+
+func scanGroups(rows *sql.Rows) ([]*api.Group, error) {
+	var groups []*api.Group
 
 	for rows.Next() {
 		g := &api.Group{}
@@ -126,6 +174,5 @@ func (g *GroupModel) GetAll() (*api.Groups, error) {
 		}
 		groups = append(groups, g)
 	}
-
-	return &api.Groups{Groups: groups}, nil
+	return groups, nil
 }

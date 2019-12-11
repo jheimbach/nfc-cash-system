@@ -359,6 +359,59 @@ func TestGroupModel_GetAll(t *testing.T) {
 	is.Equal(len(groups.Groups), 4) // expected 4 groups
 }
 
+func TestGroupModel_GetAllByIds(t *testing.T) {
+	isIntegrationTest(t)
+	is := isPkg.New(t)
+
+	db, dbTeardown := dbInitializedForGroupList(t)
+	defer func() {
+		dbTeardown()
+		db.Close()
+	}()
+
+	tests := []struct {
+		name    string
+		input   []int32
+		want    map[int32]*api.Group
+		wantErr error
+	}{
+		{
+			name:  "get single group with id 1",
+			input: []int32{1},
+			want:  map[int32]*api.Group{1: mockGroupOne},
+		},
+		{
+			name:  "get multiple groups with id 1 and 2",
+			input: []int32{1, 2},
+			want:  mockGroupMap,
+		},
+		{
+			name:  "input ids are not found",
+			input: []int32{100, 200},
+			want:  nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			model := GroupModel{
+				db: db,
+			}
+
+			got, err := model.GetAllByIds(tt.input)
+			if tt.wantErr != nil {
+				is.Equal(err, tt.wantErr)
+				return
+			}
+
+			is.NoErr(err)
+
+			is.Equal(got, tt.want)
+		})
+	}
+}
+
 func dbInitializedForGroupList(t *testing.T) (*sql.DB, func()) {
 	db, setup, teardown := getTestDb(t)
 	setup("../testdata/group_list.sql")
