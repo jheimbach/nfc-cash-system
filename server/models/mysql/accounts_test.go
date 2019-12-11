@@ -9,52 +9,94 @@ import (
 	isPkg "github.com/matryer/is"
 )
 
+var (
+	mockGroupOne = &api.Group{
+		Id:          1,
+		Name:        "testgroup1",
+		Description: "",
+		CanOverdraw: false,
+	}
+	mockGroupTwo = &api.Group{
+		Id:          2,
+		Name:        "testgroup2",
+		Description: "with description",
+		CanOverdraw: false,
+	}
+	mockGroupMap = map[int32]*api.Group{
+		mockGroupOne.Id: mockGroupOne,
+		mockGroupTwo.Id: mockGroupTwo,
+	}
+)
+
+type groupModelMock struct {
+	test   *testing.T
+	groups map[int32]*api.Group
+}
+
+func (g *groupModelMock) GetAllByIds(ids []int32) (map[int32]*api.Group, error) {
+	m := make(map[int32]*api.Group, len(ids))
+
+	for _, id := range ids {
+		if group, ok := g.groups[id]; ok {
+			m[id] = group
+		}
+	}
+
+	return m, nil
+}
+
+func (g *groupModelMock) Create(name, description string, canOverdraw bool) (*api.Group, error) {
+	g.test.Fatalf("create of groupmodelmock is not implemented and should not be used")
+	return nil, nil
+}
+
+func (g *groupModelMock) GetAll() (*api.Groups, error) {
+	if len(g.groups) < 1 {
+		return nil, models.ErrNotFound
+	}
+	var groups []*api.Group
+	for _, group := range g.groups {
+		groups = append(groups, group)
+	}
+	return &api.Groups{Groups: groups}, nil
+}
+
+func (g *groupModelMock) Read(id int32) (*api.Group, error) {
+	if group, ok := g.groups[id]; ok {
+		return group, nil
+	}
+
+	return nil, models.ErrGroupNotFound
+}
+
+func (g *groupModelMock) Update(group *api.Group) (*api.Group, error) {
+	g.test.Fatalf("update of groupmodelmock is not implemented and should not be used")
+	return nil, nil
+}
+
+func (g *groupModelMock) Delete(id int32) error {
+	g.test.Fatalf("delete of groupmodelmock is not implemented and should not be used")
+	return nil
+}
+
 func TestAccountModel_Create(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.New(t)
-
-	type fields struct {
-		name, description string
-		saldo             float64
-		group             *api.Group
-		nfcChipId         string
-	}
 	tests := []struct {
 		name          string
-		accountFields fields
+		accountCreate *api.AccountCreate
 		want          *api.Account
 		wantErr       bool
 		expectedErr   error
 	}{
 		{
 			name: "creates account",
-			accountFields: fields{
-				name:        "tim",
-				description: "",
-				saldo:       12,
-				group:       &api.Group{Id: 1},
-				nfcChipId:   "teststringteststring",
-			},
-		},
-		{
-			name: "creates account but group does not exists",
-			accountFields: fields{
-				name:        "tim",
-				description: "",
-				saldo:       12,
-				group:       &api.Group{Id: 100},
-			},
-			wantErr:     true,
-			expectedErr: models.ErrGroupNotFound,
-		},
-		{
-			name: "create account returned struct is correct",
-			accountFields: fields{
-				name:        "tim",
-				description: "",
-				saldo:       12,
-				group:       &api.Group{Id: 1},
-				nfcChipId:   "teststringteststring",
+			accountCreate: &api.AccountCreate{
+				Name:        "tim",
+				Description: "",
+				Saldo:       12,
+				GroupId:     1,
+				NfcChipId:   "teststringteststring",
 			},
 			want: &api.Account{
 				Id:          1,
@@ -62,8 +104,20 @@ func TestAccountModel_Create(t *testing.T) {
 				Description: "",
 				Saldo:       12,
 				NfcChipId:   "teststringteststring",
-				Group:       &api.Group{Id: 1},
+				Group:       mockGroupOne,
 			},
+		},
+		{
+			name: "creates account but group does not exists",
+			accountCreate: &api.AccountCreate{
+				Name:        "tim",
+				Description: "",
+				Saldo:       12,
+				GroupId:     100,
+				NfcChipId:   "teststring",
+			},
+			wantErr:     true,
+			expectedErr: models.ErrGroupNotFound,
 		},
 	}
 	for _, tt := range tests {
@@ -74,8 +128,12 @@ func TestAccountModel_Create(t *testing.T) {
 
 			model := AccountModel{
 				db: db,
+				groupModel: &groupModelMock{
+					test:   t,
+					groups: mockGroupMap,
+				},
 			}
-			account, err := model.Create(tt.accountFields.name, tt.accountFields.description, tt.accountFields.saldo, tt.accountFields.group, tt.accountFields.nfcChipId)
+			account, err := model.Create(tt.accountCreate.Name, tt.accountCreate.Description, tt.accountCreate.Saldo, tt.accountCreate.GroupId, tt.accountCreate.NfcChipId)
 
 			if tt.wantErr {
 				is.Equal(err, tt.expectedErr) // got not the expected error
@@ -87,15 +145,15 @@ func TestAccountModel_Create(t *testing.T) {
 				is.Equal(account, tt.want) // returned object is incorrect
 			}
 
-			got := fields{group: &api.Group{}}
+			got := &api.Account{Group: mockGroupOne}
 			var gotDescription sql.NullString
 
-			err = db.QueryRow("SELECT name,description,saldo,group_id,nfc_chip_uid FROM accounts WHERE id=?", 1).Scan(
-				&got.name, &gotDescription, &got.saldo, &got.group.Id, &got.nfcChipId)
+			err = db.QueryRow("SELECT id,name,description,saldo,nfc_chip_uid FROM accounts WHERE id=?", 1).Scan(
+				&got.Id, &got.Name, &gotDescription, &got.Saldo, &got.NfcChipId)
 			is.NoErr(err) // got scan error
-			got.description = decodeNullableString(gotDescription)
+			got.Description = decodeNullableString(gotDescription)
 
-			is.Equal(got, tt.accountFields)
+			is.Equal(got, tt.want)
 
 		})
 	}
@@ -106,6 +164,10 @@ func TestAccountModel_Create(t *testing.T) {
 
 		model := AccountModel{
 			db: db,
+			groupModel: &groupModelMock{
+				test:   t,
+				groups: mockGroupMap,
+			},
 		}
 
 		insertTestAccount(t, db, api.Account{
@@ -114,11 +176,9 @@ func TestAccountModel_Create(t *testing.T) {
 			Description: "",
 			Saldo:       12,
 			NfcChipId:   "same_id",
-			Group: &api.Group{
-				Id: 1,
-			},
+			Group:       mockGroupOne,
 		})
-		_, err := model.Create("another tim", "", 0, &api.Group{Id: 1}, "same_id")
+		_, err := model.Create("another tim", "", 0, 1, "same_id")
 		if err != nil && err != models.ErrDuplicateNfcChipId {
 			t.Errorf("got err %q, expected %q", err, models.ErrDuplicateNfcChipId)
 		}
@@ -139,15 +199,17 @@ func TestAccountModel_Read(t *testing.T) {
 			Description: "",
 			Saldo:       12,
 			NfcChipId:   "testchipid",
-			Group: &api.Group{
-				Id: 1,
-			},
+			Group:       mockGroupOne,
 		}
 
 		insertTestAccount(t, db, *want)
 
 		model := AccountModel{
 			db: db,
+			groupModel: &groupModelMock{
+				test:   t,
+				groups: mockGroupMap,
+			},
 		}
 
 		got, err := model.Read(1)
@@ -165,15 +227,17 @@ func TestAccountModel_Read(t *testing.T) {
 			Id:    1,
 			Name:  "tim",
 			Saldo: 12,
-			Group: &api.Group{
-				Id: 1,
-			},
+			Group: mockGroupOne,
 		}
 
 		insertTestAccount(t, db, *want)
 
 		model := AccountModel{
 			db: db,
+			groupModel: &groupModelMock{
+				test:   t,
+				groups: mockGroupMap,
+			},
 		}
 
 		got, err := model.Read(1)
@@ -188,6 +252,10 @@ func TestAccountModel_Read(t *testing.T) {
 
 		model := AccountModel{
 			db: db,
+			groupModel: &groupModelMock{
+				test:   t,
+				groups: mockGroupMap,
+			},
 		}
 
 		_, err := model.Read(100)
@@ -215,9 +283,7 @@ func TestAccountModel_Update(t *testing.T) {
 				Id:    1,
 				Name:  "tim",
 				Saldo: 12,
-				Group: &api.Group{
-					Id: 1,
-				},
+				Group: mockGroupOne,
 			},
 			want: api.Account{
 				Id:          1,
@@ -444,6 +510,10 @@ func TestAccountModel_GetAll(t *testing.T) {
 
 	model := AccountModel{
 		db: db,
+		groupModel: &groupModelMock{
+			test:   t,
+			groups: mockGroupMap,
+		},
 	}
 
 	accounts, err := model.GetAll()
@@ -463,6 +533,10 @@ func TestAccountModel_GetAllByGroup(t *testing.T) {
 
 	model := AccountModel{
 		db: db,
+		groupModel: &groupModelMock{
+			test:   t,
+			groups: mockGroupMap,
+		},
 	}
 
 	accounts, err := model.GetAllByGroup(1)

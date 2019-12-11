@@ -10,7 +10,8 @@ import (
 
 // AccountModel provides API for the accounts table
 type AccountModel struct {
-	db *sql.DB
+	db         *sql.DB
+	groupModel models.GroupStorager
 }
 
 func NewAccountModel(db *sql.DB) *AccountModel {
@@ -19,8 +20,13 @@ func NewAccountModel(db *sql.DB) *AccountModel {
 
 // Create inserts new account it returns error models.ErrGroupNotFound if the groupId is not associated with a group
 // it returns models.ErrDuplicateNfcChipId if the provided nfcchipid is already in the database present
-func (a *AccountModel) Create(name, description string, startSaldo float64, group *api.Group, nfcChipId string) (*api.Account, error) {
+func (a *AccountModel) Create(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
 	nullDescription := createNullableString(description)
+
+	group, err := a.groupModel.Read(groupId)
+	if err != nil {
+		return nil, err
+	}
 
 	createStmt := `INSERT INTO accounts (name, description, saldo, group_id, nfc_chip_uid) VALUES (?,?,?,?,?)`
 
@@ -38,7 +44,7 @@ func (a *AccountModel) Create(name, description string, startSaldo float64, grou
 		return nil, err
 	}
 
-	// mysql result returns no error, so we can ignore it
+	// mysql implementation of sql.Result returns no error on LastInsertId, so we can ignore it
 	lastId, _ := res.LastInsertId()
 
 	return &api.Account{
@@ -55,10 +61,11 @@ func (a *AccountModel) Create(name, description string, startSaldo float64, grou
 func (a *AccountModel) Read(id int32) (*api.Account, error) {
 	readStmt := `SELECT id, name, description, saldo, group_id, nfc_chip_uid FROM accounts WHERE id=?`
 
-	m := &api.Account{Group: &api.Group{}}
+	m := &api.Account{}
+	var groupId int32
 	row := a.db.QueryRow(readStmt, id)
 	var nullDesc sql.NullString
-	err := row.Scan(&m.Id, &m.Name, &nullDesc, &m.Saldo, &m.Group.Id, &m.NfcChipId)
+	err := row.Scan(&m.Id, &m.Name, &nullDesc, &m.Saldo, &groupId, &m.NfcChipId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, models.ErrNotFound
@@ -66,6 +73,12 @@ func (a *AccountModel) Read(id int32) (*api.Account, error) {
 		return nil, err
 	}
 	m.Description = decodeNullableString(nullDesc)
+
+	group, err := a.groupModel.Read(groupId)
+	if err != nil {
+		return nil, err
+	}
+	m.Group = group
 
 	return m, nil
 }
@@ -119,7 +132,7 @@ func (a *AccountModel) GetAll() (*api.Accounts, error) {
 
 	defer rows.Close()
 
-	accounts, err := scanRowsToAccounts(rows)
+	accounts, err := a.scanRowsToAccounts(rows)
 
 	if err != nil {
 		return nil, err
@@ -137,12 +150,13 @@ func (a *AccountModel) GetAllByGroup(groupId int) ([]*api.Account, error) {
 		return nil, err
 	}
 
-	return scanRowsToAccounts(rows)
+	return a.scanRowsToAccounts(rows)
 }
 
 // scanRowsToAccounts returns slice of Accounts from given sql.Rows
-func scanRowsToAccounts(rows *sql.Rows) ([]*api.Account, error) {
+func (a *AccountModel) scanRowsToAccounts(rows *sql.Rows) ([]*api.Account, error) {
 	var accounts []*api.Account
+	var groupIds []int32
 
 	for rows.Next() {
 		s := &api.Account{Group: &api.Group{}}
@@ -156,8 +170,18 @@ func scanRowsToAccounts(rows *sql.Rows) ([]*api.Account, error) {
 
 		s.Description = decodeNullableString(nullDesc)
 
+		groupIds = append(groupIds, s.Group.Id)
 		accounts = append(accounts, s)
 	}
 
+	groups, err := a.groupModel.GetAllByIds(groupIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, account := range accounts {
+		account.Group = groups[account.Group.Id]
+	}
 	return accounts, nil
 }
