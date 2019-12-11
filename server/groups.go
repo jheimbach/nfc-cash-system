@@ -29,7 +29,7 @@ func (g *groupserver) List(ctx context.Context, req *api.GroupListRequest) (*api
 	return groups, nil
 }
 
-func (g *groupserver) Create(ctx context.Context, req *api.Group) (*api.Group, error) {
+func (g *groupserver) Create(ctx context.Context, req *api.GroupCreate) (*api.Group, error) {
 	group, err := g.storage.Create(req.Name, req.Description, req.CanOverdraw)
 
 	if err != nil {
