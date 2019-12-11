@@ -32,7 +32,7 @@ func (t *transactionServer) List(ctx context.Context, req *api.TransactionListRe
 	return transactions, nil
 }
 
-func (t *transactionServer) Create(ctx context.Context, req *api.Transaction) (*api.Transaction, error) {
+func (t *transactionServer) Create(ctx context.Context, req *api.TransactionCreate) (*api.Transaction, error) {
 	transaction, err := t.storage.Create(req.Amount, req.OldSaldo, req.NewSaldo, req.Account)
 	if err != nil {
 		return nil, ErrSomethingWentWrong

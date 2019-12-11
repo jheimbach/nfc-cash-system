@@ -14,29 +14,20 @@ func TestTransactionModel_Create(t *testing.T) {
 	is := isPkg.New(t)
 	db, dbSetup, dbTeardown := getTestDb(t)
 	defer db.Close()
-
-	type args struct {
-		amount   float64
-		oldSaldo float64
-		newSaldo float64
-		account  *api.Account
-	}
 	tests := []struct {
 		name        string
-		args        args
+		input       *api.TransactionCreate
 		want        *api.Transaction
 		wantErr     bool
 		expectedErr error
 	}{
 		{
 			name: "create new transaction",
-			args: args{
-				amount:   -6,
-				oldSaldo: 12,
-				newSaldo: 6,
-				account: &api.Account{
-					Id: 1,
-				},
+			input: &api.TransactionCreate{
+				Amount:    -6,
+				OldSaldo:  12,
+				NewSaldo:  6,
+				AccountId: 1,
 			},
 			want: &api.Transaction{
 				Id:       1,
@@ -49,13 +40,11 @@ func TestTransactionModel_Create(t *testing.T) {
 			},
 		}, {
 			name: "create new transaction with nonexistent account",
-			args: args{
-				amount:   -6,
-				oldSaldo: 12,
-				newSaldo: 6,
-				account: &api.Account{
-					Id: 100,
-				},
+			input: &api.TransactionCreate{
+				Amount:    -6,
+				OldSaldo:  12,
+				NewSaldo:  6,
+				AccountId: 100,
 			},
 			wantErr:     true,
 			expectedErr: models.ErrAccountNotFound,
@@ -72,7 +61,7 @@ func TestTransactionModel_Create(t *testing.T) {
 				db: db,
 			}
 
-			got, err := model.Create(tt.args.amount, tt.args.oldSaldo, tt.args.newSaldo, tt.args.account)
+			got, err := model.Create(tt.input.Amount, tt.input.OldSaldo, tt.input.NewSaldo, tt.input.AccountId)
 
 			if tt.wantErr {
 				if err != tt.expectedErr {

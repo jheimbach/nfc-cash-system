@@ -20,12 +20,11 @@ func NewTransactionModel(db *sql.DB) *TransactionModel {
 }
 
 // Create inserts new Transaction to database will return models.ErrAccountNotFound if account is not associated with account
-func (t *TransactionModel) Create(amount, oldSaldo, newSaldo float64, account *api.Account) (*api.Transaction, error) {
-
+func (t *TransactionModel) Create(amount, oldSaldo, newSaldo float64, accountId int32) (*api.Transaction, error) {
 	now := time.Now()
 	nowProto, _ := ptypes.TimestampProto(now)
 	insertStatement := `INSERT INTO transactions (new_saldo, old_saldo, amount, account_id, created) VALUES (?,?,?,?,?)`
-	res, err := t.db.Exec(insertStatement, newSaldo, oldSaldo, amount, account.Id, now)
+	res, err := t.db.Exec(insertStatement, newSaldo, oldSaldo, amount, accountId, now)
 
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok && err.Number == 1452 {
