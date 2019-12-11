@@ -10,8 +10,8 @@ import (
 
 // AccountModel provides API for the accounts table
 type AccountModel struct {
-	db         *sql.DB
-	groupModel models.GroupStorager
+	db     *sql.DB
+	groups models.GroupStorager
 }
 
 func NewAccountModel(db *sql.DB) *AccountModel {
@@ -23,7 +23,7 @@ func NewAccountModel(db *sql.DB) *AccountModel {
 func (a *AccountModel) Create(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
 	nullDescription := createNullableString(description)
 
-	group, err := a.groupModel.Read(groupId)
+	group, err := a.groups.Read(groupId)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (a *AccountModel) Read(id int32) (*api.Account, error) {
 	}
 	m.Description = decodeNullableString(nullDesc)
 
-	group, err := a.groupModel.Read(groupId)
+	group, err := a.groups.Read(groupId)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +174,7 @@ func (a *AccountModel) scanRowsToAccounts(rows *sql.Rows) ([]*api.Account, error
 		accounts = append(accounts, s)
 	}
 
-	groups, err := a.groupModel.GetAllByIds(groupIds)
+	groups, err := a.groups.GetAllByIds(groupIds)
 
 	if err != nil {
 		return nil, err

@@ -128,7 +128,7 @@ func TestAccountModel_Create(t *testing.T) {
 
 			model := AccountModel{
 				db: db,
-				groupModel: &groupModelMock{
+				groups: &groupModelMock{
 					test:   t,
 					groups: mockGroupMap,
 				},
@@ -164,7 +164,7 @@ func TestAccountModel_Create(t *testing.T) {
 
 		model := AccountModel{
 			db: db,
-			groupModel: &groupModelMock{
+			groups: &groupModelMock{
 				test:   t,
 				groups: mockGroupMap,
 			},
@@ -206,7 +206,7 @@ func TestAccountModel_Read(t *testing.T) {
 
 		model := AccountModel{
 			db: db,
-			groupModel: &groupModelMock{
+			groups: &groupModelMock{
 				test:   t,
 				groups: mockGroupMap,
 			},
@@ -234,7 +234,7 @@ func TestAccountModel_Read(t *testing.T) {
 
 		model := AccountModel{
 			db: db,
-			groupModel: &groupModelMock{
+			groups: &groupModelMock{
 				test:   t,
 				groups: mockGroupMap,
 			},
@@ -252,7 +252,7 @@ func TestAccountModel_Read(t *testing.T) {
 
 		model := AccountModel{
 			db: db,
-			groupModel: &groupModelMock{
+			groups: &groupModelMock{
 				test:   t,
 				groups: mockGroupMap,
 			},
@@ -510,7 +510,7 @@ func TestAccountModel_GetAll(t *testing.T) {
 
 	model := AccountModel{
 		db: db,
-		groupModel: &groupModelMock{
+		groups: &groupModelMock{
 			test:   t,
 			groups: mockGroupMap,
 		},
@@ -533,7 +533,7 @@ func TestAccountModel_GetAllByGroup(t *testing.T) {
 
 	model := AccountModel{
 		db: db,
-		groupModel: &groupModelMock{
+		groups: &groupModelMock{
 			test:   t,
 			groups: mockGroupMap,
 		},
