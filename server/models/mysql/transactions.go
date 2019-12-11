@@ -12,15 +12,24 @@ import (
 
 // TransactionModel provides API for the transactions table
 type TransactionModel struct {
-	db *sql.DB
+	db       *sql.DB
+	accounts models.AccountStorager
 }
 
-func NewTransactionModel(db *sql.DB) *TransactionModel {
-	return &TransactionModel{db: db}
+func NewTransactionModel(db *sql.DB, accounts models.AccountStorager) *TransactionModel {
+	return &TransactionModel{
+		db:       db,
+		accounts: accounts,
+	}
 }
 
 // Create inserts new Transaction to database will return models.ErrAccountNotFound if account is not associated with account
 func (t *TransactionModel) Create(amount, oldSaldo, newSaldo float64, accountId int32) (*api.Transaction, error) {
+	account, err := t.accounts.Read(accountId)
+	if err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	nowProto, _ := ptypes.TimestampProto(now)
 	insertStatement := `INSERT INTO transactions (new_saldo, old_saldo, amount, account_id, created) VALUES (?,?,?,?,?)`
