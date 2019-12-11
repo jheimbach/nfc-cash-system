@@ -6,25 +6,42 @@ import "globals.proto";
 import "accounts.proto";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 service TransactionsService {
     rpc All (TransactionAllRequest) returns (Transactions) {
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            operation_id: "List all transactions"
+            description: "Lists all transactions, can be limited with paging options"
+        };
         option (google.api.http) = {
             get: "/v1/transactions"
         };
     };
     rpc List (TransactionListRequest) returns (Transactions) {
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            operation_id: "List transactions"
+            description: "Lists all Transactions for given account, can be limited with paging options"
+        };
         option (google.api.http) = {
             get: "/v1/account/{account_id}/transactions"
         };
     };
-    rpc Create (Transaction) returns (Transaction) {
+    rpc Create (TransactionCreate) returns (Transaction) {
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            operation_id: "Create transaction"
+            description: "Creates new transaction"
+        };
         option (google.api.http) = {
-            post: "/v1/account/{account.id}/transactions"
+            post: "/v1/account/{account_id}/transactions"
             body: "*"
         };
     };
     rpc Get (TransactionRequest) returns (Transaction) {
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            operation_id: "Get transaction"
+            description: "Returns single transaction"
+        };
         option (google.api.http) = {
             get: "/v1/account/{account_id}/transactions/{id}"
         };
@@ -46,14 +63,30 @@ message TransactionRequest {
 }
 
 message Transactions {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: {title:"Transactions"}
+    };
     repeated Transaction transactions = 1;
 }
 
 message Transaction {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: {title:"Transaction"}
+    };
     int32 id = 1;
     double old_saldo = 2;
     double new_saldo = 3;
     double amount = 4;
     google.protobuf.Timestamp created = 5;
     Account account = 6;
+}
+
+message TransactionCreate {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: {title:"TransactionCreation"}
+    };
+    double old_saldo = 1;
+    double new_saldo = 2;
+    double amount = 3;
+    int32 account_id = 4;
 }

@@ -65,7 +65,7 @@ func local_request_GroupsService_List_0(ctx context.Context, marshaler runtime.M
 }
 
 func request_GroupsService_Create_0(ctx context.Context, marshaler runtime.Marshaler, client GroupsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Group
+	var protoReq GroupCreate
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -82,7 +82,7 @@ func request_GroupsService_Create_0(ctx context.Context, marshaler runtime.Marsh
 }
 
 func local_request_GroupsService_Create_0(ctx context.Context, marshaler runtime.Marshaler, server GroupsServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Group
+	var protoReq GroupCreate
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)

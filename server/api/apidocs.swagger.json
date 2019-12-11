@@ -21,42 +21,10 @@
     "application/json"
   ],
   "paths": {
-    "/v1/account/{account.id}/transactions": {
-      "post": {
-        "operationId": "Create",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/apiTransaction"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "account.id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/apiTransaction"
-            }
-          }
-        ],
-        "tags": [
-          "TransactionsService"
-        ]
-      }
-    },
     "/v1/account/{account_id}/transactions": {
       "get": {
-        "operationId": "List",
+        "description": "Lists all Transactions for given account, can be limited with paging options",
+        "operationId": "List transactions",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -91,11 +59,44 @@
         "tags": [
           "TransactionsService"
         ]
+      },
+      "post": {
+        "description": "Creates new transaction",
+        "operationId": "Create transaction",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiTransaction"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiTransactionCreate"
+            }
+          }
+        ],
+        "tags": [
+          "TransactionsService"
+        ]
       }
     },
     "/v1/account/{account_id}/transactions/{id}": {
       "get": {
-        "operationId": "Get",
+        "description": "Returns single transaction",
+        "operationId": "Get transaction",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -127,7 +128,8 @@
     },
     "/v1/account/{id}": {
       "get": {
-        "operationId": "Get",
+        "description": "Returns single account with given id",
+        "operationId": "Get account",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -150,7 +152,8 @@
         ]
       },
       "delete": {
-        "operationId": "Delete",
+        "description": "Deletes account with given id",
+        "operationId": "Delete account",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -173,7 +176,8 @@
         ]
       },
       "put": {
-        "operationId": "Update",
+        "description": "Updates account with given id, all fields must be send",
+        "operationId": "Update account",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -189,6 +193,14 @@
             "required": true,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/apiAccount"
+            }
           }
         ],
         "tags": [
@@ -198,8 +210,8 @@
     },
     "/v1/accounts": {
       "get": {
-        "description": "Account service",
-        "operationId": "List",
+        "description": "Returns all account, can be limited with paged options and filtered by group",
+        "operationId": "List all accounts",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -236,7 +248,8 @@
         ]
       },
       "post": {
-        "operationId": "Create",
+        "description": "Creates new account",
+        "operationId": "Create account",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -262,7 +275,8 @@
     },
     "/v1/group/{id}": {
       "get": {
-        "operationId": "Get",
+        "description": "Returns single group with given id",
+        "operationId": "Get group",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -308,7 +322,8 @@
         ]
       },
       "put": {
-        "operationId": "Update",
+        "description": "Updates group, all fields must be send",
+        "operationId": "Update group",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -341,7 +356,8 @@
     },
     "/v1/groups": {
       "get": {
-        "operationId": "List",
+        "description": "Lists all groups, can be limited with paging options",
+        "operationId": "List groups",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -371,7 +387,8 @@
         ]
       },
       "post": {
-        "operationId": "Create",
+        "description": "Creates group",
+        "operationId": "Create group",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -386,7 +403,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/apiGroup"
+              "$ref": "#/definitions/apiGroupCreate"
             }
           }
         ],
@@ -397,7 +414,8 @@
     },
     "/v1/transactions": {
       "get": {
-        "operationId": "All",
+        "description": "Lists all transactions, can be limited with paging options",
+        "operationId": "List all transactions",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -458,7 +476,8 @@
           "$ref": "#/definitions/apiGroup",
           "title": "Account Group"
         }
-      }
+      },
+      "title": "Account"
     },
     "apiAccountCreate": {
       "type": "object",
@@ -485,7 +504,8 @@
           "format": "int32",
           "title": "Account Group ID"
         }
-      }
+      },
+      "title": "AccountCreation"
     },
     "apiAccounts": {
       "type": "object",
@@ -496,7 +516,8 @@
             "$ref": "#/definitions/apiAccount"
           }
         }
-      }
+      },
+      "title": "Accounts"
     },
     "apiGroup": {
       "type": "object",
@@ -515,7 +536,24 @@
           "type": "boolean",
           "format": "boolean"
         }
-      }
+      },
+      "title": "Group"
+    },
+    "apiGroupCreate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "can_overdraw": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      },
+      "title": "GroupCreation"
     },
     "apiGroups": {
       "type": "object",
@@ -526,7 +564,8 @@
             "$ref": "#/definitions/apiGroup"
           }
         }
-      }
+      },
+      "title": "Groups"
     },
     "apiPaging": {
       "type": "object",
@@ -539,7 +578,8 @@
           "type": "integer",
           "format": "int32"
         }
-      }
+      },
+      "title": "PagingOptions"
     },
     "apiStatus": {
       "type": "object",
@@ -551,7 +591,8 @@
         "error_message": {
           "type": "string"
         }
-      }
+      },
+      "title": "Status"
     },
     "apiTransaction": {
       "type": "object",
@@ -579,7 +620,30 @@
         "account": {
           "$ref": "#/definitions/apiAccount"
         }
-      }
+      },
+      "title": "Transaction"
+    },
+    "apiTransactionCreate": {
+      "type": "object",
+      "properties": {
+        "old_saldo": {
+          "type": "number",
+          "format": "double"
+        },
+        "new_saldo": {
+          "type": "number",
+          "format": "double"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "account_id": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "TransactionCreation"
     },
     "apiTransactions": {
       "type": "object",
@@ -590,7 +654,8 @@
             "$ref": "#/definitions/apiTransaction"
           }
         }
-      }
+      },
+      "title": "Transactions"
     }
   }
 }
