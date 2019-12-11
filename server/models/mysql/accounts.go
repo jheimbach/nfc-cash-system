@@ -14,8 +14,11 @@ type AccountModel struct {
 	groups models.GroupStorager
 }
 
-func NewAccountModel(db *sql.DB) *AccountModel {
-	return &AccountModel{db: db}
+func NewAccountModel(db *sql.DB, model models.GroupStorager) *AccountModel {
+	return &AccountModel{
+		db:     db,
+		groups: model,
+	}
 }
 
 // Create inserts new account it returns error models.ErrGroupNotFound if the groupId is not associated with a group
