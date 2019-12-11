@@ -13,11 +13,12 @@ import (
 )
 
 type groupMockStorage struct {
-	create func(name, description string, canOverdraw bool) (*api.Group, error)
-	getAll func() (*api.Groups, error)
-	read   func(id int32) (*api.Group, error)
-	update func(group *api.Group) (*api.Group, error)
-	delete func(id int32) error
+	create      func(name, description string, canOverdraw bool) (*api.Group, error)
+	getAll      func() (*api.Groups, error)
+	read        func(id int32) (*api.Group, error)
+	update      func(group *api.Group) (*api.Group, error)
+	delete      func(id int32) error
+	getAllByIds func(ids []int32) (map[int32]*api.Group, error)
 }
 
 func (g *groupMockStorage) Create(name, description string, canOverdraw bool) (*api.Group, error) {
@@ -38,6 +39,9 @@ func (g *groupMockStorage) Update(group *api.Group) (*api.Group, error) {
 
 func (g *groupMockStorage) Delete(id int32) error {
 	return g.delete(id)
+}
+func (g groupMockStorage) GetAllByIds(ids []int32) (map[int32]*api.Group, error) {
+	return g.getAllByIds(ids)
 }
 
 func TestGroupserver_List(t *testing.T) {
