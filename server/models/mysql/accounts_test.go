@@ -544,6 +544,67 @@ func TestAccountModel_GetAllByGroup(t *testing.T) {
 	is.Equal(len(accounts), 5)
 }
 
+func TestAccountModel_GetAllByIds(t *testing.T) {
+	isIntegrationTest(t)
+
+	is := isPkg.New(t)
+	db, dbTeardown := dbInitializedForAccountLists(t)
+	defer func() {
+		dbTeardown()
+		db.Close()
+	}()
+
+	tests := []struct {
+		name    string
+		input   []int32
+		want    map[int32]*api.Account
+		wantErr error
+	}{
+		{
+			name:  "return two accounts",
+			input: []int32{1, 2},
+			want: map[int32]*api.Account{
+				1: {
+					Id:        1,
+					Name:      "testaccount1",
+					NfcChipId: "chipid1",
+					Group: &api.Group{
+						Id:   1,
+						Name: "testgroup1",
+					},
+				},
+				2: {
+					Id:        2,
+					Name:      "testaccount2",
+					NfcChipId: "chipid2",
+					Group: &api.Group{
+						Id:   1,
+						Name: "testgroup1",
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			model := AccountModel{
+				db:     db,
+				groups: NewGroupModel(db), //todo mock groupmodel
+			}
+			got, err := model.GetAllByIds(tt.input)
+			if tt.wantErr != nil {
+				is.Equal(err, tt.wantErr) // errors don't match
+				return
+			}
+
+			is.NoErr(err)
+			is.Equal(got, tt.want) // return values don't match
+		})
+	}
+}
+
 func insertTestAccount(t *testing.T, db *sql.DB, account api.Account) {
 	t.Helper()
 

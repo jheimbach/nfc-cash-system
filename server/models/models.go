@@ -20,7 +20,10 @@ var (
 
 type AccountStorager interface {
 	Create(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error)
+
 	GetAll() (*api.Accounts, error)
+	GetAllByIds(ids []int32) (map[int32]*api.Account, error)
+
 	Read(id int32) (*api.Account, error)
 	Delete(id int32) error
 	Update(m *api.Account) error
@@ -28,11 +31,13 @@ type AccountStorager interface {
 
 type GroupStorager interface {
 	Create(name, description string, canOverdraw bool) (*api.Group, error)
+
 	GetAll() (*api.Groups, error)
+	GetAllByIds(ids []int32) (map[int32]*api.Group, error)
+
 	Read(id int32) (*api.Group, error)
 	Update(group *api.Group) (*api.Group, error)
 	Delete(id int32) error
-	GetAllByIds(ids []int32) (map[int32]*api.Group, error)
 }
 
 type TransactionStorager interface {

@@ -2,11 +2,14 @@ package mysql
 
 import (
 	"database/sql"
+	"strings"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/go-sql-driver/mysql"
 )
+
+const accountFields = "id, name, description, saldo, group_id, nfc_chip_uid"
 
 // AccountModel provides API for the accounts table
 type AccountModel struct {
@@ -62,7 +65,7 @@ func (a *AccountModel) Create(name, description string, startSaldo float64, grou
 
 // Read returns account struct for given id
 func (a *AccountModel) Read(id int32) (*api.Account, error) {
-	readStmt := `SELECT id, name, description, saldo, group_id, nfc_chip_uid FROM accounts WHERE id=?`
+	readStmt := `SELECT ` + accountFields + ` FROM accounts WHERE id=?`
 
 	m := &api.Account{}
 	var groupId int32
@@ -120,14 +123,14 @@ func (a *AccountModel) Delete(id int32) error {
 
 // UpdateSaldo provides a simpler update method for the saldo field
 func (a *AccountModel) UpdateSaldo(id int32, newSaldo float64) error {
-	_, err := a.db.Exec("UPDATE accounts SET saldo=? WHERE id=?", newSaldo, id)
+	_, err := a.db.Exec(`UPDATE accounts SET saldo=? WHERE id=?`, newSaldo, id)
 
 	return err
 }
 
 // GetAll returns slice with all accounts in the database
 func (a *AccountModel) GetAll() (*api.Accounts, error) {
-	rows, err := a.db.Query("SELECT id, name, description, saldo, group_id FROM accounts")
+	rows, err := a.db.Query(`SELECT ` + accountFields + ` FROM accounts`)
 
 	if err != nil {
 		return nil, err
@@ -146,14 +149,40 @@ func (a *AccountModel) GetAll() (*api.Accounts, error) {
 
 // GetAllByGroup returns slice with all accounts with given group id
 func (a *AccountModel) GetAllByGroup(groupId int) ([]*api.Account, error) {
-	rows, err := a.db.Query("SELECT id, name, description, saldo, group_id FROM accounts WHERE group_id=?", groupId)
+	rows, err := a.db.Query(`SELECT `+accountFields+` FROM accounts WHERE group_id=?`, groupId)
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 
+	return a.scanRowsToAccounts(rows)
+}
+
+func (a *AccountModel) GetAllByIds(ids []int32) (map[int32]*api.Account, error) {
+	m := make(map[int32]*api.Account, len(ids))
+
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+
+	stmt := `SELECT ` + accountFields + ` FROM accounts WHERE id IN (?` + strings.Repeat(",?", len(ids)-1) + `)`
+	rows, err := a.db.Query(stmt, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	accounts, err := a.scanRowsToAccounts(rows)
 	if err != nil {
 		return nil, err
 	}
 
-	return a.scanRowsToAccounts(rows)
+	for _, account := range accounts {
+		m[account.Id] = account
+	}
+
+	return m, nil
 }
 
 // scanRowsToAccounts returns slice of Accounts from given sql.Rows
@@ -166,7 +195,7 @@ func (a *AccountModel) scanRowsToAccounts(rows *sql.Rows) ([]*api.Account, error
 
 		var nullDesc sql.NullString
 
-		err := rows.Scan(&s.Id, &s.Name, &nullDesc, &s.Saldo, &s.Group.Id)
+		err := rows.Scan(&s.Id, &s.Name, &nullDesc, &s.Saldo, &s.Group.Id, &s.NfcChipId)
 		if err != nil {
 			return nil, err
 		}
