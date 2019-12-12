@@ -129,7 +129,7 @@ func (a *AccountModel) UpdateSaldo(id int32, newSaldo float64) error {
 }
 
 // GetAll returns slice with all accounts in the database
-func (a *AccountModel) GetAll() (*api.Accounts, error) {
+func (a *AccountModel) GetAll() ([]*api.Account, error) {
 	rows, err := a.db.Query(`SELECT ` + accountFields + ` FROM accounts`)
 
 	if err != nil {
@@ -138,13 +138,7 @@ func (a *AccountModel) GetAll() (*api.Accounts, error) {
 
 	defer rows.Close()
 
-	accounts, err := a.scanRowsToAccounts(rows)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &api.Accounts{Accounts: accounts}, nil
+	return a.scanRowsToAccounts(rows)
 }
 
 // GetAllByGroup returns slice with all accounts with given group id

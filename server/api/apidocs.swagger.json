@@ -216,7 +216,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiAccounts"
+              "$ref": "#/definitions/apiListAccountsResponse"
             }
           }
         },
@@ -479,22 +479,6 @@
       },
       "title": "Account"
     },
-    "apiAccounts": {
-      "type": "object",
-      "properties": {
-        "accounts": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/apiAccount"
-          }
-        },
-        "total_count": {
-          "type": "integer",
-          "format": "int32"
-        }
-      },
-      "title": "Accounts"
-    },
     "apiCreateAccountRequest": {
       "type": "object",
       "properties": {
@@ -580,6 +564,22 @@
         }
       },
       "title": "Group"
+    },
+    "apiListAccountsResponse": {
+      "type": "object",
+      "properties": {
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/apiAccount"
+          }
+        },
+        "total_count": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "Accounts"
     },
     "apiListGroupsResponse": {
       "type": "object",

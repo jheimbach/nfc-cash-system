@@ -9,7 +9,7 @@ import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 service AccountService {
-    rpc ListAccounts (ListAccountsRequest) returns (Accounts) {
+    rpc ListAccounts (ListAccountsRequest) returns (ListAccountsResponse) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "List all accounts"
             description: "Returns all account, can be limited with paged options and filtered by group"
@@ -63,7 +63,7 @@ message ListAccountsRequest {
     Paging paging = 2;
 }
 
-message Accounts {
+message ListAccountsResponse {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
         json_schema: {title:"Accounts"}
     };

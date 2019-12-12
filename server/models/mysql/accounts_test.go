@@ -518,7 +518,7 @@ func TestAccountModel_GetAll(t *testing.T) {
 
 	accounts, err := model.GetAll()
 	is.NoErr(err)
-	is.Equal(len(accounts.Accounts), 9) // expect 9 accounts
+	is.Equal(len(accounts), 9) // expect 9 accounts
 }
 
 func TestAccountModel_GetAllByGroup(t *testing.T) {
@@ -568,19 +568,13 @@ func TestAccountModel_GetAllByIds(t *testing.T) {
 					Id:        1,
 					Name:      "testaccount1",
 					NfcChipId: "chipid1",
-					Group: &api.Group{
-						Id:   1,
-						Name: "testgroup1",
-					},
+					Group:     mockGroupOne,
 				},
 				2: {
 					Id:        2,
 					Name:      "testaccount2",
 					NfcChipId: "chipid2",
-					Group: &api.Group{
-						Id:   1,
-						Name: "testgroup1",
-					},
+					Group:     mockGroupOne,
 				},
 			},
 		},
@@ -590,8 +584,11 @@ func TestAccountModel_GetAllByIds(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
 			model := AccountModel{
-				db:     db,
-				groups: NewGroupModel(db), //todo mock groupmodel
+				db: db,
+				groups: &groupModelMock{
+					test:   t,
+					groups: mockGroupMap,
+				},
 			}
 			got, err := model.GetAllByIds(tt.input)
 			if tt.wantErr != nil {

@@ -18,7 +18,7 @@ import (
 
 type accountMockStorager struct {
 	create      func(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error)
-	getAll      func() (*api.Accounts, error)
+	getAll      func() ([]*api.Account, error)
 	getAllByIds func(ids []int32) (map[int32]*api.Account, error)
 	read        func(id int32) (*api.Account, error)
 	delete      func(id int32) error
@@ -29,7 +29,7 @@ func (a accountMockStorager) Create(name, description string, startSaldo float64
 	return a.create(name, description, startSaldo, groupId, nfcChipId)
 }
 
-func (a accountMockStorager) GetAll() (*api.Accounts, error) {
+func (a accountMockStorager) GetAll() ([]*api.Account, error) {
 	return a.getAll()
 }
 
@@ -53,14 +53,15 @@ func TestAccountserver_List(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   *api.ListAccountsRequest
-		want    *api.Accounts
+		want    *api.ListAccountsResponse
 		wantErr error
 	}{
 		{
 			name:  "get simple list of accounts",
 			input: &api.ListAccountsRequest{},
-			want: &api.Accounts{
-				Accounts: getAccountModels(2),
+			want: &api.ListAccountsResponse{
+				Accounts:   getAccountModels(2),
+				TotalCount: 2,
 			},
 		},
 		{
@@ -73,13 +74,11 @@ func TestAccountserver_List(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &accountserver{
-				storage: accountMockStorager{getAll: func() (*api.Accounts, error) {
+				storage: accountMockStorager{getAll: func() ([]*api.Account, error) {
 					if tt.wantErr != nil {
 						return nil, sql.ErrNoRows
 					}
-					return &api.Accounts{
-						Accounts: getAccountModels(2),
-					}, nil
+					return getAccountModels(2), nil
 				},
 				},
 			}

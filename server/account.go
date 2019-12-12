@@ -27,14 +27,17 @@ func RegisterAccountServer(s *grpc.Server, storage models.AccountStorager) {
 	api.RegisterAccountServiceServer(s, &accountserver{storage: storage})
 }
 
-func (a *accountserver) ListAccounts(ctx context.Context, req *api.ListAccountsRequest) (*api.Accounts, error) {
+func (a *accountserver) ListAccounts(ctx context.Context, req *api.ListAccountsRequest) (*api.ListAccountsResponse, error) {
 	accounts, err := a.storage.GetAll()
 
 	if err != nil {
 		return nil, ErrGetAll
 	}
 
-	return accounts, nil
+	return &api.ListAccountsResponse{
+		Accounts:   accounts,
+		TotalCount: int32(len(accounts)),
+	}, nil
 }
 
 func (a *accountserver) CreateAccount(ctx context.Context, req *api.CreateAccountRequest) (*api.Account, error) {
