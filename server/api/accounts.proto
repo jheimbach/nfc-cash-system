@@ -59,7 +59,7 @@ service AccountService {
 }
 
 message ListAccountsRequest {
-    int32 group_filter = 1;
+    int32 group_id = 1;
     Paging paging = 2;
 }
 

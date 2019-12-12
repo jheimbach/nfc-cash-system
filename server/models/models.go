@@ -21,7 +21,7 @@ var (
 type AccountStorager interface {
 	Create(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error)
 
-	GetAll() ([]*api.Account, error)
+	GetAll(groupId, limit, offset int32) ([]*api.Account, error)
 	GetAllByIds(ids []int32) (map[int32]*api.Account, error)
 
 	Read(id int32) (*api.Account, error)

@@ -18,7 +18,7 @@ import (
 
 type accountMockStorager struct {
 	create      func(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error)
-	getAll      func() ([]*api.Account, error)
+	getAll      func(groupId, limit, offset int32) ([]*api.Account, error)
 	getAllByIds func(ids []int32) (map[int32]*api.Account, error)
 	read        func(id int32) (*api.Account, error)
 	delete      func(id int32) error
@@ -29,8 +29,8 @@ func (a accountMockStorager) Create(name, description string, startSaldo float64
 	return a.create(name, description, startSaldo, groupId, nfcChipId)
 }
 
-func (a accountMockStorager) GetAll() ([]*api.Account, error) {
-	return a.getAll()
+func (a accountMockStorager) GetAll(groupId, limit, offset int32) ([]*api.Account, error) {
+	return a.getAll(groupId, limit, offset)
 }
 
 func (a accountMockStorager) GetAllByIds(ids []int32) (map[int32]*api.Account, error) {
@@ -57,28 +57,104 @@ func TestAccountserver_List(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:  "get simple list of accounts",
-			input: &api.ListAccountsRequest{},
+			name: "get simple list of accounts",
+			input: &api.ListAccountsRequest{
+				GroupId: 0,
+				Paging: &api.Paging{
+					Limit:  0,
+					Offset: 0,
+				},
+			},
 			want: &api.ListAccountsResponse{
-				Accounts:   getAccountModels(2),
+				Accounts: func() []*api.Account {
+					return append(getAccountModels(2, 1), getAccountModels(2, 2)...)
+				}(),
+				TotalCount: 4,
+			},
+		},
+		{
+			name: "has error",
+			input: &api.ListAccountsRequest{
+				GroupId: 0,
+				Paging: &api.Paging{
+					Limit:  0,
+					Offset: 0,
+				},
+			},
+			want:    nil,
+			wantErr: ErrGetAll,
+		},
+		{
+			name: "with group",
+			input: &api.ListAccountsRequest{
+				GroupId: 1,
+				Paging: &api.Paging{
+					Limit:  0,
+					Offset: 0,
+				},
+			},
+			want: &api.ListAccountsResponse{
+				Accounts:   getAccountModels(2, 1),
 				TotalCount: 2,
 			},
 		},
 		{
-			name:    "has error",
-			input:   &api.ListAccountsRequest{},
-			want:    nil,
-			wantErr: ErrGetAll,
+			name: "with limit",
+			input: &api.ListAccountsRequest{
+				GroupId: 0,
+				Paging: &api.Paging{
+					Limit:  2,
+					Offset: 0,
+				},
+			},
+			want: &api.ListAccountsResponse{
+				Accounts:   getAccountModels(2, 1),
+				TotalCount: 2,
+			},
+		},
+		{
+			name: "with limit and offset",
+			input: &api.ListAccountsRequest{
+				GroupId: 0,
+				Paging: &api.Paging{
+					Limit:  1,
+					Offset: 1,
+				},
+			},
+			want: &api.ListAccountsResponse{
+				Accounts:   getAccountModels(2, 1)[1:],
+				TotalCount: 1,
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &accountserver{
-				storage: accountMockStorager{getAll: func() ([]*api.Account, error) {
+				storage: accountMockStorager{getAll: func(groupId, limit, offset int32) ([]*api.Account, error) {
 					if tt.wantErr != nil {
 						return nil, sql.ErrNoRows
 					}
-					return getAccountModels(2), nil
+
+					groupOne := getAccountModels(2, 1)
+					groupTwo := getAccountModels(2, 2)
+
+					if groupId == 1 {
+						return groupOne, nil
+					}
+
+					if groupId == 2 {
+						return groupTwo, nil
+					}
+
+					groups := append(groupOne, groupTwo...)
+					if limit > 0 {
+						off := int32(0)
+						if offset > 0 {
+							off = offset
+						}
+						return groups[off : off+limit], nil
+					}
+					return groups, nil
 				},
 				},
 			}
@@ -359,7 +435,7 @@ func TestAccountserver_Delete(t *testing.T) {
 
 }
 
-func getAccountModels(num int) []*api.Account {
+func getAccountModels(num int, groupId int32) []*api.Account {
 	accounts := make([]*api.Account, 0, num)
 
 	for i := 1; i <= num; i++ {
@@ -370,7 +446,7 @@ func getAccountModels(num int) []*api.Account {
 			Saldo:       0,
 			NfcChipId:   fmt.Sprintf("ncf_chip_%d", i),
 			Group: &api.Group{
-				Id: 1,
+				Id: groupId,
 			},
 		})
 	}
@@ -378,7 +454,7 @@ func getAccountModels(num int) []*api.Account {
 }
 
 func genAccountMap(num int) map[int32]*api.Account {
-	accounts := getAccountModels(num)
+	accounts := getAccountModels(num, 1)
 	m := make(map[int32]*api.Account)
 	for _, account := range accounts {
 		m[account.Id] = account

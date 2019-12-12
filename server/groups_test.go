@@ -91,13 +91,6 @@ func TestGroupserver_List(t *testing.T) {
 	}
 }
 
-/*
-
-groups:<id:1 name:"group name 1" description:"description" can_overdraw:true > groups:<id:2 name:"group name 2" description:"description" > total_count:2
-groups:<id:1 name:"group name 1" description:"description" can_overdraw:true > groups:<id:2 name:"group name 2" description:"description" >
-
-*/
-
 func TestGroupserver_Create(t *testing.T) {
 	tests := []struct {
 		name    string

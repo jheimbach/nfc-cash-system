@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
@@ -129,8 +130,25 @@ func (a *AccountModel) UpdateSaldo(id int32, newSaldo float64) error {
 }
 
 // GetAll returns slice with all accounts in the database
-func (a *AccountModel) GetAll() ([]*api.Account, error) {
-	rows, err := a.db.Query(`SELECT ` + accountFields + ` FROM accounts`)
+func (a *AccountModel) GetAll(groupId int32, limit int32, offset int32) ([]*api.Account, error) {
+	stmt := `SELECT ` + accountFields + ` FROM accounts`
+
+	args := make([]interface{}, 0, 3)
+	if groupId > 0 {
+		stmt = fmt.Sprintf("%s WHERE group_id = ?", stmt)
+		args = append(args, groupId)
+	}
+	if limit > 0 {
+		stmt = fmt.Sprintf("%s LIMIT ?", stmt)
+		args = append(args, limit)
+
+		if offset > 0 {
+			stmt = fmt.Sprintf("%s OFFSET ?", stmt)
+			args = append(args, offset)
+		}
+	}
+
+	rows, err := a.db.Query(stmt, args...)
 
 	if err != nil {
 		return nil, err

@@ -16,8 +16,8 @@ message Paging {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
         json_schema: {title:"PagingOptions"}
     };
-    int32 Limit = 1;
-    int32 Offset = 2;
+    int32 limit = 1;
+    int32 offset = 2;
 }
 
 message IdRequest {

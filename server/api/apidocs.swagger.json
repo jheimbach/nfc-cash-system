@@ -42,14 +42,14 @@
             "format": "int32"
           },
           {
-            "name": "paging.Limit",
+            "name": "paging.limit",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "paging.Offset",
+            "name": "paging.offset",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -222,21 +222,21 @@
         },
         "parameters": [
           {
-            "name": "group_filter",
+            "name": "group_id",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "paging.Limit",
+            "name": "paging.limit",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "paging.Offset",
+            "name": "paging.offset",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -368,14 +368,14 @@
         },
         "parameters": [
           {
-            "name": "paging.Limit",
+            "name": "paging.limit",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "paging.Offset",
+            "name": "paging.offset",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -426,14 +426,14 @@
         },
         "parameters": [
           {
-            "name": "paging.Limit",
+            "name": "paging.limit",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "paging.Offset",
+            "name": "paging.offset",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -616,11 +616,11 @@
     "apiPaging": {
       "type": "object",
       "properties": {
-        "Limit": {
+        "limit": {
           "type": "integer",
           "format": "int32"
         },
-        "Offset": {
+        "offset": {
           "type": "integer",
           "format": "int32"
         }

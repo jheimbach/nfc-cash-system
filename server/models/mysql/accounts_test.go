@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"fmt"
 	"testing"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
@@ -508,6 +509,42 @@ func TestAccountModel_GetAll(t *testing.T) {
 		db.Close()
 	}()
 
+	type args struct {
+		groupId, limit, offset int32
+	}
+	tests := []struct {
+		name    string
+		input   args
+		want    []*api.Account
+		wantErr error
+	}{
+		{
+			name:  "return all accounts",
+			input: args{0, 0, 0},
+			want:  mockListAccounts(9),
+		},
+		{
+			name:  "return all accounts with group id 1",
+			input: args{1, 0, 0},
+			want:  mockListAccounts(5),
+		},
+		{
+			name:  "return all accounts limit 5",
+			input: args{0, 5, 0},
+			want:  mockListAccounts(5),
+		},
+		{
+			name:  "return all accounts limit 2 offset 3",
+			input: args{0, 2, 3},
+			want:  mockListAccounts(5)[3:5],
+		},
+		{
+			name:  "return all accounts in group 1 limit 1 offset 2",
+			input: args{1, 1, 2},
+			want:  mockListAccounts(5)[2:3],
+		},
+	}
+
 	model := AccountModel{
 		db: db,
 		groups: &groupModelMock{
@@ -516,9 +553,14 @@ func TestAccountModel_GetAll(t *testing.T) {
 		},
 	}
 
-	accounts, err := model.GetAll()
-	is.NoErr(err)
-	is.Equal(len(accounts), 9) // expect 9 accounts
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			accounts, err := model.GetAll(tt.input.groupId, tt.input.limit, tt.input.offset)
+			is.NoErr(err)
+			is.Equal(accounts, tt.want)
+		})
+	}
 }
 
 func TestAccountModel_GetAllByGroup(t *testing.T) {
@@ -626,4 +668,22 @@ func dbInitializedForAccountLists(t *testing.T) (*sql.DB, func()) {
 	setup("../testdata/account.sql", "../testdata/account_list.sql")
 
 	return db, teardown
+}
+
+func mockListAccounts(num int) []*api.Account {
+	accounts := make([]*api.Account, 0, num)
+	for i := 1; i <= num; i++ {
+		accounts = append(accounts, &api.Account{
+			Id:        int32(i),
+			Name:      fmt.Sprintf("testaccount%d", i),
+			NfcChipId: fmt.Sprintf("chipid%d", i),
+			Group: func(i int) *api.Group {
+				if i > 5 {
+					return mockGroupTwo
+				}
+				return mockGroupOne
+			}(i),
+		})
+	}
+	return accounts
 }

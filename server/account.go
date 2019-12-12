@@ -28,7 +28,14 @@ func RegisterAccountServer(s *grpc.Server, storage models.AccountStorager) {
 }
 
 func (a *accountserver) ListAccounts(ctx context.Context, req *api.ListAccountsRequest) (*api.ListAccountsResponse, error) {
-	accounts, err := a.storage.GetAll()
+	var limit int32 = 0
+	var offset int32 = 0
+
+	if req.Paging != nil {
+		limit = req.Paging.Limit
+		offset = req.Paging.Offset
+	}
+	accounts, err := a.storage.GetAll(req.GroupId, limit, offset)
 
 	if err != nil {
 		return nil, ErrGetAll
