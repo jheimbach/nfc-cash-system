@@ -123,7 +123,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		transactions, err := model.GetAll()
 		is.NoErr(err)
 
-		is.Equal(len(transactions.Transactions), 9) // expected 9 transactions
+		is.Equal(len(transactions), 9) // expected 9 transactions
 
 	})
 
@@ -137,7 +137,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		transactions, err := model.GetAll()
 		is.NoErr(err)
 
-		is.Equal(len(transactions.Transactions), 0) // expected 0 transactions
+		is.Equal(len(transactions), 0) // expected 0 transactions
 	})
 
 }
@@ -211,7 +211,7 @@ func TestTransactionModel_GetAllByAccount(t *testing.T) {
 		transactions, err := model.GetAllByAccount(1)
 		is.NoErr(err)
 
-		is.Equal(len(transactions.Transactions), 5) // expected 5 transactions
+		is.Equal(len(transactions), 5) // expected 5 transactions
 	})
 
 	t.Run("no transactions found for account id 100", func(t *testing.T) {
@@ -225,6 +225,6 @@ func TestTransactionModel_GetAllByAccount(t *testing.T) {
 		transactions, err := model.GetAllByAccount(100)
 		is.NoErr(err)
 
-		is.Equal(len(transactions.Transactions), 0) // expected 0 transactions
+		is.Equal(len(transactions), 0) // expected 0 transactions
 	})
 }

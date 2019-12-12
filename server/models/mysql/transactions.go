@@ -82,21 +82,21 @@ func (t *TransactionModel) Read(id int32) (*api.Transaction, error) {
 
 // GetAll returns all transactions
 // CAUTION: due to the nature of Transactions, this could be a lot
-func (t *TransactionModel) GetAll() (*api.Transactions, error) {
+func (t *TransactionModel) GetAll() ([]*api.Transaction, error) {
 	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions ORDER BY created`
 
 	return t.loadTransactions(selectStmt)
 }
 
 // GetAllByAccount returns transactions for given account id
-func (t *TransactionModel) GetAllByAccount(accountId int32) (*api.Transactions, error) {
+func (t *TransactionModel) GetAllByAccount(accountId int32) ([]*api.Transaction, error) {
 	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions WHERE account_id=? ORDER BY created DESC`
 
 	return t.loadTransactions(selectStmt, accountId)
 }
 
 // loadTransactions will Transactions for given query
-func (t *TransactionModel) loadTransactions(query string, args ...interface{}) (*api.Transactions, error) {
+func (t *TransactionModel) loadTransactions(query string, args ...interface{}) ([]*api.Transaction, error) {
 	rows, err := t.db.Query(query, args...)
 	if err != nil {
 		return nil, err
@@ -126,7 +126,5 @@ func (t *TransactionModel) loadTransactions(query string, args ...interface{}) (
 		return nil, rows.Err()
 	}
 
-	return &api.Transactions{
-		Transactions: transactions,
-	}, nil
+	return transactions, nil
 }

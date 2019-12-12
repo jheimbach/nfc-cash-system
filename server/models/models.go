@@ -36,8 +36,8 @@ type GroupStorager interface {
 }
 
 type TransactionStorager interface {
-	GetAll() (*api.Transactions, error)
+	GetAll() ([]*api.Transaction, error)
 	Read(id int32) (*api.Transaction, error)
 	Create(amount, oldSaldo, newSaldo float64, accountId int32) (*api.Transaction, error)
-	GetAllByAccount(accountId int32) (*api.Transactions, error)
+	GetAllByAccount(accountId int32) ([]*api.Transaction, error)
 }

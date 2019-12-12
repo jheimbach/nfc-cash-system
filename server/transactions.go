@@ -23,7 +23,10 @@ func (t *transactionServer) ListTransactions(ctx context.Context, req *api.ListT
 	if err != nil {
 		return nil, ErrSomethingWentWrong
 	}
-	return transactions, nil
+	return &api.ListTransactionsResponse{
+		Transactions: transactions,
+		TotalCount:   int32(len(transactions)),
+	}, nil
 }
 
 func (t *transactionServer) ListTransactionsByAccount(ctx context.Context, req *api.ListTransactionsByAccountRequest) (*api.ListTransactionsResponse, error) {
@@ -31,7 +34,10 @@ func (t *transactionServer) ListTransactionsByAccount(ctx context.Context, req *
 	if err != nil {
 		return nil, ErrSomethingWentWrong
 	}
-	return transactions, nil
+	return &api.ListTransactionsResponse{
+		Transactions: transactions,
+		TotalCount:   int32(len(transactions)),
+	}, nil
 }
 
 func (t *transactionServer) CreateTransaction(ctx context.Context, req *api.CreateTransactionRequest) (*api.Transaction, error) {
