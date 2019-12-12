@@ -6,7 +6,10 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -24,7 +27,7 @@ func RegisterAccountServer(s *grpc.Server, storage models.AccountStorager) {
 	api.RegisterAccountServiceServer(s, &accountserver{storage: storage})
 }
 
-func (a *accountserver) List(ctx context.Context, req *api.AccountListRequest) (*api.Accounts, error) {
+func (a *accountserver) ListAccounts(ctx context.Context, req *api.ListAccountsRequest) (*api.Accounts, error) {
 	accounts, err := a.storage.GetAll()
 
 	if err != nil {
@@ -34,7 +37,7 @@ func (a *accountserver) List(ctx context.Context, req *api.AccountListRequest) (
 	return accounts, nil
 }
 
-func (a *accountserver) Create(ctx context.Context, req *api.AccountCreate) (*api.Account, error) {
+func (a *accountserver) CreateAccount(ctx context.Context, req *api.CreateAccountRequest) (*api.Account, error) {
 	account, err := a.storage.Create(req.Name, req.Description, req.Saldo, req.GroupId, req.NfcChipId)
 	if err != nil {
 		return nil, ErrCouldNotCreateAccount
@@ -43,7 +46,7 @@ func (a *accountserver) Create(ctx context.Context, req *api.AccountCreate) (*ap
 	return account, nil
 }
 
-func (a *accountserver) Get(ctx context.Context, req *api.IdRequest) (*api.Account, error) {
+func (a *accountserver) GetAccount(ctx context.Context, req *api.GetAccountRequest) (*api.Account, error) {
 	account, err := a.storage.Read(req.Id)
 
 	if err != nil {
@@ -53,7 +56,7 @@ func (a *accountserver) Get(ctx context.Context, req *api.IdRequest) (*api.Accou
 	return account, nil
 }
 
-func (a *accountserver) Update(ctx context.Context, req *api.Account) (*api.Account, error) {
+func (a *accountserver) UpdateAccount(ctx context.Context, req *api.Account) (*api.Account, error) {
 	err := a.storage.Update(req)
 
 	if err != nil {
@@ -63,20 +66,16 @@ func (a *accountserver) Update(ctx context.Context, req *api.Account) (*api.Acco
 	return req, nil
 }
 
-func (a *accountserver) Delete(ctw context.Context, req *api.IdRequest) (*api.Status, error) {
+func (a *accountserver) DeleteAccount(ctw context.Context, req *api.DeleteAccountRequest) (*empty.Empty, error) {
 	err := a.storage.Delete(req.Id)
 
 	if err != nil {
-		retErr := ErrSomethingWentWrong
 		if err == models.ErrNotFound {
-			retErr = ErrNotFound
+			return &empty.Empty{}, status.Error(codes.NotFound, ErrNotFound.Error())
 		}
 
-		return &api.Status{
-			Success:      false,
-			ErrorMessage: retErr.Error(),
-		}, nil
+		return &empty.Empty{}, status.Error(codes.Internal, ErrSomethingWentWrong.Error())
 	}
 
-	return &api.Status{Success: true}, nil
+	return &empty.Empty{}, nil
 }

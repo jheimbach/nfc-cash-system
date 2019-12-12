@@ -10,7 +10,10 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/golang/protobuf/ptypes/empty"
 	isPkg "github.com/matryer/is"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type accountMockStorager struct {
@@ -44,20 +47,20 @@ func (a accountMockStorager) Update(m *api.Account) error {
 func TestAccountserver_List(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   *api.AccountListRequest
+		input   *api.ListAccountsRequest
 		want    *api.Accounts
 		wantErr error
 	}{
 		{
 			name:  "get simple list of accounts",
-			input: &api.AccountListRequest{},
+			input: &api.ListAccountsRequest{},
 			want: &api.Accounts{
 				Accounts: getAccountModels(2),
 			},
 		},
 		{
 			name:    "has error",
-			input:   &api.AccountListRequest{},
+			input:   &api.ListAccountsRequest{},
 			want:    nil,
 			wantErr: ErrGetAll,
 		},
@@ -75,7 +78,7 @@ func TestAccountserver_List(t *testing.T) {
 				},
 				},
 			}
-			got, err := a.List(context.Background(), tt.input)
+			got, err := a.ListAccounts(context.Background(), tt.input)
 
 			if err != tt.wantErr {
 				t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
@@ -95,23 +98,23 @@ func TestAccountserver_Get(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		input   *api.IdRequest
+		input   *api.GetAccountRequest
 		want    *api.Account
 		wantErr error
 	}{
 		{
 			name:  "get account with id 1",
-			input: &api.IdRequest{Id: 1},
+			input: &api.GetAccountRequest{Id: 1},
 			want:  db[1],
 		},
 		{
 			name:  "get account with id 2",
-			input: &api.IdRequest{Id: 2},
+			input: &api.GetAccountRequest{Id: 2},
 			want:  db[2],
 		},
 		{
 			name:    "get account that does not exist",
-			input:   &api.IdRequest{Id: 100},
+			input:   &api.GetAccountRequest{Id: 100},
 			wantErr: ErrNotFound,
 		},
 	}
@@ -128,7 +131,7 @@ func TestAccountserver_Get(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			got, err := server.Get(context.Background(), tt.input)
+			got, err := server.GetAccount(context.Background(), tt.input)
 
 			if tt.wantErr != nil {
 				is.Equal(err, tt.wantErr) //expected error
@@ -146,14 +149,14 @@ func TestAccountserver_Create(t *testing.T) {
 	is := isPkg.New(t)
 	tests := []struct {
 		name      string
-		input     *api.AccountCreate
+		input     *api.CreateAccountRequest
 		want      *api.Account
 		returnErr error
 		wantErr   error
 	}{
 		{
 			name: "create account",
-			input: &api.AccountCreate{
+			input: &api.CreateAccountRequest{
 				Name:        "test",
 				Description: "",
 				Saldo:       120,
@@ -172,7 +175,7 @@ func TestAccountserver_Create(t *testing.T) {
 		},
 		{
 			name: "create account with same nfcchip",
-			input: &api.AccountCreate{
+			input: &api.CreateAccountRequest{
 				Name:        "test",
 				Description: "",
 				Saldo:       120,
@@ -184,7 +187,7 @@ func TestAccountserver_Create(t *testing.T) {
 		},
 		{
 			name: "create account with unknown group",
-			input: &api.AccountCreate{
+			input: &api.CreateAccountRequest{
 				Name:        "test",
 				Description: "",
 				Saldo:       120,
@@ -211,7 +214,7 @@ func TestAccountserver_Create(t *testing.T) {
 				},
 			}
 
-			got, err := server.Create(context.Background(), tt.input)
+			got, err := server.CreateAccount(context.Background(), tt.input)
 
 			if tt.wantErr != nil {
 				is.Equal(err, tt.wantErr)
@@ -280,7 +283,7 @@ func TestAccountserver_Update(t *testing.T) {
 				},
 			}
 
-			got, err := server.Update(context.Background(), tt.input)
+			got, err := server.UpdateAccount(context.Background(), tt.input)
 
 			if tt.wantErr != nil {
 				is.Equal(err, tt.wantErr) // error is not the expected
@@ -300,41 +303,33 @@ func TestAccountserver_Delete(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		input     *api.IdRequest
-		want      *api.Status
+		input     *api.DeleteAccountRequest
 		returnErr error
+		wantErr   error
 	}{
 		{
 			name:  "delete account",
-			input: &api.IdRequest{Id: 1},
-			want: &api.Status{
-				Success:      true,
-				ErrorMessage: "",
-			},
+			input: &api.DeleteAccountRequest{Id: 1},
 		},
 		{
 			name:      "delete account that does not exist",
-			input:     &api.IdRequest{Id: 1},
+			input:     &api.DeleteAccountRequest{Id: 1},
 			returnErr: models.ErrNotFound,
-			want: &api.Status{
-				Success:      false,
-				ErrorMessage: ErrNotFound.Error(),
-			},
+			wantErr:   status.Error(codes.NotFound, ErrNotFound.Error()),
 		},
 		{
 			name:      "delete returns other than models.ErrNotFound",
-			input:     &api.IdRequest{Id: 1},
+			input:     &api.DeleteAccountRequest{Id: 1},
 			returnErr: errors.New("this is a test"),
-			want: &api.Status{
-				Success:      false,
-				ErrorMessage: ErrSomethingWentWrong.Error(),
-			},
+			wantErr:   status.Error(codes.Internal, ErrSomethingWentWrong.Error()),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := accountserver{
+			is := is.New(t)
+
+			server := &accountserver{
 				storage: accountMockStorager{
 					delete: func(id int32) error {
 						if tt.returnErr != nil {
@@ -346,9 +341,15 @@ func TestAccountserver_Delete(t *testing.T) {
 				},
 			}
 
-			got, err := server.Delete(context.Background(), tt.input)
-			is.NoErr(err)
-			is.Equal(got, tt.want) // status is not correct
+			got, err := server.DeleteAccount(context.Background(), tt.input)
+
+			if tt.wantErr != nil {
+				is.Equal(err, tt.wantErr)
+				return
+			}
+
+			is.NoErr(err) // unexpected error
+			is.Equal(got, &empty.Empty{})
 		})
 	}
 

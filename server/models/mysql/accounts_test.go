@@ -84,14 +84,14 @@ func TestAccountModel_Create(t *testing.T) {
 	is := isPkg.New(t)
 	tests := []struct {
 		name          string
-		accountCreate *api.AccountCreate
+		accountCreate *api.CreateAccountRequest
 		want          *api.Account
 		wantErr       bool
 		expectedErr   error
 	}{
 		{
 			name: "creates account",
-			accountCreate: &api.AccountCreate{
+			accountCreate: &api.CreateAccountRequest{
 				Name:        "tim",
 				Description: "",
 				Saldo:       12,
@@ -109,7 +109,7 @@ func TestAccountModel_Create(t *testing.T) {
 		},
 		{
 			name: "creates account but group does not exists",
-			accountCreate: &api.AccountCreate{
+			accountCreate: &api.CreateAccountRequest{
 				Name:        "tim",
 				Description: "",
 				Saldo:       12,

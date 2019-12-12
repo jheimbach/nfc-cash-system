@@ -4,11 +4,12 @@ package api;
 
 import "globals.proto";
 import "groups.proto";
+import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 service AccountService {
-    rpc List (AccountListRequest) returns (Accounts) {
+    rpc ListAccounts (ListAccountsRequest) returns (Accounts) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "List all accounts"
             description: "Returns all account, can be limited with paged options and filtered by group"
@@ -17,7 +18,7 @@ service AccountService {
             get: "/v1/accounts"
         };
     };
-    rpc Create (AccountCreate) returns (Account) {
+    rpc CreateAccount (CreateAccountRequest) returns (Account) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Create account"
             description: "Creates new account"
@@ -27,7 +28,7 @@ service AccountService {
             body: "*"
         };
     };
-    rpc Get (IdRequest) returns (Account) {
+    rpc GetAccount (GetAccountRequest) returns (Account) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Get account"
             description: "Returns single account with given id"
@@ -36,7 +37,7 @@ service AccountService {
             get: "/v1/account/{id}"
         };
     };
-    rpc Update (Account) returns (Account) {
+    rpc UpdateAccount (Account) returns (Account) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Update account"
             description: "Updates account with given id, all fields must be send"
@@ -46,7 +47,7 @@ service AccountService {
             body: "*"
         };
     };
-    rpc Delete (IdRequest) returns (Status) {
+    rpc DeleteAccount (DeleteAccountRequest) returns (google.protobuf.Empty) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Delete account"
             description: "Deletes account with given id"
@@ -57,7 +58,7 @@ service AccountService {
     };
 }
 
-message AccountListRequest {
+message ListAccountsRequest {
     int32 group_filter = 1;
     Paging paging = 2;
 }
@@ -82,13 +83,20 @@ message Account {
     Group group = 6 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account Group"}];
 }
 
-message AccountCreate {
+message CreateAccountRequest {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: {title:"AccountCreation"}
-    };
+        json_schema: {title:"AccountCreation"} };
     string name = 2 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account name"}];
     string description = 3 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account description"}];
     double saldo = 4 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account Startsaldo"}];
     string nfc_chip_id = 5 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account Nfc Chip Uuid"}];
     int32 group_id = 6 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field) = {title: "Account Group ID"}];
+}
+
+message GetAccountRequest {
+    int32 id = 1;
+}
+
+message DeleteAccountRequest {
+    int32 id = 1;
 }

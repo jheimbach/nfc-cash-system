@@ -7,6 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
@@ -26,7 +27,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type AccountListRequest struct {
+type ListAccountsRequest struct {
 	GroupFilter          int32    `protobuf:"varint,1,opt,name=group_filter,json=groupFilter,proto3" json:"group_filter,omitempty"`
 	Paging               *Paging  `protobuf:"bytes,2,opt,name=paging,proto3" json:"paging,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -34,39 +35,39 @@ type AccountListRequest struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *AccountListRequest) Reset()         { *m = AccountListRequest{} }
-func (m *AccountListRequest) String() string { return proto.CompactTextString(m) }
-func (*AccountListRequest) ProtoMessage()    {}
-func (*AccountListRequest) Descriptor() ([]byte, []int) {
+func (m *ListAccountsRequest) Reset()         { *m = ListAccountsRequest{} }
+func (m *ListAccountsRequest) String() string { return proto.CompactTextString(m) }
+func (*ListAccountsRequest) ProtoMessage()    {}
+func (*ListAccountsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e1e7723af4c007b7, []int{0}
 }
 
-func (m *AccountListRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AccountListRequest.Unmarshal(m, b)
+func (m *ListAccountsRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ListAccountsRequest.Unmarshal(m, b)
 }
-func (m *AccountListRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AccountListRequest.Marshal(b, m, deterministic)
+func (m *ListAccountsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ListAccountsRequest.Marshal(b, m, deterministic)
 }
-func (m *AccountListRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AccountListRequest.Merge(m, src)
+func (m *ListAccountsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ListAccountsRequest.Merge(m, src)
 }
-func (m *AccountListRequest) XXX_Size() int {
-	return xxx_messageInfo_AccountListRequest.Size(m)
+func (m *ListAccountsRequest) XXX_Size() int {
+	return xxx_messageInfo_ListAccountsRequest.Size(m)
 }
-func (m *AccountListRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_AccountListRequest.DiscardUnknown(m)
+func (m *ListAccountsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ListAccountsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_AccountListRequest proto.InternalMessageInfo
+var xxx_messageInfo_ListAccountsRequest proto.InternalMessageInfo
 
-func (m *AccountListRequest) GetGroupFilter() int32 {
+func (m *ListAccountsRequest) GetGroupFilter() int32 {
 	if m != nil {
 		return m.GroupFilter
 	}
 	return 0
 }
 
-func (m *AccountListRequest) GetPaging() *Paging {
+func (m *ListAccountsRequest) GetPaging() *Paging {
 	if m != nil {
 		return m.Paging
 	}
@@ -199,7 +200,7 @@ func (m *Account) GetGroup() *Group {
 	return nil
 }
 
-type AccountCreate struct {
+type CreateAccountRequest struct {
 	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Description          string   `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	Saldo                float64  `protobuf:"fixed64,4,opt,name=saldo,proto3" json:"saldo,omitempty"`
@@ -210,125 +211,209 @@ type AccountCreate struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *AccountCreate) Reset()         { *m = AccountCreate{} }
-func (m *AccountCreate) String() string { return proto.CompactTextString(m) }
-func (*AccountCreate) ProtoMessage()    {}
-func (*AccountCreate) Descriptor() ([]byte, []int) {
+func (m *CreateAccountRequest) Reset()         { *m = CreateAccountRequest{} }
+func (m *CreateAccountRequest) String() string { return proto.CompactTextString(m) }
+func (*CreateAccountRequest) ProtoMessage()    {}
+func (*CreateAccountRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e1e7723af4c007b7, []int{3}
 }
 
-func (m *AccountCreate) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AccountCreate.Unmarshal(m, b)
+func (m *CreateAccountRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CreateAccountRequest.Unmarshal(m, b)
 }
-func (m *AccountCreate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AccountCreate.Marshal(b, m, deterministic)
+func (m *CreateAccountRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CreateAccountRequest.Marshal(b, m, deterministic)
 }
-func (m *AccountCreate) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AccountCreate.Merge(m, src)
+func (m *CreateAccountRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CreateAccountRequest.Merge(m, src)
 }
-func (m *AccountCreate) XXX_Size() int {
-	return xxx_messageInfo_AccountCreate.Size(m)
+func (m *CreateAccountRequest) XXX_Size() int {
+	return xxx_messageInfo_CreateAccountRequest.Size(m)
 }
-func (m *AccountCreate) XXX_DiscardUnknown() {
-	xxx_messageInfo_AccountCreate.DiscardUnknown(m)
+func (m *CreateAccountRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CreateAccountRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_AccountCreate proto.InternalMessageInfo
+var xxx_messageInfo_CreateAccountRequest proto.InternalMessageInfo
 
-func (m *AccountCreate) GetName() string {
+func (m *CreateAccountRequest) GetName() string {
 	if m != nil {
 		return m.Name
 	}
 	return ""
 }
 
-func (m *AccountCreate) GetDescription() string {
+func (m *CreateAccountRequest) GetDescription() string {
 	if m != nil {
 		return m.Description
 	}
 	return ""
 }
 
-func (m *AccountCreate) GetSaldo() float64 {
+func (m *CreateAccountRequest) GetSaldo() float64 {
 	if m != nil {
 		return m.Saldo
 	}
 	return 0
 }
 
-func (m *AccountCreate) GetNfcChipId() string {
+func (m *CreateAccountRequest) GetNfcChipId() string {
 	if m != nil {
 		return m.NfcChipId
 	}
 	return ""
 }
 
-func (m *AccountCreate) GetGroupId() int32 {
+func (m *CreateAccountRequest) GetGroupId() int32 {
 	if m != nil {
 		return m.GroupId
 	}
 	return 0
 }
 
+type GetAccountRequest struct {
+	Id                   int32    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetAccountRequest) Reset()         { *m = GetAccountRequest{} }
+func (m *GetAccountRequest) String() string { return proto.CompactTextString(m) }
+func (*GetAccountRequest) ProtoMessage()    {}
+func (*GetAccountRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e1e7723af4c007b7, []int{4}
+}
+
+func (m *GetAccountRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetAccountRequest.Unmarshal(m, b)
+}
+func (m *GetAccountRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetAccountRequest.Marshal(b, m, deterministic)
+}
+func (m *GetAccountRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAccountRequest.Merge(m, src)
+}
+func (m *GetAccountRequest) XXX_Size() int {
+	return xxx_messageInfo_GetAccountRequest.Size(m)
+}
+func (m *GetAccountRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAccountRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetAccountRequest proto.InternalMessageInfo
+
+func (m *GetAccountRequest) GetId() int32 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+type DeleteAccountRequest struct {
+	Id                   int32    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DeleteAccountRequest) Reset()         { *m = DeleteAccountRequest{} }
+func (m *DeleteAccountRequest) String() string { return proto.CompactTextString(m) }
+func (*DeleteAccountRequest) ProtoMessage()    {}
+func (*DeleteAccountRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e1e7723af4c007b7, []int{5}
+}
+
+func (m *DeleteAccountRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DeleteAccountRequest.Unmarshal(m, b)
+}
+func (m *DeleteAccountRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DeleteAccountRequest.Marshal(b, m, deterministic)
+}
+func (m *DeleteAccountRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteAccountRequest.Merge(m, src)
+}
+func (m *DeleteAccountRequest) XXX_Size() int {
+	return xxx_messageInfo_DeleteAccountRequest.Size(m)
+}
+func (m *DeleteAccountRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteAccountRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeleteAccountRequest proto.InternalMessageInfo
+
+func (m *DeleteAccountRequest) GetId() int32 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
 func init() {
-	proto.RegisterType((*AccountListRequest)(nil), "api.AccountListRequest")
+	proto.RegisterType((*ListAccountsRequest)(nil), "api.ListAccountsRequest")
 	proto.RegisterType((*Accounts)(nil), "api.Accounts")
 	proto.RegisterType((*Account)(nil), "api.Account")
-	proto.RegisterType((*AccountCreate)(nil), "api.AccountCreate")
+	proto.RegisterType((*CreateAccountRequest)(nil), "api.CreateAccountRequest")
+	proto.RegisterType((*GetAccountRequest)(nil), "api.GetAccountRequest")
+	proto.RegisterType((*DeleteAccountRequest)(nil), "api.DeleteAccountRequest")
 }
 
 func init() { proto.RegisterFile("accounts.proto", fileDescriptor_e1e7723af4c007b7) }
 
 var fileDescriptor_e1e7723af4c007b7 = []byte{
-	// 767 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x54, 0xd1, 0x6e, 0xf3, 0x34,
-	0x18, 0x55, 0xda, 0xb5, 0xff, 0xe6, 0x74, 0xd9, 0x5f, 0x8f, 0xb2, 0x28, 0x02, 0xfd, 0x26, 0xf0,
-	0x4b, 0x95, 0xb5, 0xad, 0xb0, 0x21, 0x2e, 0x7a, 0x83, 0xd2, 0x4d, 0x8c, 0xa2, 0x69, 0x42, 0x99,
-	0x76, 0x87, 0x54, 0xb9, 0xb1, 0x9b, 0x59, 0x64, 0x4e, 0x16, 0xbb, 0x1b, 0x08, 0x71, 0xc3, 0x35,
-	0x57, 0xe1, 0x01, 0xb8, 0x84, 0x57, 0xe0, 0x39, 0x78, 0x05, 0x1e, 0x04, 0xc5, 0x4e, 0xaa, 0x64,
-	0x85, 0x3b, 0xc4, 0x55, 0xe4, 0x73, 0x8e, 0xbf, 0xf3, 0xf9, 0xd8, 0x5f, 0x80, 0x43, 0xa2, 0x28,
-	0x5d, 0x0b, 0x25, 0x4f, 0xb3, 0x3c, 0x55, 0x29, 0xec, 0x92, 0x8c, 0x7b, 0xfb, 0x71, 0x92, 0x2e,
-	0x49, 0x52, 0x61, 0xde, 0x20, 0xce, 0xd3, 0x75, 0x56, 0xaf, 0xde, 0x8b, 0xd3, 0x34, 0x4e, 0xd8,
-	0x84, 0x64, 0x7c, 0x42, 0x84, 0x48, 0x15, 0x51, 0x3c, 0x15, 0x35, 0x7b, 0xac, 0x3f, 0xd1, 0x49,
-	0xcc, 0xc4, 0x89, 0x7c, 0x26, 0x71, 0xcc, 0xf2, 0x49, 0x9a, 0x69, 0xc5, 0xb6, 0xda, 0xff, 0x06,
-	0xc0, 0xc0, 0xf8, 0x5f, 0x73, 0xa9, 0x42, 0xf6, 0xb8, 0x66, 0x52, 0xc1, 0x0f, 0x80, 0x71, 0x5c,
-	0xac, 0x78, 0xa2, 0x58, 0xee, 0x5a, 0xc8, 0x1a, 0xf7, 0x42, 0x5b, 0x63, 0x5f, 0x68, 0x08, 0x7e,
-	0x08, 0xfa, 0x19, 0x89, 0xb9, 0x88, 0xdd, 0x0e, 0xb2, 0xc6, 0xf6, 0x99, 0x7d, 0x4a, 0x32, 0x7e,
-	0xfa, 0xb5, 0x86, 0xc2, 0x8a, 0xf2, 0x57, 0x60, 0xb7, 0xaa, 0x2e, 0xe1, 0x18, 0xec, 0xd6, 0x27,
-	0x75, 0x2d, 0xd4, 0x1d, 0xdb, 0x67, 0x03, 0xbd, 0xa5, 0x12, 0x84, 0x1b, 0x16, 0xbe, 0x01, 0xb6,
-	0x4a, 0x15, 0x49, 0x16, 0x7a, 0xad, 0xeb, 0xf7, 0x42, 0xa0, 0xa1, 0x8b, 0x12, 0x99, 0x1e, 0x14,
-	0xc1, 0x00, 0x00, 0xbc, 0xa9, 0xed, 0xff, 0xd1, 0x01, 0xaf, 0xaa, 0x05, 0x7c, 0x03, 0x3a, 0x9c,
-	0x9a, 0x8e, 0x67, 0xa5, 0x10, 0x83, 0x8a, 0x41, 0xf3, 0xcb, 0xb0, 0xc3, 0x29, 0x7c, 0x0b, 0x76,
-	0x04, 0x79, 0x60, 0xba, 0xee, 0xde, 0x6c, 0x58, 0x04, 0x0e, 0x1e, 0xd4, 0x92, 0x92, 0x08, 0x35,
-	0x0d, 0xa7, 0xc0, 0xa6, 0x4c, 0x46, 0x39, 0xd7, 0xd9, 0xb9, 0x5d, 0xad, 0x76, 0x8b, 0x60, 0x84,
-	0x0f, 0x6b, 0x75, 0x83, 0x0f, 0x9b, 0x62, 0x38, 0x06, 0x3d, 0x49, 0x12, 0x9a, 0xba, 0x3b, 0xc8,
-	0x1a, 0x5b, 0x33, 0x58, 0x04, 0x07, 0x78, 0xbf, 0xde, 0x75, 0x5b, 0x32, 0xa1, 0x11, 0x94, 0x2e,
-	0x62, 0x15, 0x2d, 0xa2, 0x7b, 0x9e, 0x2d, 0x38, 0x75, 0x7b, 0xda, 0xc5, 0x2b, 0x82, 0x23, 0x3c,
-	0xaa, 0xf5, 0x37, 0xab, 0x08, 0x5d, 0xdc, 0xf3, 0x0c, 0xdd, 0xad, 0x39, 0x0d, 0xf7, 0xc4, 0x2a,
-	0x2a, 0x57, 0x73, 0x0a, 0x3f, 0x05, 0x3d, 0x7d, 0x23, 0x6e, 0x5f, 0xdf, 0x00, 0xd0, 0x71, 0x5e,
-	0x95, 0xc8, 0x0b, 0x47, 0x8d, 0x85, 0x46, 0x3c, 0x75, 0x8a, 0xc0, 0x06, 0x7b, 0xb8, 0xce, 0xcb,
-	0xff, 0xad, 0x03, 0x6a, 0xe1, 0x45, 0xce, 0x88, 0x62, 0xff, 0x47, 0x40, 0x27, 0xed, 0x80, 0x8e,
-	0x8a, 0xe0, 0x1d, 0x0c, 0x37, 0x01, 0x29, 0x92, 0x2b, 0xf9, 0x5f, 0xa5, 0xf4, 0x31, 0xd8, 0x35,
-	0x6f, 0x99, 0x53, 0x1d, 0x54, 0x6f, 0x36, 0x2a, 0x02, 0x88, 0x5f, 0xb7, 0xc2, 0x29, 0xdf, 0xc6,
-	0x2b, 0x2d, 0x9b, 0xd3, 0xe9, 0xbb, 0x45, 0x70, 0x08, 0x86, 0xf8, 0xa0, 0x99, 0x0a, 0x4f, 0xc5,
-	0xd9, 0xaf, 0x3d, 0xe0, 0x54, 0xd8, 0x2d, 0xcb, 0x9f, 0x78, 0xc4, 0xe0, 0xef, 0x16, 0xd8, 0x29,
-	0x07, 0x07, 0x1e, 0x35, 0xdf, 0x72, 0x63, 0x94, 0xbc, 0xfd, 0x26, 0x21, 0xfd, 0xef, 0x8a, 0x80,
-	0x78, 0xd7, 0x21, 0x53, 0xeb, 0x5c, 0x48, 0x44, 0x92, 0x04, 0x55, 0xcf, 0xfe, 0x18, 0x45, 0x44,
-	0xa0, 0x25, 0x43, 0x09, 0x7f, 0xe0, 0x8a, 0x51, 0xf4, 0xcc, 0xd5, 0x3d, 0xca, 0x48, 0xcc, 0x28,
-	0xaa, 0xc6, 0x17, 0x11, 0x41, 0x91, 0x99, 0x48, 0x46, 0xd1, 0xf2, 0x7b, 0xa4, 0x1b, 0xc6, 0xc3,
-	0xd2, 0xae, 0x59, 0x4a, 0xfe, 0xf4, 0xe7, 0x5f, 0xbf, 0x74, 0x1c, 0x38, 0x98, 0x3c, 0x7d, 0x32,
-	0xd9, 0x4c, 0xd5, 0xb7, 0xa0, 0x5f, 0xdd, 0x2f, 0x6c, 0xb6, 0x64, 0x30, 0xaf, 0x35, 0x8b, 0xfe,
-	0xe7, 0x45, 0xf0, 0xd6, 0x3b, 0x34, 0x94, 0x44, 0x82, 0x3d, 0xd7, 0xa5, 0xb1, 0x63, 0xc0, 0x7a,
-	0xad, 0x9d, 0x86, 0x7e, 0xcb, 0x69, 0x6a, 0x61, 0x28, 0x41, 0xf7, 0x8a, 0x29, 0xe8, 0xe8, 0xaa,
-	0x73, 0x5a, 0x87, 0xd1, 0x76, 0xb9, 0x29, 0x82, 0x73, 0xef, 0xa3, 0x3a, 0x0b, 0xc9, 0x45, 0x9c,
-	0x6c, 0x0a, 0x9b, 0xe3, 0xc7, 0xfc, 0x89, 0x09, 0xc4, 0x29, 0xb6, 0xaf, 0x98, 0x6a, 0x79, 0x42,
-	0xf8, 0xba, 0xe1, 0x39, 0xf9, 0x81, 0xd3, 0x1f, 0xe1, 0xcf, 0x16, 0xe8, 0xdf, 0x65, 0xb4, 0x3c,
-	0x62, 0xcb, 0xe8, 0x85, 0xed, 0xaa, 0x08, 0xbe, 0xf4, 0x3e, 0x33, 0x42, 0xf9, 0xcf, 0x7e, 0xc7,
-	0x3a, 0xce, 0x15, 0x67, 0x09, 0x95, 0xe8, 0x61, 0x2d, 0x55, 0x79, 0x31, 0x92, 0x09, 0x8a, 0x1d,
-	0xb3, 0xaf, 0xd5, 0xcb, 0xc8, 0xdb, 0xea, 0xa5, 0xcc, 0xe0, 0x11, 0xf4, 0x2f, 0x59, 0xc2, 0x14,
-	0xdb, 0x8a, 0xc1, 0xfc, 0x2b, 0x6f, 0x15, 0x51, 0x6b, 0xe9, 0x7f, 0x55, 0x04, 0x13, 0xef, 0x7d,
-	0xa3, 0xfc, 0x97, 0x76, 0xb0, 0x63, 0xe8, 0x76, 0x02, 0x78, 0xcb, 0x75, 0xd9, 0xd7, 0x3f, 0xf5,
-	0xf3, 0xbf, 0x03, 0x00, 0x00, 0xff, 0xff, 0x1a, 0xe9, 0x06, 0xe1, 0x54, 0x06, 0x00, 0x00,
+	// 827 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x55, 0xdd, 0x6e, 0xe3, 0x44,
+	0x14, 0x96, 0xd3, 0x4d, 0xb7, 0x1d, 0x27, 0xee, 0x66, 0xfa, 0xb3, 0xc6, 0x80, 0x76, 0xf0, 0xb2,
+	0x28, 0x1a, 0xb5, 0x31, 0x74, 0x11, 0x17, 0xb9, 0x41, 0x4e, 0x17, 0x4a, 0xd1, 0x6a, 0x85, 0xbc,
+	0xda, 0x4b, 0x14, 0x4d, 0x3c, 0x63, 0x77, 0x24, 0x67, 0x6c, 0x3c, 0x93, 0x96, 0x0a, 0x71, 0xb3,
+	0x0f, 0xc0, 0x85, 0xf7, 0x3d, 0x90, 0xb8, 0xe4, 0x39, 0x78, 0x05, 0xee, 0x78, 0x09, 0xe4, 0xb1,
+	0x9d, 0xc6, 0x49, 0xb8, 0x43, 0x7b, 0x15, 0x9d, 0x73, 0xbe, 0x39, 0xdf, 0xa7, 0xef, 0x9c, 0x13,
+	0x03, 0x8b, 0x84, 0x61, 0xba, 0x10, 0x4a, 0x8e, 0xb2, 0x3c, 0x55, 0x29, 0xdc, 0x21, 0x19, 0x77,
+	0xfa, 0x71, 0x92, 0xce, 0x48, 0x52, 0xe7, 0x9c, 0x5e, 0x9c, 0xa7, 0x8b, 0xac, 0x89, 0x3e, 0x8c,
+	0xd3, 0x34, 0x4e, 0x98, 0xa7, 0xa3, 0xd9, 0x22, 0xf2, 0xd8, 0x3c, 0x53, 0x77, 0x75, 0xf1, 0xa3,
+	0xba, 0x48, 0x32, 0xee, 0x11, 0x21, 0x52, 0x45, 0x14, 0x4f, 0x45, 0xf3, 0xf4, 0x54, 0xff, 0x84,
+	0x67, 0x31, 0x13, 0x67, 0xf2, 0x96, 0xc4, 0x31, 0xcb, 0xbd, 0x34, 0xd3, 0x88, 0x4d, 0xb4, 0xfb,
+	0x23, 0x38, 0x7c, 0xc9, 0xa5, 0xf2, 0x6b, 0x81, 0x01, 0xfb, 0x69, 0xc1, 0xa4, 0x82, 0x9f, 0x80,
+	0x4a, 0xcf, 0x34, 0xe2, 0x89, 0x62, 0xb9, 0x6d, 0x20, 0x63, 0xd8, 0x0d, 0x4c, 0x9d, 0xfb, 0x56,
+	0xa7, 0xe0, 0x53, 0xb0, 0x9b, 0x91, 0x98, 0x8b, 0xd8, 0xee, 0x20, 0x63, 0x68, 0x9e, 0x9b, 0x23,
+	0x92, 0xf1, 0xd1, 0x0f, 0x3a, 0x15, 0xd4, 0x25, 0x37, 0x02, 0x7b, 0x4d, 0x6b, 0x38, 0x04, 0x7b,
+	0x8d, 0x0f, 0xb6, 0x81, 0x76, 0x86, 0xe6, 0x79, 0x4f, 0x3f, 0xa9, 0x01, 0xc1, 0xb2, 0x0a, 0x9f,
+	0x00, 0x53, 0xa5, 0x8a, 0x24, 0x53, 0x1d, 0xeb, 0xfe, 0xdd, 0x00, 0xe8, 0xd4, 0x45, 0x99, 0x19,
+	0x1f, 0x14, 0x7e, 0x0f, 0x00, 0xbc, 0xec, 0xed, 0xfe, 0xd9, 0x01, 0x0f, 0xeb, 0x00, 0x3e, 0x01,
+	0x1d, 0x4e, 0x2b, 0xc5, 0x93, 0x12, 0x88, 0x41, 0x5d, 0x41, 0x57, 0x2f, 0x82, 0x0e, 0xa7, 0xf0,
+	0x19, 0x78, 0x20, 0xc8, 0x9c, 0xe9, 0xbe, 0xfb, 0x93, 0x41, 0xe1, 0x5b, 0xb8, 0xd7, 0x40, 0xca,
+	0x42, 0xa0, 0xcb, 0x70, 0x0c, 0x4c, 0xca, 0x64, 0x98, 0x73, 0x6d, 0x9e, 0xbd, 0xa3, 0xd1, 0x76,
+	0xe1, 0x1f, 0xe3, 0xc3, 0x06, 0xbd, 0x52, 0x0f, 0x56, 0xc1, 0x70, 0x08, 0xba, 0x92, 0x24, 0x34,
+	0xb5, 0x1f, 0x20, 0x63, 0x68, 0x4c, 0x60, 0xe1, 0x1f, 0xe0, 0x7e, 0xf3, 0xea, 0x75, 0x59, 0x09,
+	0x2a, 0x40, 0xc9, 0x22, 0xa2, 0x70, 0x1a, 0x5e, 0xf3, 0x6c, 0xca, 0xa9, 0xdd, 0xd5, 0x2c, 0x4e,
+	0xe1, 0x3f, 0xc6, 0xc7, 0x0d, 0xfe, 0x55, 0x14, 0xa2, 0x8b, 0x6b, 0x9e, 0xa1, 0x37, 0x0b, 0x4e,
+	0x83, 0x7d, 0x11, 0x85, 0x65, 0x74, 0x45, 0xe1, 0x97, 0xa0, 0xab, 0x27, 0x62, 0xef, 0xea, 0x09,
+	0x00, 0x6d, 0xe7, 0x65, 0x99, 0x59, 0x63, 0xd4, 0xb9, 0xa0, 0x02, 0x8f, 0xad, 0xc2, 0x37, 0xc1,
+	0x3e, 0x6e, 0xfc, 0x72, 0x7f, 0xef, 0x80, 0xa3, 0x8b, 0x9c, 0x11, 0xc5, 0x9a, 0x49, 0xd4, 0x4b,
+	0xf0, 0x1e, 0x7c, 0x3a, 0x6b, 0xfb, 0xf4, 0xb8, 0xf0, 0x8f, 0x30, 0x5c, 0xfa, 0xa4, 0x48, 0xae,
+	0xe4, 0xff, 0x65, 0xd6, 0xe7, 0x60, 0xaf, 0x5a, 0x69, 0x4e, 0xb5, 0x5f, 0xdd, 0xc9, 0x71, 0xe1,
+	0x43, 0xfc, 0xa8, 0xe5, 0x51, 0xb9, 0x22, 0x0f, 0x35, 0xec, 0x8a, 0x8e, 0x4f, 0x0a, 0xff, 0x10,
+	0x0c, 0xf0, 0x41, 0x8d, 0xd0, 0x1e, 0xf1, 0x54, 0xb8, 0x4f, 0xc1, 0xe0, 0x92, 0xa9, 0x35, 0xb3,
+	0xac, 0xfb, 0xad, 0x2b, 0x97, 0xcc, 0xfd, 0x0c, 0x1c, 0xbd, 0x60, 0x09, 0xdb, 0x30, 0x75, 0x0d,
+	0x77, 0xfe, 0x4f, 0x17, 0x58, 0x35, 0xe4, 0x35, 0xcb, 0x6f, 0x78, 0xc8, 0xe0, 0x1f, 0x06, 0xe8,
+	0xad, 0x1e, 0x25, 0xb4, 0xf5, 0x60, 0xb7, 0xdc, 0xa9, 0xd3, 0x5f, 0xbd, 0x20, 0xe9, 0xfe, 0x5c,
+	0xf8, 0xc4, 0x79, 0x19, 0x30, 0xb5, 0xc8, 0x85, 0x44, 0x24, 0x49, 0x50, 0x7d, 0x53, 0xa7, 0x28,
+	0x24, 0x02, 0xcd, 0x18, 0x4a, 0xf8, 0x9c, 0x2b, 0x46, 0xd1, 0x2d, 0x57, 0xd7, 0x28, 0x23, 0x31,
+	0xa3, 0xa8, 0xfe, 0x73, 0x40, 0x44, 0x50, 0x54, 0x9d, 0x3b, 0xa3, 0x68, 0x76, 0x87, 0xb4, 0x0d,
+	0x78, 0x50, 0xd2, 0xae, 0xb6, 0x92, 0x6f, 0xff, 0xfa, 0xfb, 0x5d, 0xc7, 0x82, 0x3d, 0xef, 0xe6,
+	0x0b, 0x6f, 0x79, 0xb2, 0x77, 0xa0, 0xdf, 0xda, 0x21, 0xf8, 0x81, 0x56, 0xb6, 0x6d, 0xaf, 0x9c,
+	0xd6, 0xd9, 0xbb, 0x5f, 0x17, 0xfe, 0x33, 0xe7, 0xb0, 0x02, 0x4a, 0x24, 0xd8, 0x6d, 0x43, 0x84,
+	0xad, 0x2a, 0xd9, 0xc4, 0x9a, 0x77, 0xe0, 0xb6, 0x78, 0xc7, 0x06, 0x86, 0x6f, 0x0d, 0x00, 0xee,
+	0xe7, 0x01, 0x4f, 0xaa, 0x2b, 0x58, 0x1f, 0xd0, 0x1a, 0xeb, 0xab, 0xc2, 0x7f, 0xee, 0x7c, 0xda,
+	0x38, 0x25, 0xb9, 0x88, 0x93, 0x25, 0x51, 0x65, 0x4e, 0xcc, 0x6f, 0x98, 0x40, 0x9c, 0x62, 0xf3,
+	0x92, 0xa9, 0x96, 0x06, 0x08, 0x1f, 0xad, 0x68, 0xf0, 0x7e, 0xe1, 0xf4, 0x57, 0xf8, 0xce, 0x00,
+	0xfd, 0x37, 0x19, 0x5d, 0x31, 0xa0, 0xc5, 0xb7, 0xc6, 0x1e, 0x15, 0xfe, 0x77, 0xce, 0x57, 0x15,
+	0x5e, 0x6e, 0xa7, 0x3d, 0xd5, 0x9e, 0x47, 0x9c, 0x25, 0x54, 0xa2, 0xf9, 0x42, 0xaa, 0x72, 0x7a,
+	0x92, 0x09, 0x8a, 0xad, 0xea, 0x5d, 0x4b, 0xd2, 0xb1, 0xb3, 0x21, 0xa9, 0xb4, 0xe6, 0x37, 0x03,
+	0xf4, 0x5b, 0x5b, 0x58, 0x8f, 0x65, 0xdb, 0x66, 0x3a, 0x27, 0xa3, 0xea, 0xbb, 0x32, 0x6a, 0x3e,
+	0x3a, 0xa3, 0x6f, 0xca, 0x8f, 0x8e, 0xfb, 0x7d, 0xe1, 0x7b, 0xce, 0xc7, 0xd5, 0x93, 0xff, 0x10,
+	0x8b, 0xad, 0xaa, 0xdc, 0xb6, 0x09, 0x6f, 0x68, 0x9a, 0xed, 0xea, 0xde, 0xcf, 0xff, 0x0d, 0x00,
+	0x00, 0xff, 0xff, 0x03, 0x12, 0x68, 0x7b, 0x12, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -343,11 +428,11 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type AccountServiceClient interface {
-	List(ctx context.Context, in *AccountListRequest, opts ...grpc.CallOption) (*Accounts, error)
-	Create(ctx context.Context, in *AccountCreate, opts ...grpc.CallOption) (*Account, error)
-	Get(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Account, error)
-	Update(ctx context.Context, in *Account, opts ...grpc.CallOption) (*Account, error)
-	Delete(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Status, error)
+	ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*Accounts, error)
+	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*Account, error)
+	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*Account, error)
+	UpdateAccount(ctx context.Context, in *Account, opts ...grpc.CallOption) (*Account, error)
+	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type accountServiceClient struct {
@@ -358,45 +443,45 @@ func NewAccountServiceClient(cc *grpc.ClientConn) AccountServiceClient {
 	return &accountServiceClient{cc}
 }
 
-func (c *accountServiceClient) List(ctx context.Context, in *AccountListRequest, opts ...grpc.CallOption) (*Accounts, error) {
+func (c *accountServiceClient) ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*Accounts, error) {
 	out := new(Accounts)
-	err := c.cc.Invoke(ctx, "/api.AccountService/List", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.AccountService/ListAccounts", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountServiceClient) Create(ctx context.Context, in *AccountCreate, opts ...grpc.CallOption) (*Account, error) {
+func (c *accountServiceClient) CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*Account, error) {
 	out := new(Account)
-	err := c.cc.Invoke(ctx, "/api.AccountService/Create", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.AccountService/CreateAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountServiceClient) Get(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Account, error) {
+func (c *accountServiceClient) GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*Account, error) {
 	out := new(Account)
-	err := c.cc.Invoke(ctx, "/api.AccountService/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.AccountService/GetAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountServiceClient) Update(ctx context.Context, in *Account, opts ...grpc.CallOption) (*Account, error) {
+func (c *accountServiceClient) UpdateAccount(ctx context.Context, in *Account, opts ...grpc.CallOption) (*Account, error) {
 	out := new(Account)
-	err := c.cc.Invoke(ctx, "/api.AccountService/Update", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.AccountService/UpdateAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *accountServiceClient) Delete(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*Status, error) {
-	out := new(Status)
-	err := c.cc.Invoke(ctx, "/api.AccountService/Delete", in, out, opts...)
+func (c *accountServiceClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/api.AccountService/DeleteAccount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -405,123 +490,123 @@ func (c *accountServiceClient) Delete(ctx context.Context, in *IdRequest, opts .
 
 // AccountServiceServer is the server API for AccountService service.
 type AccountServiceServer interface {
-	List(context.Context, *AccountListRequest) (*Accounts, error)
-	Create(context.Context, *AccountCreate) (*Account, error)
-	Get(context.Context, *IdRequest) (*Account, error)
-	Update(context.Context, *Account) (*Account, error)
-	Delete(context.Context, *IdRequest) (*Status, error)
+	ListAccounts(context.Context, *ListAccountsRequest) (*Accounts, error)
+	CreateAccount(context.Context, *CreateAccountRequest) (*Account, error)
+	GetAccount(context.Context, *GetAccountRequest) (*Account, error)
+	UpdateAccount(context.Context, *Account) (*Account, error)
+	DeleteAccount(context.Context, *DeleteAccountRequest) (*empty.Empty, error)
 }
 
 // UnimplementedAccountServiceServer can be embedded to have forward compatible implementations.
 type UnimplementedAccountServiceServer struct {
 }
 
-func (*UnimplementedAccountServiceServer) List(ctx context.Context, req *AccountListRequest) (*Accounts, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+func (*UnimplementedAccountServiceServer) ListAccounts(ctx context.Context, req *ListAccountsRequest) (*Accounts, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAccounts not implemented")
 }
-func (*UnimplementedAccountServiceServer) Create(ctx context.Context, req *AccountCreate) (*Account, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+func (*UnimplementedAccountServiceServer) CreateAccount(ctx context.Context, req *CreateAccountRequest) (*Account, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateAccount not implemented")
 }
-func (*UnimplementedAccountServiceServer) Get(ctx context.Context, req *IdRequest) (*Account, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+func (*UnimplementedAccountServiceServer) GetAccount(ctx context.Context, req *GetAccountRequest) (*Account, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAccount not implemented")
 }
-func (*UnimplementedAccountServiceServer) Update(ctx context.Context, req *Account) (*Account, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
+func (*UnimplementedAccountServiceServer) UpdateAccount(ctx context.Context, req *Account) (*Account, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateAccount not implemented")
 }
-func (*UnimplementedAccountServiceServer) Delete(ctx context.Context, req *IdRequest) (*Status, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+func (*UnimplementedAccountServiceServer) DeleteAccount(ctx context.Context, req *DeleteAccountRequest) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
 }
 
 func RegisterAccountServiceServer(s *grpc.Server, srv AccountServiceServer) {
 	s.RegisterService(&_AccountService_serviceDesc, srv)
 }
 
-func _AccountService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AccountListRequest)
+func _AccountService_ListAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAccountsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).List(ctx, in)
+		return srv.(AccountServiceServer).ListAccounts(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.AccountService/List",
+		FullMethod: "/api.AccountService/ListAccounts",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).List(ctx, req.(*AccountListRequest))
+		return srv.(AccountServiceServer).ListAccounts(ctx, req.(*ListAccountsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AccountCreate)
+func _AccountService_CreateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).Create(ctx, in)
+		return srv.(AccountServiceServer).CreateAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.AccountService/Create",
+		FullMethod: "/api.AccountService/CreateAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).Create(ctx, req.(*AccountCreate))
+		return srv.(AccountServiceServer).CreateAccount(ctx, req.(*CreateAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IdRequest)
+func _AccountService_GetAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).Get(ctx, in)
+		return srv.(AccountServiceServer).GetAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.AccountService/Get",
+		FullMethod: "/api.AccountService/GetAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).Get(ctx, req.(*IdRequest))
+		return srv.(AccountServiceServer).GetAccount(ctx, req.(*GetAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AccountService_UpdateAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Account)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).Update(ctx, in)
+		return srv.(AccountServiceServer).UpdateAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.AccountService/Update",
+		FullMethod: "/api.AccountService/UpdateAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).Update(ctx, req.(*Account))
+		return srv.(AccountServiceServer).UpdateAccount(ctx, req.(*Account))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IdRequest)
+func _AccountService_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAccountRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).Delete(ctx, in)
+		return srv.(AccountServiceServer).DeleteAccount(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.AccountService/Delete",
+		FullMethod: "/api.AccountService/DeleteAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).Delete(ctx, req.(*IdRequest))
+		return srv.(AccountServiceServer).DeleteAccount(ctx, req.(*DeleteAccountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -531,24 +616,24 @@ var _AccountService_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*AccountServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "List",
-			Handler:    _AccountService_List_Handler,
+			MethodName: "ListAccounts",
+			Handler:    _AccountService_ListAccounts_Handler,
 		},
 		{
-			MethodName: "Create",
-			Handler:    _AccountService_Create_Handler,
+			MethodName: "CreateAccount",
+			Handler:    _AccountService_CreateAccount_Handler,
 		},
 		{
-			MethodName: "Get",
-			Handler:    _AccountService_Get_Handler,
+			MethodName: "GetAccount",
+			Handler:    _AccountService_GetAccount_Handler,
 		},
 		{
-			MethodName: "Update",
-			Handler:    _AccountService_Update_Handler,
+			MethodName: "UpdateAccount",
+			Handler:    _AccountService_UpdateAccount_Handler,
 		},
 		{
-			MethodName: "Delete",
-			Handler:    _AccountService_Delete_Handler,
+			MethodName: "DeleteAccount",
+			Handler:    _AccountService_DeleteAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

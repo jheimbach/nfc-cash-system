@@ -158,7 +158,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiStatus"
+              "properties": {}
             }
           }
         },
@@ -264,7 +264,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/apiAccountCreate"
+              "$ref": "#/definitions/apiCreateAccountRequest"
             }
           }
         ],
@@ -479,7 +479,23 @@
       },
       "title": "Account"
     },
-    "apiAccountCreate": {
+    "apiAccounts": {
+      "type": "object",
+      "properties": {
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/apiAccount"
+          }
+        },
+        "total_count": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "Accounts"
+    },
+    "apiCreateAccountRequest": {
       "type": "object",
       "properties": {
         "name": {
@@ -506,22 +522,6 @@
         }
       },
       "title": "AccountCreation"
-    },
-    "apiAccounts": {
-      "type": "object",
-      "properties": {
-        "accounts": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/apiAccount"
-          }
-        },
-        "total_count": {
-          "type": "integer",
-          "format": "int32"
-        }
-      },
-      "title": "Accounts"
     },
     "apiCreateGroupRequest": {
       "type": "object",
@@ -588,19 +588,6 @@
         }
       },
       "title": "PagingOptions"
-    },
-    "apiStatus": {
-      "type": "object",
-      "properties": {
-        "success": {
-          "type": "boolean",
-          "format": "boolean"
-        },
-        "error_message": {
-          "type": "string"
-        }
-      },
-      "title": "Status"
     },
     "apiTransaction": {
       "type": "object",
