@@ -299,12 +299,12 @@
         ]
       },
       "delete": {
-        "operationId": "Delete",
+        "operationId": "DeleteGroup",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiStatus"
+              "properties": {}
             }
           }
         },
@@ -403,7 +403,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/apiGroupCreate"
+              "$ref": "#/definitions/apiCreateGroupRequest"
             }
           }
         ],
@@ -515,9 +515,29 @@
           "items": {
             "$ref": "#/definitions/apiAccount"
           }
+        },
+        "total_count": {
+          "type": "integer",
+          "format": "int32"
         }
       },
       "title": "Accounts"
+    },
+    "apiCreateGroupRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "can_overdraw": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      },
+      "title": "GroupCreation"
     },
     "apiGroup": {
       "type": "object",
@@ -539,22 +559,6 @@
       },
       "title": "Group"
     },
-    "apiGroupCreate": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "can_overdraw": {
-          "type": "boolean",
-          "format": "boolean"
-        }
-      },
-      "title": "GroupCreation"
-    },
     "apiGroups": {
       "type": "object",
       "properties": {
@@ -563,6 +567,10 @@
           "items": {
             "$ref": "#/definitions/apiGroup"
           }
+        },
+        "total_count": {
+          "type": "integer",
+          "format": "int32"
         }
       },
       "title": "Groups"
@@ -653,6 +661,10 @@
           "items": {
             "$ref": "#/definitions/apiTransaction"
           }
+        },
+        "total_count": {
+          "type": "integer",
+          "format": "int32"
         }
       },
       "title": "Transactions"

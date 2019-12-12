@@ -3,11 +3,12 @@ syntax = "proto3";
 package api;
 
 import "globals.proto";
+import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 service GroupsService {
-    rpc List (GroupListRequest) returns (Groups) {
+    rpc ListGroups (ListGroupsRequest) returns (Groups) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "List groups"
             description: "Lists all groups, can be limited with paging options"
@@ -16,7 +17,7 @@ service GroupsService {
             get: "/v1/groups"
         };
     };
-    rpc Create (GroupCreate) returns (Group) {
+    rpc CreateGroup (CreateGroupRequest) returns (Group) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Create group"
             description: "Creates group"
@@ -26,7 +27,7 @@ service GroupsService {
             body: "*"
         };
     };
-    rpc Get (IdRequest) returns (Group) {
+    rpc GetGroup (GetGroupRequest) returns (Group) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Get group"
             description: "Returns single group with given id"
@@ -35,7 +36,7 @@ service GroupsService {
             get: "/v1/group/{id}"
         };
     };
-    rpc Update (Group) returns (Group) {
+    rpc UpdateGroup (Group) returns (Group) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Update group"
             description: "Updates group, all fields must be send"
@@ -45,15 +46,32 @@ service GroupsService {
             body: "*"
         };
     };
-    rpc Delete (IdRequest) returns (Status) {
+    rpc DeleteGroup (DeleteGroupRequest) returns (google.protobuf.Empty) {
         option (google.api.http) = {
             delete: "/v1/group/{id}"
         };
     };
 }
 
-message GroupListRequest {
+message ListGroupsRequest {
     Paging paging = 1;
+}
+
+message CreateGroupRequest {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: {title:"GroupCreation"}
+    };
+    string name =1;
+    string description = 2;
+    bool can_overdraw = 3;
+}
+
+message GetGroupRequest {
+    int32 id = 1;
+}
+
+message DeleteGroupRequest {
+    int32 id = 1;
 }
 
 message Groups {
@@ -61,6 +79,7 @@ message Groups {
         json_schema: {title:"Groups"}
     };
     repeated Group groups = 1;
+    int32 total_count=2;
 }
 
 message Group {
@@ -71,13 +90,4 @@ message Group {
     string name = 2;
     string description = 3;
     bool can_overdraw = 4;
-}
-
-message GroupCreate {
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: {title:"GroupCreation"}
-    };
-    string name =1;
-    string description = 2;
-    bool can_overdraw = 3;
 }

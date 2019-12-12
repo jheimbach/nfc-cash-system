@@ -32,57 +32,40 @@ var _ = utilities.NewDoubleArray
 var _ = descriptor.ForMessage
 
 var (
-	filter_GroupsService_List_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_GroupsService_ListGroups_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_GroupsService_List_0(ctx context.Context, marshaler runtime.Marshaler, client GroupsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GroupListRequest
+func request_GroupsService_ListGroups_0(ctx context.Context, marshaler runtime.Marshaler, client GroupsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListGroupsRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GroupsService_List_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_GroupsService_ListGroups_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.List(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.ListGroups(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_GroupsService_List_0(ctx context.Context, marshaler runtime.Marshaler, server GroupsServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GroupListRequest
+func local_request_GroupsService_ListGroups_0(ctx context.Context, marshaler runtime.Marshaler, server GroupsServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ListGroupsRequest
 	var metadata runtime.ServerMetadata
 
-	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_GroupsService_List_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_GroupsService_ListGroups_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.List(ctx, &protoReq)
+	msg, err := server.ListGroups(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_GroupsService_Create_0(ctx context.Context, marshaler runtime.Marshaler, client GroupsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GroupCreate
-	var metadata runtime.ServerMetadata
-
-	newReader, berr := utilities.IOReaderFactory(req.Body)
-	if berr != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
-	}
-	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := client.Create(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-
-}
-
-func local_request_GroupsService_Create_0(ctx context.Context, marshaler runtime.Marshaler, server GroupsServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GroupCreate
+func request_GroupsService_CreateGroup_0(ctx context.Context, marshaler runtime.Marshaler, client GroupsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CreateGroupRequest
 	var metadata runtime.ServerMetadata
 
 	newReader, berr := utilities.IOReaderFactory(req.Body)
@@ -93,13 +76,30 @@ func local_request_GroupsService_Create_0(ctx context.Context, marshaler runtime
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.Create(ctx, &protoReq)
+	msg, err := client.CreateGroup(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func request_GroupsService_Get_0(ctx context.Context, marshaler runtime.Marshaler, client GroupsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq IdRequest
+func local_request_GroupsService_CreateGroup_0(ctx context.Context, marshaler runtime.Marshaler, server GroupsServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq CreateGroupRequest
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.CreateGroup(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
+func request_GroupsService_GetGroup_0(ctx context.Context, marshaler runtime.Marshaler, client GroupsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetGroupRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -120,13 +120,13 @@ func request_GroupsService_Get_0(ctx context.Context, marshaler runtime.Marshale
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := client.Get(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetGroup(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_GroupsService_Get_0(ctx context.Context, marshaler runtime.Marshaler, server GroupsServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq IdRequest
+func local_request_GroupsService_GetGroup_0(ctx context.Context, marshaler runtime.Marshaler, server GroupsServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetGroupRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -147,12 +147,12 @@ func local_request_GroupsService_Get_0(ctx context.Context, marshaler runtime.Ma
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := server.Get(ctx, &protoReq)
+	msg, err := server.GetGroup(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_GroupsService_Update_0(ctx context.Context, marshaler runtime.Marshaler, client GroupsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_GroupsService_UpdateGroup_0(ctx context.Context, marshaler runtime.Marshaler, client GroupsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq Group
 	var metadata runtime.ServerMetadata
 
@@ -182,12 +182,12 @@ func request_GroupsService_Update_0(ctx context.Context, marshaler runtime.Marsh
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := client.Update(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.UpdateGroup(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_GroupsService_Update_0(ctx context.Context, marshaler runtime.Marshaler, server GroupsServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func local_request_GroupsService_UpdateGroup_0(ctx context.Context, marshaler runtime.Marshaler, server GroupsServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq Group
 	var metadata runtime.ServerMetadata
 
@@ -217,13 +217,13 @@ func local_request_GroupsService_Update_0(ctx context.Context, marshaler runtime
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := server.Update(ctx, &protoReq)
+	msg, err := server.UpdateGroup(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_GroupsService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, client GroupsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq IdRequest
+func request_GroupsService_DeleteGroup_0(ctx context.Context, marshaler runtime.Marshaler, client GroupsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq DeleteGroupRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -244,13 +244,13 @@ func request_GroupsService_Delete_0(ctx context.Context, marshaler runtime.Marsh
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := client.Delete(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.DeleteGroup(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_GroupsService_Delete_0(ctx context.Context, marshaler runtime.Marshaler, server GroupsServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq IdRequest
+func local_request_GroupsService_DeleteGroup_0(ctx context.Context, marshaler runtime.Marshaler, server GroupsServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq DeleteGroupRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -271,7 +271,7 @@ func local_request_GroupsService_Delete_0(ctx context.Context, marshaler runtime
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	msg, err := server.Delete(ctx, &protoReq)
+	msg, err := server.DeleteGroup(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -281,7 +281,7 @@ func local_request_GroupsService_Delete_0(ctx context.Context, marshaler runtime
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
 func RegisterGroupsServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server GroupsServiceServer) error {
 
-	mux.Handle("GET", pattern_GroupsService_List_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_GroupsService_ListGroups_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -290,18 +290,18 @@ func RegisterGroupsServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GroupsService_List_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GroupsService_ListGroups_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GroupsService_List_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GroupsService_ListGroups_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_GroupsService_Create_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_GroupsService_CreateGroup_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -310,18 +310,18 @@ func RegisterGroupsServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GroupsService_Create_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GroupsService_CreateGroup_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GroupsService_Create_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GroupsService_CreateGroup_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_GroupsService_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_GroupsService_GetGroup_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -330,18 +330,18 @@ func RegisterGroupsServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GroupsService_Get_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GroupsService_GetGroup_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GroupsService_Get_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GroupsService_GetGroup_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PUT", pattern_GroupsService_Update_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_GroupsService_UpdateGroup_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -350,18 +350,18 @@ func RegisterGroupsServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GroupsService_Update_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GroupsService_UpdateGroup_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GroupsService_Update_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GroupsService_UpdateGroup_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_GroupsService_Delete_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_GroupsService_DeleteGroup_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -370,14 +370,14 @@ func RegisterGroupsServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_GroupsService_Delete_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_GroupsService_DeleteGroup_0(rctx, inboundMarshaler, server, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GroupsService_Delete_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GroupsService_DeleteGroup_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -422,7 +422,7 @@ func RegisterGroupsServiceHandler(ctx context.Context, mux *runtime.ServeMux, co
 // "GroupsServiceClient" to call the correct interceptors.
 func RegisterGroupsServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client GroupsServiceClient) error {
 
-	mux.Handle("GET", pattern_GroupsService_List_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_GroupsService_ListGroups_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -431,18 +431,18 @@ func RegisterGroupsServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GroupsService_List_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GroupsService_ListGroups_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GroupsService_List_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GroupsService_ListGroups_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("POST", pattern_GroupsService_Create_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_GroupsService_CreateGroup_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -451,18 +451,18 @@ func RegisterGroupsServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GroupsService_Create_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GroupsService_CreateGroup_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GroupsService_Create_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GroupsService_CreateGroup_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_GroupsService_Get_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_GroupsService_GetGroup_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -471,18 +471,18 @@ func RegisterGroupsServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GroupsService_Get_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GroupsService_GetGroup_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GroupsService_Get_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GroupsService_GetGroup_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("PUT", pattern_GroupsService_Update_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("PUT", pattern_GroupsService_UpdateGroup_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -491,18 +491,18 @@ func RegisterGroupsServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GroupsService_Update_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GroupsService_UpdateGroup_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GroupsService_Update_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GroupsService_UpdateGroup_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("DELETE", pattern_GroupsService_Delete_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("DELETE", pattern_GroupsService_DeleteGroup_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -511,14 +511,14 @@ func RegisterGroupsServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_GroupsService_Delete_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_GroupsService_DeleteGroup_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_GroupsService_Delete_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_GroupsService_DeleteGroup_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -526,25 +526,25 @@ func RegisterGroupsServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 }
 
 var (
-	pattern_GroupsService_List_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "groups"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_GroupsService_ListGroups_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "groups"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_GroupsService_Create_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "groups"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_GroupsService_CreateGroup_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "groups"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_GroupsService_Get_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "group", "id"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_GroupsService_GetGroup_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "group", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_GroupsService_Update_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "group", "id"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_GroupsService_UpdateGroup_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "group", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_GroupsService_Delete_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "group", "id"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_GroupsService_DeleteGroup_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "group", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (
-	forward_GroupsService_List_0 = runtime.ForwardResponseMessage
+	forward_GroupsService_ListGroups_0 = runtime.ForwardResponseMessage
 
-	forward_GroupsService_Create_0 = runtime.ForwardResponseMessage
+	forward_GroupsService_CreateGroup_0 = runtime.ForwardResponseMessage
 
-	forward_GroupsService_Get_0 = runtime.ForwardResponseMessage
+	forward_GroupsService_GetGroup_0 = runtime.ForwardResponseMessage
 
-	forward_GroupsService_Update_0 = runtime.ForwardResponseMessage
+	forward_GroupsService_UpdateGroup_0 = runtime.ForwardResponseMessage
 
-	forward_GroupsService_Delete_0 = runtime.ForwardResponseMessage
+	forward_GroupsService_DeleteGroup_0 = runtime.ForwardResponseMessage
 )

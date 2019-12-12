@@ -10,6 +10,7 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/golang/protobuf/ptypes/empty"
 )
 
 type groupMockStorage struct {
@@ -47,20 +48,20 @@ func (g groupMockStorage) GetAllByIds(ids []int32) (map[int32]*api.Group, error)
 func TestGroupserver_List(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   *api.GroupListRequest
+		input   *api.ListGroupsRequest
 		want    *api.Groups
 		wantErr error
 	}{
 		{
 			name:  "get simple list of accounts",
-			input: &api.GroupListRequest{},
+			input: &api.ListGroupsRequest{},
 			want: &api.Groups{
 				Groups: genGroupModels(2),
 			},
 		},
 		{
 			name:    "has error",
-			input:   &api.GroupListRequest{},
+			input:   &api.ListGroupsRequest{},
 			wantErr: ErrGetAll,
 		},
 	}
@@ -75,7 +76,7 @@ func TestGroupserver_List(t *testing.T) {
 				},
 				},
 			}
-			got, err := a.List(context.Background(), tt.input)
+			got, err := a.ListGroups(context.Background(), tt.input)
 
 			if err != tt.wantErr {
 				t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
@@ -92,13 +93,13 @@ func TestGroupserver_List(t *testing.T) {
 func TestGroupserver_Create(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   *api.Group
+		input   *api.CreateGroupRequest
 		want    *api.Group
 		wantErr error
 	}{
 		{
 			name: "create group",
-			input: &api.Group{
+			input: &api.CreateGroupRequest{
 				Name:        "test group",
 				Description: "test",
 				CanOverdraw: false,
@@ -112,7 +113,7 @@ func TestGroupserver_Create(t *testing.T) {
 		},
 		{
 			name: "create group",
-			input: &api.Group{
+			input: &api.CreateGroupRequest{
 				Name:        "test group",
 				Description: "test",
 				CanOverdraw: false,
@@ -136,7 +137,7 @@ func TestGroupserver_Create(t *testing.T) {
 				},
 			}
 
-			got, err := server.Create(context.Background(), tt.input)
+			got, err := server.CreateGroup(context.Background(), tt.input)
 			if tt.wantErr != nil {
 				if err != tt.wantErr {
 					t.Errorf("got err %v, expected %v", err, tt.wantErr)
@@ -195,7 +196,7 @@ func TestGroupserver_Update(t *testing.T) {
 					},
 				},
 			}
-			got, err := server.Update(context.Background(), tt.want)
+			got, err := server.UpdateGroup(context.Background(), tt.want)
 
 			if tt.wantErr != nil {
 				if err != tt.wantErr {
@@ -218,19 +219,19 @@ func TestGroupserver_Update(t *testing.T) {
 func TestGroupserver_Delete(t *testing.T) {
 	tests := []struct {
 		name    string
-		request *api.IdRequest
-		want    *api.Status
+		request *api.DeleteGroupRequest
+		want    *empty.Empty
 		wantErr error
 	}{
 		{
 			name:    "delete group",
-			request: &api.IdRequest{Id: 1},
-			want:    &api.Status{Success: true},
+			request: &api.DeleteGroupRequest{Id: 1},
+			want:    &empty.Empty{},
 		},
 		{
 			name:    "delete group with error",
-			request: &api.IdRequest{Id: 1},
-			want:    &api.Status{Success: false, ErrorMessage: ErrSomethingWentWrong.Error()},
+			request: &api.DeleteGroupRequest{Id: 1},
+			want:    &empty.Empty{},
 			wantErr: ErrSomethingWentWrong,
 		},
 	}
@@ -248,7 +249,7 @@ func TestGroupserver_Delete(t *testing.T) {
 				},
 			}
 
-			got, err := server.Delete(context.Background(), tt.request)
+			got, err := server.DeleteGroup(context.Background(), tt.request)
 
 			if tt.wantErr != nil {
 				if err != tt.wantErr {
