@@ -11,16 +11,18 @@ import (
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type transactionMockStorage struct {
-	getAll          func() (*api.Transactions, error)
+	getAll          func() ([]*api.Transaction, error)
 	read            func(id int32) (*api.Transaction, error)
-	create          func(amount, oldSaldo, newSaldo float64, account *api.Account) (*api.Transaction, error)
-	getAllByAccount func(accountId int32) (*api.Transactions, error)
+	create          func(amount, oldSaldo, newSaldo float64, accountId int32) (*api.Transaction, error)
+	getAllByAccount func(accountId int32) ([]*api.Transaction, error)
 }
 
-func (t *transactionMockStorage) GetAll() (*api.Transactions, error) {
+func (t *transactionMockStorage) GetAll() ([]*api.Transaction, error) {
 	return t.getAll()
 }
 
@@ -28,32 +30,33 @@ func (t *transactionMockStorage) Read(id int32) (*api.Transaction, error) {
 	return t.read(id)
 }
 
-func (t *transactionMockStorage) Create(amount, oldSaldo, newSaldo float64, account *api.Account) (*api.Transaction, error) {
-	return t.create(amount, oldSaldo, newSaldo, account)
+func (t *transactionMockStorage) Create(amount, oldSaldo, newSaldo float64, accountId int32) (*api.Transaction, error) {
+	return t.create(amount, oldSaldo, newSaldo, accountId)
 }
 
-func (t *transactionMockStorage) GetAllByAccount(accountId int32) (*api.Transactions, error) {
+func (t *transactionMockStorage) GetAllByAccount(accountId int32) ([]*api.Transaction, error) {
 	return t.getAllByAccount(accountId)
 }
 
-func TestTransactionServer_All(t *testing.T) {
+func TestTransactionServer_ListTransactions(t *testing.T) {
 	tests := []struct {
 		name      string
-		input     *api.TransactionAllRequest
-		want      *api.Transactions
+		input     *api.ListTransactionRequest
+		want      *api.ListTransactionsResponse
 		wantErr   error
 		returnErr error
 	}{
 		{
 			name:  "return all transactions",
-			input: &api.TransactionAllRequest{},
-			want: &api.Transactions{
+			input: &api.ListTransactionRequest{},
+			want: &api.ListTransactionsResponse{
 				Transactions: genTransactionModels(2, 1),
+				TotalCount:   2,
 			},
 		},
 		{
 			name:      "storage returns error",
-			input:     &api.TransactionAllRequest{},
+			input:     &api.ListTransactionRequest{},
 			wantErr:   ErrSomethingWentWrong,
 			returnErr: errors.New("test error"),
 		},
@@ -62,15 +65,15 @@ func TestTransactionServer_All(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := transactionServer{
 				storage: &transactionMockStorage{
-					getAll: func() (*api.Transactions, error) {
+					getAll: func() ([]*api.Transaction, error) {
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
 						}
-						return tt.want, nil
+						return tt.want.Transactions, nil
 					},
 				},
 			}
-			got, err := server.All(context.Background(), tt.input)
+			got, err := server.ListTransactions(context.Background(), tt.input)
 
 			if tt.wantErr != nil {
 				if err != tt.wantErr {
@@ -89,19 +92,20 @@ func TestTransactionServer_All(t *testing.T) {
 	}
 }
 
-func TestTransactionServer_List(t *testing.T) {
+func TestTransactionServer_ListTransactionsByAccount(t *testing.T) {
 	tests := []struct {
 		name      string
-		input     *api.TransactionListRequest
-		want      *api.Transactions
+		input     *api.ListTransactionsByAccountRequest
+		want      *api.ListTransactionsResponse
 		wantErr   error
 		returnErr error
 	}{
 		{
 			name:  "return all transaction for the same account",
-			input: &api.TransactionListRequest{AccountId: 1},
-			want: &api.Transactions{
+			input: &api.ListTransactionsByAccountRequest{AccountId: 1},
+			want: &api.ListTransactionsResponse{
 				Transactions: genTransactionModels(3, 1),
+				TotalCount:   3,
 			},
 		},
 	}
@@ -109,18 +113,18 @@ func TestTransactionServer_List(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := &transactionServer{
 				storage: &transactionMockStorage{
-					getAllByAccount: func(accountId int32) (*api.Transactions, error) {
+					getAllByAccount: func(accountId int32) ([]*api.Transaction, error) {
 						if accountId != tt.input.AccountId {
 							t.Fatalf("got accountid %d, expected %d", accountId, tt.input.AccountId)
 						}
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
 						}
-						return tt.want, nil
+						return tt.want.Transactions, nil
 					},
 				},
 			}
-			got, err := server.List(context.Background(), tt.input)
+			got, err := server.ListTransactionsByAccount(context.Background(), tt.input)
 			if tt.wantErr != nil {
 				if err != tt.wantErr {
 					t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
@@ -142,26 +146,26 @@ func TestTransactionServer_List(t *testing.T) {
 func TestTransactionServer_Create(t *testing.T) {
 	tests := []struct {
 		name      string
-		input     *api.Transaction
+		input     *api.CreateTransactionRequest
 		wantErr   error
 		returnErr error
 	}{
 		{
 			name: "create transaction",
-			input: &api.Transaction{
-				OldSaldo: 120,
-				NewSaldo: 115,
-				Amount:   -5,
-				Account:  &api.Account{Id: 1},
+			input: &api.CreateTransactionRequest{
+				OldSaldo:  120,
+				NewSaldo:  115,
+				Amount:    -5,
+				AccountId: 1,
 			},
 		},
 		{
 			name: "storage returns AccountNotFound",
-			input: &api.Transaction{
-				OldSaldo: 120,
-				NewSaldo: 115,
-				Amount:   -5,
-				Account:  &api.Account{Id: 1},
+			input: &api.CreateTransactionRequest{
+				OldSaldo:  120,
+				NewSaldo:  115,
+				Amount:    -5,
+				AccountId: 100,
 			},
 			returnErr: models.ErrAccountNotFound,
 			wantErr:   ErrSomethingWentWrong,
@@ -172,7 +176,7 @@ func TestTransactionServer_Create(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := transactionServer{
 				storage: &transactionMockStorage{
-					create: func(amount, oldSaldo, newSaldo float64, account *api.Account) (*api.Transaction, error) {
+					create: func(amount, oldSaldo, newSaldo float64, accountId int32) (*api.Transaction, error) {
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
 						}
@@ -181,14 +185,14 @@ func TestTransactionServer_Create(t *testing.T) {
 							Amount:   amount,
 							OldSaldo: oldSaldo,
 							NewSaldo: newSaldo,
-							Account:  account,
+							Account:  &api.Account{Id: accountId},
 							Created:  timeStamp(),
 						}, nil
 					},
 				},
 			}
 
-			got, err := server.Create(context.Background(), tt.input)
+			got, err := server.CreateTransaction(context.Background(), tt.input)
 
 			if tt.wantErr != nil {
 				if err != tt.wantErr {
@@ -199,9 +203,14 @@ func TestTransactionServer_Create(t *testing.T) {
 			if err != nil {
 				t.Fatalf("got err %v, did not expect one", err)
 			}
-			want := tt.input
-			want.Id = 1
-			want.Created = timeStamp()
+			want := &api.Transaction{
+				Id:       1,
+				OldSaldo: tt.input.OldSaldo,
+				NewSaldo: tt.input.NewSaldo,
+				Amount:   tt.input.Amount,
+				Created:  timeStamp(),
+				Account:  &api.Account{Id: 1},
+			}
 
 			if !reflect.DeepEqual(got, want) {
 				t.Errorf("got %v, expected %v", got, want)
@@ -213,14 +222,14 @@ func TestTransactionServer_Create(t *testing.T) {
 func TestTransactionServer_Get(t *testing.T) {
 	tests := []struct {
 		name      string
-		input     *api.TransactionRequest
+		input     *api.GetTransactionRequest
 		want      *api.Transaction
 		wantErr   error
 		returnErr error
 	}{
 		{
 			name: "returns transaction",
-			input: &api.TransactionRequest{
+			input: &api.GetTransactionRequest{
 				Id:        1,
 				AccountId: 1,
 			},
@@ -228,21 +237,21 @@ func TestTransactionServer_Get(t *testing.T) {
 		},
 		{
 			name: "returns transaction but account id does not match",
-			input: &api.TransactionRequest{
+			input: &api.GetTransactionRequest{
 				Id:        1,
 				AccountId: 1,
 			},
 			want:    genTransactionModels(1, 2)[0],
-			wantErr: ErrNotFound,
+			wantErr: status.Error(codes.NotFound, ErrNotFound.Error()),
 		},
 		{
 			name: "storage returns error",
-			input: &api.TransactionRequest{
+			input: &api.GetTransactionRequest{
 				Id:        1,
 				AccountId: 1,
 			},
 			want:      genTransactionModels(1, 1)[0],
-			wantErr:   ErrSomethingWentWrong,
+			wantErr:   status.Error(codes.Internal, ErrSomethingWentWrong.Error()),
 			returnErr: errors.New("test error"),
 		},
 	}
@@ -259,10 +268,10 @@ func TestTransactionServer_Get(t *testing.T) {
 				},
 			}
 
-			got, err := server.Get(context.Background(), tt.input)
+			got, err := server.GetTransaction(context.Background(), tt.input)
 
 			if tt.wantErr != nil {
-				if err != tt.wantErr {
+				if !errors.Is(err, tt.wantErr) {
 					t.Errorf("got err %v, expected %v", err, tt.wantErr)
 				}
 				return

@@ -16,14 +16,14 @@ func TestTransactionModel_Create(t *testing.T) {
 	defer db.Close()
 	tests := []struct {
 		name        string
-		input       *api.TransactionCreate
+		input       *api.CreateTransactionRequest
 		want        *api.Transaction
 		wantErr     bool
 		expectedErr error
 	}{
 		{
 			name: "create new transaction",
-			input: &api.TransactionCreate{
+			input: &api.CreateTransactionRequest{
 				Amount:    -6,
 				OldSaldo:  12,
 				NewSaldo:  6,
@@ -35,12 +35,19 @@ func TestTransactionModel_Create(t *testing.T) {
 				NewSaldo: 6,
 				Amount:   -6,
 				Account: &api.Account{
-					Id: 1,
+					Id:        1,
+					Name:      "testaccount",
+					Saldo:     12,
+					NfcChipId: "testchipid",
+					Group: &api.Group{
+						Id:   1,
+						Name: "testgroup1",
+					},
 				},
 			},
 		}, {
 			name: "create new transaction with nonexistent account",
-			input: &api.TransactionCreate{
+			input: &api.CreateTransactionRequest{
 				Amount:    -6,
 				OldSaldo:  12,
 				NewSaldo:  6,
@@ -58,7 +65,8 @@ func TestTransactionModel_Create(t *testing.T) {
 			defer dbTeardown()
 
 			model := TransactionModel{
-				db: db,
+				db:       db,
+				accounts: NewAccountModel(db, NewGroupModel(db)), //todo create mock
 			}
 
 			got, err := model.Create(tt.input.Amount, tt.input.OldSaldo, tt.input.NewSaldo, tt.input.AccountId)

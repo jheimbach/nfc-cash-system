@@ -9,7 +9,7 @@ import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 service TransactionsService {
-    rpc All (TransactionAllRequest) returns (Transactions) {
+    rpc ListTransactions (ListTransactionRequest) returns (ListTransactionsResponse) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "List all transactions"
             description: "Lists all transactions, can be limited with paging options"
@@ -18,7 +18,7 @@ service TransactionsService {
             get: "/v1/transactions"
         };
     };
-    rpc List (TransactionListRequest) returns (Transactions) {
+    rpc ListTransactionsByAccount (ListTransactionsByAccountRequest) returns (ListTransactionsResponse) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "List transactions"
             description: "Lists all Transactions for given account, can be limited with paging options"
@@ -27,7 +27,7 @@ service TransactionsService {
             get: "/v1/account/{account_id}/transactions"
         };
     };
-    rpc Create (TransactionCreate) returns (Transaction) {
+    rpc CreateTransaction (CreateTransactionRequest) returns (Transaction) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Create transaction"
             description: "Creates new transaction"
@@ -37,7 +37,7 @@ service TransactionsService {
             body: "*"
         };
     };
-    rpc Get (TransactionRequest) returns (Transaction) {
+    rpc GetTransaction (GetTransactionRequest) returns (Transaction) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Get transaction"
             description: "Returns single transaction"
@@ -48,21 +48,21 @@ service TransactionsService {
     };
 }
 
-message TransactionAllRequest {
+message ListTransactionRequest {
     Paging paging = 1;
 }
 
-message TransactionListRequest {
+message ListTransactionsByAccountRequest {
     int32 account_id = 1;
     Paging paging = 2;
 }
 
-message TransactionRequest {
+message GetTransactionRequest {
     int32 id = 1;
     int32 account_id = 2;
 }
 
-message Transactions {
+message ListTransactionsResponse {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
         json_schema: {title:"Transactions"}
     };
@@ -82,7 +82,7 @@ message Transaction {
     Account account = 6;
 }
 
-message TransactionCreate {
+message CreateTransactionRequest {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
         json_schema: {title:"TransactionCreation"}
     };

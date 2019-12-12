@@ -6,6 +6,8 @@ import (
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type transactionServer struct {
@@ -16,7 +18,7 @@ func RegisterTransactionServer(server *grpc.Server, storage models.TransactionSt
 	api.RegisterTransactionsServiceServer(server, &transactionServer{storage: storage})
 }
 
-func (t *transactionServer) All(ctx context.Context, req *api.TransactionAllRequest) (*api.Transactions, error) {
+func (t *transactionServer) ListTransactions(ctx context.Context, req *api.ListTransactionRequest) (*api.ListTransactionsResponse, error) {
 	transactions, err := t.storage.GetAll()
 	if err != nil {
 		return nil, ErrSomethingWentWrong
@@ -24,7 +26,7 @@ func (t *transactionServer) All(ctx context.Context, req *api.TransactionAllRequ
 	return transactions, nil
 }
 
-func (t *transactionServer) List(ctx context.Context, req *api.TransactionListRequest) (*api.Transactions, error) {
+func (t *transactionServer) ListTransactionsByAccount(ctx context.Context, req *api.ListTransactionsByAccountRequest) (*api.ListTransactionsResponse, error) {
 	transactions, err := t.storage.GetAllByAccount(req.AccountId)
 	if err != nil {
 		return nil, ErrSomethingWentWrong
@@ -32,22 +34,23 @@ func (t *transactionServer) List(ctx context.Context, req *api.TransactionListRe
 	return transactions, nil
 }
 
-func (t *transactionServer) Create(ctx context.Context, req *api.TransactionCreate) (*api.Transaction, error) {
-	transaction, err := t.storage.Create(req.Amount, req.OldSaldo, req.NewSaldo, req.Account)
+func (t *transactionServer) CreateTransaction(ctx context.Context, req *api.CreateTransactionRequest) (*api.Transaction, error) {
+	// Todo compute old and new saldo
+	transaction, err := t.storage.Create(req.Amount, req.OldSaldo, req.NewSaldo, req.AccountId)
 	if err != nil {
 		return nil, ErrSomethingWentWrong
 	}
 	return transaction, nil
 }
 
-func (t *transactionServer) Get(ctx context.Context, req *api.TransactionRequest) (*api.Transaction, error) {
+func (t *transactionServer) GetTransaction(ctx context.Context, req *api.GetTransactionRequest) (*api.Transaction, error) {
 	transaction, err := t.storage.Read(req.Id)
 	if err != nil {
-		return nil, ErrSomethingWentWrong
+		return nil, status.Error(codes.Internal, ErrSomethingWentWrong.Error())
 	}
 
 	if transaction.Account.Id != req.AccountId {
-		return nil, ErrNotFound
+		return nil, status.Error(codes.NotFound, ErrNotFound.Error())
 	}
 
 	return transaction, nil

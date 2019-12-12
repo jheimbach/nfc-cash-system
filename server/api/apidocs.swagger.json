@@ -29,7 +29,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiTransactions"
+              "$ref": "#/definitions/apiListTransactionsResponse"
             }
           }
         },
@@ -84,7 +84,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/apiTransactionCreate"
+              "$ref": "#/definitions/apiCreateTransactionRequest"
             }
           }
         ],
@@ -420,7 +420,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiTransactions"
+              "$ref": "#/definitions/apiListTransactionsResponse"
             }
           }
         },
@@ -539,6 +539,28 @@
       },
       "title": "GroupCreation"
     },
+    "apiCreateTransactionRequest": {
+      "type": "object",
+      "properties": {
+        "old_saldo": {
+          "type": "number",
+          "format": "double"
+        },
+        "new_saldo": {
+          "type": "number",
+          "format": "double"
+        },
+        "amount": {
+          "type": "number",
+          "format": "double"
+        },
+        "account_id": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "TransactionCreation"
+    },
     "apiGroup": {
       "type": "object",
       "properties": {
@@ -574,6 +596,22 @@
         }
       },
       "title": "Groups"
+    },
+    "apiListTransactionsResponse": {
+      "type": "object",
+      "properties": {
+        "transactions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/apiTransaction"
+          }
+        },
+        "total_count": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "Transactions"
     },
     "apiPaging": {
       "type": "object",
@@ -617,44 +655,6 @@
         }
       },
       "title": "Transaction"
-    },
-    "apiTransactionCreate": {
-      "type": "object",
-      "properties": {
-        "old_saldo": {
-          "type": "number",
-          "format": "double"
-        },
-        "new_saldo": {
-          "type": "number",
-          "format": "double"
-        },
-        "amount": {
-          "type": "number",
-          "format": "double"
-        },
-        "account_id": {
-          "type": "integer",
-          "format": "int32"
-        }
-      },
-      "title": "TransactionCreation"
-    },
-    "apiTransactions": {
-      "type": "object",
-      "properties": {
-        "transactions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/apiTransaction"
-          }
-        },
-        "total_count": {
-          "type": "integer",
-          "format": "int32"
-        }
-      },
-      "title": "Transactions"
     }
   }
 }

@@ -27,7 +27,7 @@ func NewTransactionModel(db *sql.DB, accounts models.AccountStorager) *Transacti
 func (t *TransactionModel) Create(amount, oldSaldo, newSaldo float64, accountId int32) (*api.Transaction, error) {
 	account, err := t.accounts.Read(accountId)
 	if err != nil {
-		return nil, err
+		return nil, models.ErrAccountNotFound
 	}
 
 	now := time.Now()
