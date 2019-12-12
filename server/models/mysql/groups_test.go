@@ -356,7 +356,7 @@ func TestGroupModel_GetAll(t *testing.T) {
 
 	groups, err := model.GetAll()
 	is.NoErr(err)
-	is.Equal(len(groups.Groups), 4) // expected 4 groups
+	is.Equal(len(groups), 4) // expected 4 groups
 }
 
 func TestGroupModel_GetAllByIds(t *testing.T) {

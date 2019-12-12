@@ -362,7 +362,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/apiGroups"
+              "$ref": "#/definitions/apiListGroupsResponse"
             }
           }
         },
@@ -581,7 +581,7 @@
       },
       "title": "Group"
     },
-    "apiGroups": {
+    "apiListGroupsResponse": {
       "type": "object",
       "properties": {
         "groups": {

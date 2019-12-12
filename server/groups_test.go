@@ -15,7 +15,7 @@ import (
 
 type groupMockStorage struct {
 	create      func(name, description string, canOverdraw bool) (*api.Group, error)
-	getAll      func() (*api.Groups, error)
+	getAll      func() ([]*api.Group, error)
 	read        func(id int32) (*api.Group, error)
 	update      func(group *api.Group) (*api.Group, error)
 	delete      func(id int32) error
@@ -26,7 +26,7 @@ func (g *groupMockStorage) Create(name, description string, canOverdraw bool) (*
 	return g.create(name, description, canOverdraw)
 }
 
-func (g *groupMockStorage) GetAll() (*api.Groups, error) {
+func (g *groupMockStorage) GetAll() ([]*api.Group, error) {
 	return g.getAll()
 }
 
@@ -49,14 +49,15 @@ func TestGroupserver_List(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   *api.ListGroupsRequest
-		want    *api.Groups
+		want    *api.ListGroupsResponse
 		wantErr error
 	}{
 		{
 			name:  "get simple list of accounts",
 			input: &api.ListGroupsRequest{},
-			want: &api.Groups{
-				Groups: genGroupModels(2),
+			want: &api.ListGroupsResponse{
+				Groups:     genGroupModels(2),
+				TotalCount: 2,
 			},
 		},
 		{
@@ -68,11 +69,11 @@ func TestGroupserver_List(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &groupserver{
-				storage: &groupMockStorage{getAll: func() (*api.Groups, error) {
+				storage: &groupMockStorage{getAll: func() ([]*api.Group, error) {
 					if tt.wantErr != nil {
 						return nil, sql.ErrNoRows
 					}
-					return tt.want, nil
+					return tt.want.Groups, nil
 				},
 				},
 			}
@@ -89,6 +90,13 @@ func TestGroupserver_List(t *testing.T) {
 		})
 	}
 }
+
+/*
+
+groups:<id:1 name:"group name 1" description:"description" can_overdraw:true > groups:<id:2 name:"group name 2" description:"description" > total_count:2
+groups:<id:1 name:"group name 1" description:"description" can_overdraw:true > groups:<id:2 name:"group name 2" description:"description" >
+
+*/
 
 func TestGroupserver_Create(t *testing.T) {
 	tests := []struct {

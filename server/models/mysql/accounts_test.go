@@ -50,7 +50,7 @@ func (g *groupModelMock) Create(name, description string, canOverdraw bool) (*ap
 	return nil, nil
 }
 
-func (g *groupModelMock) GetAll() (*api.Groups, error) {
+func (g *groupModelMock) GetAll() ([]*api.Group, error) {
 	if len(g.groups) < 1 {
 		return nil, models.ErrNotFound
 	}
@@ -58,7 +58,7 @@ func (g *groupModelMock) GetAll() (*api.Groups, error) {
 	for _, group := range g.groups {
 		groups = append(groups, group)
 	}
-	return &api.Groups{Groups: groups}, nil
+	return groups, nil
 }
 
 func (g *groupModelMock) Read(id int32) (*api.Group, error) {

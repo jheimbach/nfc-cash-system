@@ -104,7 +104,7 @@ func (g *GroupModel) Delete(id int32) error {
 	return nil
 }
 
-func (g *GroupModel) GetAll() (*api.Groups, error) {
+func (g *GroupModel) GetAll() ([]*api.Group, error) {
 
 	rows, err := g.db.Query("SELECT id, name, description, can_overdraw FROM account_groups")
 	if err != nil {
@@ -117,7 +117,7 @@ func (g *GroupModel) GetAll() (*api.Groups, error) {
 		return nil, err
 	}
 
-	return &api.Groups{Groups: groups}, nil
+	return groups, nil
 }
 
 func (g *GroupModel) GetAllByIds(ids []int32) (map[int32]*api.Group, error) {

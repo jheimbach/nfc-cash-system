@@ -8,7 +8,7 @@ import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 service GroupsService {
-    rpc ListGroups (ListGroupsRequest) returns (Groups) {
+    rpc ListGroups (ListGroupsRequest) returns (ListGroupsResponse) {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "List groups"
             description: "Lists all groups, can be limited with paging options"
@@ -74,7 +74,7 @@ message DeleteGroupRequest {
     int32 id = 1;
 }
 
-message Groups {
+message ListGroupsResponse {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
         json_schema: {title:"Groups"}
     };

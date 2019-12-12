@@ -22,13 +22,16 @@ func RegisterGroupServer(s *grpc.Server, storage models.GroupStorager) {
 	api.RegisterGroupsServiceServer(s, &groupserver{storage: storage})
 }
 
-func (g *groupserver) ListGroups(ctx context.Context, req *api.ListGroupsRequest) (*api.Groups, error) {
+func (g *groupserver) ListGroups(ctx context.Context, req *api.ListGroupsRequest) (*api.ListGroupsResponse, error) {
 	groups, err := g.storage.GetAll()
 
 	if err != nil {
 		return nil, ErrGetAll
 	}
-	return groups, nil
+	return &api.ListGroupsResponse{
+		Groups:     groups,
+		TotalCount: int32(len(groups)),
+	}, nil
 }
 
 func (g *groupserver) CreateGroup(ctx context.Context, req *api.CreateGroupRequest) (*api.Group, error) {
