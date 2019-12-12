@@ -4,6 +4,7 @@ import (
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/timestamp"
 	isPkg "github.com/matryer/is"
 	"testing"
 	"time"
@@ -118,7 +119,8 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		defer dbTeardown()
 
 		model := TransactionModel{
-			db: db,
+			db:       db,
+			accounts: NewAccountModel(db, NewGroupModel(db)),
 		}
 		transactions, err := model.GetAll()
 		is.NoErr(err)
@@ -132,7 +134,8 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		defer dbTeardown()
 
 		model := TransactionModel{
-			db: db,
+			db:       db,
+			accounts: NewAccountModel(db, NewGroupModel(db)),
 		}
 		transactions, err := model.GetAll()
 		is.NoErr(err)
@@ -163,7 +166,7 @@ func TestTransactionModel_Get(t *testing.T) {
 			Id:       1,
 			OldSaldo: 120,
 			NewSaldo: 115,
-			Amount:   -5,
+			Amount:   5,
 			Created:  created,
 			Account: &api.Account{
 				Id: 1,
@@ -206,12 +209,68 @@ func TestTransactionModel_GetAllByAccount(t *testing.T) {
 		defer dbTeardown()
 
 		model := TransactionModel{
-			db: db,
+			db:       db,
+			accounts: NewAccountModel(db, NewGroupModel(db)),
 		}
 		transactions, err := model.GetAllByAccount(1)
 		is.NoErr(err)
-
 		is.Equal(len(transactions), 5) // expected 5 transactions
+
+		account := &api.Account{
+			Id:        1,
+			Name:      "testaccount",
+			Saldo:     12,
+			NfcChipId: "testchipid",
+			Group: &api.Group{
+				Id:   1,
+				Name: "testgroup1",
+			},
+		}
+
+		wantList := []*api.Transaction{
+			{
+				Id:       5,
+				OldSaldo: 100,
+				NewSaldo: 105,
+				Amount:   -5,
+				Created:  timeStampMock(5),
+				Account:  account,
+			},
+			{
+				Id:       4,
+				OldSaldo: 105,
+				NewSaldo: 100,
+				Amount:   5,
+				Created:  timeStampMock(4),
+				Account:  account,
+			},
+			{
+				Id:       3,
+				OldSaldo: 110,
+				NewSaldo: 105,
+				Amount:   5,
+				Created:  timeStampMock(3),
+				Account:  account,
+			},
+			{
+				Id:       2,
+				OldSaldo: 115,
+				NewSaldo: 110,
+				Amount:   5,
+				Created:  timeStampMock(2),
+				Account:  account,
+			},
+			{
+				Id:       1,
+				OldSaldo: 120,
+				NewSaldo: 115,
+				Amount:   5,
+				Created:  timeStampMock(1),
+				Account:  account,
+			},
+		}
+
+		is.Equal(transactions, wantList)
 	})
 
 	t.Run("no transactions found for account id 100", func(t *testing.T) {
@@ -227,4 +286,9 @@ func TestTransactionModel_GetAllByAccount(t *testing.T) {
 
 		is.Equal(len(transactions), 0) // expected 0 transactions
 	})
+}
+
+func timeStampMock(month int) *timestamp.Timestamp {
+	ts, _ := ptypes.TimestampProto(time.Date(2019, time.Month(month), 17, 16, 15, 14, 0, time.UTC))
+	return ts
 }

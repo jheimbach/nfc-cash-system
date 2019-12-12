@@ -104,6 +104,8 @@ func (t *TransactionModel) loadTransactions(query string, args ...interface{}) (
 	defer rows.Close()
 
 	var transactions []*api.Transaction
+	var accountIdsLookup = make(map[int32]bool)
+	var accountIds []int32
 
 	for rows.Next() {
 		s := &api.Transaction{Account: &api.Account{}}
@@ -120,10 +122,28 @@ func (t *TransactionModel) loadTransactions(query string, args ...interface{}) (
 		}
 
 		transactions = append(transactions, s)
+
+		if _, ok := accountIdsLookup[s.Account.Id]; !ok {
+			accountIdsLookup[s.Account.Id] = true
+			accountIds = append(accountIds, s.Account.Id)
+		}
 	}
 
 	if rows.Err() != nil {
 		return nil, rows.Err()
+	}
+
+	if len(transactions) == 0 {
+		return nil, nil
+	}
+
+	accounts, err := t.accounts.GetAllByIds(accountIds)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, transaction := range transactions {
+		transaction.Account = accounts[transaction.Account.Id]
 	}
 
 	return transactions, nil
