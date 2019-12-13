@@ -51,7 +51,7 @@ func (g *groupModelMock) Create(name, description string, canOverdraw bool) (*ap
 	return nil, nil
 }
 
-func (g *groupModelMock) GetAll() ([]*api.Group, error) {
+func (g *groupModelMock) GetAll(limit, offset int32) ([]*api.Group, error) {
 	if len(g.groups) < 1 {
 		return nil, models.ErrNotFound
 	}

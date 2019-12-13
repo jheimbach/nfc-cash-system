@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
@@ -104,9 +105,20 @@ func (g *GroupModel) Delete(id int32) error {
 	return nil
 }
 
-func (g *GroupModel) GetAll() ([]*api.Group, error) {
+func (g *GroupModel) GetAll(limit, offset int32) ([]*api.Group, error) {
+	stmt := "SELECT id, name, description, can_overdraw FROM account_groups"
 
-	rows, err := g.db.Query("SELECT id, name, description, can_overdraw FROM account_groups")
+	var args []interface{}
+	if limit > 0 {
+		stmt = fmt.Sprintf("%s LIMIT ?", stmt)
+		args = append(args, limit)
+		if offset > 0 {
+			stmt = fmt.Sprintf("%s OFFSET ?", stmt)
+			args = append(args, offset)
+		}
+	}
+
+	rows, err := g.db.Query(stmt, args...)
 	if err != nil {
 		return nil, err
 	}

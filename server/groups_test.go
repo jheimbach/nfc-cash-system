@@ -15,7 +15,7 @@ import (
 
 type groupMockStorage struct {
 	create      func(name, description string, canOverdraw bool) (*api.Group, error)
-	getAll      func() ([]*api.Group, error)
+	getAll      func(limit, offset int32) ([]*api.Group, error)
 	read        func(id int32) (*api.Group, error)
 	update      func(group *api.Group) (*api.Group, error)
 	delete      func(id int32) error
@@ -26,8 +26,8 @@ func (g *groupMockStorage) Create(name, description string, canOverdraw bool) (*
 	return g.create(name, description, canOverdraw)
 }
 
-func (g *groupMockStorage) GetAll() ([]*api.Group, error) {
-	return g.getAll()
+func (g *groupMockStorage) GetAll(limit, offset int32) ([]*api.Group, error) {
+	return g.getAll(limit, offset)
 }
 
 func (g *groupMockStorage) Read(id int32) (*api.Group, error) {
@@ -46,42 +46,86 @@ func (g groupMockStorage) GetAllByIds(ids []int32) (map[int32]*api.Group, error)
 }
 
 func TestGroupserver_List(t *testing.T) {
-	tests := []struct {
-		name    string
-		input   *api.ListGroupsRequest
-		want    *api.ListGroupsResponse
-		wantErr error
+	var tests = []struct {
+		name      string
+		input     *api.ListGroupsRequest
+		want      *api.ListGroupsResponse
+		wantErr   error
+		returnErr error
 	}{
 		{
-			name:  "get simple list of accounts",
-			input: &api.ListGroupsRequest{},
+			name: "get list all groups",
+			input: &api.ListGroupsRequest{
+				Paging: nil,
+			},
 			want: &api.ListGroupsResponse{
-				Groups:     genGroupModels(2),
-				TotalCount: 2,
+				Groups:     genGroupModels(10),
+				TotalCount: 10,
 			},
 		},
 		{
-			name:    "has error",
-			input:   &api.ListGroupsRequest{},
-			wantErr: ErrGetAll,
+			name:      "has error",
+			input:     &api.ListGroupsRequest{},
+			wantErr:   ErrGetAll,
+			returnErr: sql.ErrNoRows,
+		},
+		{
+			name: "has limit",
+			input: &api.ListGroupsRequest{
+				Paging: &api.Paging{Limit: 5},
+			},
+			want: &api.ListGroupsResponse{
+				Groups:     genGroupModels(5),
+				TotalCount: 5,
+			},
+		},
+		{
+			name: "has limit and offset",
+			input: &api.ListGroupsRequest{
+				Paging: &api.Paging{
+					Limit:  3,
+					Offset: 2,
+				},
+			},
+			want: &api.ListGroupsResponse{
+				Groups:     genGroupModels(10)[2:5],
+				TotalCount: 3,
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &groupserver{
-				storage: &groupMockStorage{getAll: func() ([]*api.Group, error) {
-					if tt.wantErr != nil {
-						return nil, sql.ErrNoRows
-					}
-					return tt.want.Groups, nil
-				},
+				storage: &groupMockStorage{
+					getAll: func(limit, offset int32) ([]*api.Group, error) {
+						if tt.returnErr != nil {
+							return nil, tt.returnErr
+						}
+						groups := genGroupModels(10)
+
+						if limit > 0 {
+							var off int32
+							if offset > 0 {
+								off = offset
+							}
+							return groups[off : off+limit], nil
+						}
+
+						return groups, nil
+					},
 				},
 			}
-			got, err := a.ListGroups(context.Background(), tt.input)
 
-			if err != tt.wantErr {
-				t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
+			got, err := a.ListGroups(context.Background(), tt.input)
+			if tt.wantErr != nil {
+				if err != tt.wantErr {
+					t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
+				}
 				return
+			}
+
+			if err != nil {
+				t.Errorf("got unexpected err %q", err)
 			}
 
 			if !reflect.DeepEqual(got, tt.want) {

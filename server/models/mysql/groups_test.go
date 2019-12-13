@@ -354,9 +354,50 @@ func TestGroupModel_GetAll(t *testing.T) {
 		db: db,
 	}
 
-	groups, err := model.GetAll()
-	is.NoErr(err)
-	is.Equal(len(groups), 4) // expected 4 groups
+	type args struct {
+		limit, offset int32
+	}
+	tests := []struct {
+		name    string
+		input   args
+		want    []*api.Group
+		wantErr error
+	}{
+		{
+			name: "get all groups",
+			input: args{
+				limit:  0,
+				offset: 0,
+			},
+			want: groupList(0, 0),
+		},
+		{
+			name: "get groups with limit",
+			input: args{
+				limit:  5,
+				offset: 0,
+			},
+			want: groupList(5, 0),
+		},
+		{
+			name: "get groups with limit and offset",
+			input: args{
+				limit:  5,
+				offset: 5,
+			},
+			want: groupList(5, 5),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			got, err := model.GetAll(tt.input.limit, tt.input.offset)
+			is.NoErr(err)
+
+			is.Equal(got, tt.want)
+		})
+	}
 }
 
 func TestGroupModel_GetAllByIds(t *testing.T) {
@@ -417,4 +458,68 @@ func dbInitializedForGroupList(t *testing.T) (*sql.DB, func()) {
 	setup("../testdata/group_list.sql")
 
 	return db, teardown
+}
+
+func groupList(limit, offset int32) []*api.Group {
+	groups := []*api.Group{
+		{
+			Id:   1,
+			Name: "testgroup1",
+		},
+		{
+			Id:          2,
+			Name:        "testgroup2",
+			Description: "with description",
+		},
+		{
+			Id:          3,
+			Name:        "testgroup3",
+			CanOverdraw: true,
+		},
+		{
+			Id:          4,
+			Name:        "testgroup4",
+			Description: "with description",
+			CanOverdraw: true,
+		},
+		{
+			Id:          5,
+			Name:        "testgroup5",
+			CanOverdraw: true,
+		},
+		{
+			Id:          6,
+			Name:        "testgroup6",
+			Description: "with description",
+			CanOverdraw: true,
+		},
+		{
+			Id:   7,
+			Name: "testgroup7",
+		},
+		{
+			Id:          8,
+			Name:        "testgroup8",
+			Description: "with description",
+		},
+		{
+			Id:   9,
+			Name: "testgroup9",
+		},
+		{
+			Id:          10,
+			Name:        "testgroup10",
+			Description: "with description",
+		},
+	}
+
+	if limit > 0 {
+		var off int32
+		if offset > 0 {
+			off = offset
+		}
+		return groups[off : off+limit]
+	}
+
+	return groups
 }

@@ -32,7 +32,7 @@ type AccountStorager interface {
 type GroupStorager interface {
 	Create(name, description string, canOverdraw bool) (*api.Group, error)
 
-	GetAll() ([]*api.Group, error)
+	GetAll(limit, offset int32) ([]*api.Group, error)
 	GetAllByIds(ids []int32) (map[int32]*api.Group, error)
 
 	Read(id int32) (*api.Group, error)

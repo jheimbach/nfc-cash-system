@@ -23,7 +23,12 @@ func RegisterGroupServer(s *grpc.Server, storage models.GroupStorager) {
 }
 
 func (g *groupserver) ListGroups(ctx context.Context, req *api.ListGroupsRequest) (*api.ListGroupsResponse, error) {
-	groups, err := g.storage.GetAll()
+	var limit, offset int32
+	if req.Paging != nil {
+		limit = req.Paging.Limit
+		offset = req.Paging.Offset
+	}
+	groups, err := g.storage.GetAll(limit, offset)
 
 	if err != nil {
 		return nil, ErrGetAll
