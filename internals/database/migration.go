@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/mysql"
@@ -27,6 +28,7 @@ func UpdateDatabase(db *sql.DB, databaseName, migrationDir string, force bool) e
 	if err != nil {
 		return err
 	}
+
 	if force {
 		err = forcing(m)
 		if err != nil {
