@@ -21,15 +21,15 @@ type transactionMockStorage struct {
 	getAll func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error)
 }
 
-func (t *transactionMockStorage) Read(id int32) (*api.Transaction, error) {
+func (t *transactionMockStorage) Read(ctx context.Context, id int32) (*api.Transaction, error) {
 	return t.read(id)
 }
 
-func (t *transactionMockStorage) Create(amount float64, accountId int32) (*api.Transaction, error) {
+func (t *transactionMockStorage) Create(ctx context.Context, amount float64, accountId int32) (*api.Transaction, error) {
 	return t.create(amount, accountId)
 }
 
-func (t *transactionMockStorage) GetAll(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
+func (t *transactionMockStorage) GetAll(ctx context.Context, accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
 	return t.getAll(accountId, order, limit, offset)
 }
 

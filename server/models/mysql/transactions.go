@@ -29,9 +29,9 @@ func NewTransactionModel(db *sql.DB, accounts models.AccountStorager) *Transacti
 // Create inserts new Transaction to database
 // with account.saldo and amount, the fields OldSaldo and NewSaldo are calculated
 // It will return models.ErrAccountNotFound if account with accountId is not found
-func (t *TransactionModel) Create(amount float64, accountId int32) (*api.Transaction, error) {
+func (t *TransactionModel) Create(ctx context.Context, amount float64, accountId int32) (*api.Transaction, error) {
 	// load account
-	account, err := t.accounts.Read(context.Background(), accountId)
+	account, err := t.accounts.Read(ctx, accountId)
 	if err != nil {
 		return nil, models.ErrAccountNotFound
 	}
@@ -46,7 +46,7 @@ func (t *TransactionModel) Create(amount float64, accountId int32) (*api.Transac
 
 	// create transaction
 	insertStatement := `INSERT INTO transactions (new_saldo, old_saldo, amount, account_id, created) VALUES (?,?,?,?,?)`
-	res, err := t.db.Exec(insertStatement, newSaldo, oldSaldo, amount, accountId, now)
+	res, err := t.db.ExecContext(ctx, insertStatement, newSaldo, oldSaldo, amount, accountId, now)
 	if err != nil {
 		// theoretically this error should not be true, we recieve the account in the beginning from accountmodel.
 		// but someone could create a transactions and someone else deletes the account
@@ -57,7 +57,7 @@ func (t *TransactionModel) Create(amount float64, accountId int32) (*api.Transac
 	}
 
 	// update account saldo
-	err = t.accounts.UpdateSaldo(context.Background(), account, newSaldo) //in database
+	err = t.accounts.UpdateSaldo(ctx, account, newSaldo) //in database
 	if err != nil {
 		return nil, err
 	}
@@ -78,13 +78,13 @@ func (t *TransactionModel) Create(amount float64, accountId int32) (*api.Transac
 }
 
 // Read returns Transaction with given id, returns models.ErrNotFound if transaction with id does not exist
-func (t *TransactionModel) Read(id int32) (*api.Transaction, error) {
+func (t *TransactionModel) Read(ctx context.Context, id int32) (*api.Transaction, error) {
 	getSmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions WHERE id=?`
 
 	transaction := &api.Transaction{Account: &api.Account{}}
 	var created time.Time
 
-	err := t.db.QueryRow(getSmt, id).Scan(
+	err := t.db.QueryRowContext(ctx, getSmt, id).Scan(
 		&transaction.Id, &transaction.NewSaldo, &transaction.OldSaldo,
 		&transaction.Amount, &transaction.Account.Id, &created,
 	)
@@ -104,7 +104,7 @@ func (t *TransactionModel) Read(id int32) (*api.Transaction, error) {
 
 // GetAll returns all transactions ordered by create date with parameter `order` can be changed (default DESC)
 // CAUTION: due to the nature of Transactions, this could be a lot
-func (t *TransactionModel) GetAll(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
+func (t *TransactionModel) GetAll(ctx context.Context, accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
 	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions`
 
 	var args []interface{}
@@ -123,17 +123,17 @@ func (t *TransactionModel) GetAll(accountId int32, order string, limit, offset i
 		}
 	}
 
-	rows, err := t.db.Query(selectStmt, args...)
+	rows, err := t.db.QueryContext(ctx, selectStmt, args...)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
 
-	transactions, err := t.loadTransactions(rows)
+	transactions, err := t.loadTransactions(ctx, rows)
 
 	totalCount := len(transactions)
 	if limit > 0 {
-		totalCount, err = t.countAll(accountId)
+		totalCount, err = t.countAll(ctx, accountId)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -154,7 +154,7 @@ func orderByClause(order string, selectStmt string) string {
 }
 
 // countAll counts the account rows in the database and returns a total count
-func (t *TransactionModel) countAll(accountId int32) (int, error) {
+func (t *TransactionModel) countAll(ctx context.Context, accountId int32) (int, error) {
 	countStmt := `SELECT COUNT(id) FROM transactions`
 	var countArgs []interface{}
 
@@ -165,7 +165,7 @@ func (t *TransactionModel) countAll(accountId int32) (int, error) {
 	}
 
 	var totalCount int
-	err := t.db.QueryRow(countStmt, countArgs...).Scan(&totalCount)
+	err := t.db.QueryRowContext(ctx, countStmt, countArgs...).Scan(&totalCount)
 	if err != nil {
 		return 0, err
 	}
@@ -174,7 +174,7 @@ func (t *TransactionModel) countAll(accountId int32) (int, error) {
 }
 
 // loadTransactions will Transactions for given query
-func (t *TransactionModel) loadTransactions(rows *sql.Rows) ([]*api.Transaction, error) {
+func (t *TransactionModel) loadTransactions(ctx context.Context, rows *sql.Rows) ([]*api.Transaction, error) {
 
 	var transactions []*api.Transaction
 	var accountIdsLookup = make(map[int32]bool)
@@ -210,7 +210,7 @@ func (t *TransactionModel) loadTransactions(rows *sql.Rows) ([]*api.Transaction,
 		return nil, nil
 	}
 
-	accounts, err := t.accounts.GetAllByIds(context.Background(), accountIds)
+	accounts, err := t.accounts.GetAllByIds(ctx, accountIds)
 	if err != nil {
 		return nil, err
 	}

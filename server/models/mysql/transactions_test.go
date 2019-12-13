@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/golang/protobuf/ptypes"
@@ -67,7 +68,7 @@ func TestTransactionModel_Create(t *testing.T) {
 				accounts: NewAccountModel(db, NewGroupModel(db)), //todo create mock
 			}
 
-			got, err := model.Create(tt.input.Amount, tt.input.AccountId)
+			got, err := model.Create(context.Background(), tt.input.Amount, tt.input.AccountId)
 
 			if tt.wantErr {
 				if err != tt.expectedErr {
@@ -131,7 +132,7 @@ func TestTransactionModel_Get(t *testing.T) {
 			},
 		}
 
-		transaction, err := model.Read(1)
+		transaction, err := model.Read(context.Background(), 1)
 		is.NoErr(err)
 
 		is.Equal(transaction, want)
@@ -143,7 +144,7 @@ func TestTransactionModel_Get(t *testing.T) {
 		model := TransactionModel{
 			db: db,
 		}
-		transaction, err := model.Read(100)
+		transaction, err := model.Read(context.Background(), 100)
 		is.Equal(transaction, nil)
 
 		if err != models.ErrNotFound {
@@ -286,7 +287,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 				db:       db,
 				accounts: NewAccountModel(db, NewGroupModel(db)),
 			}
-			got, count, err := model.GetAll(tt.input.accountId, tt.input.order, tt.input.limit, tt.input.offset)
+			got, count, err := model.GetAll(context.Background(), tt.input.accountId, tt.input.order, tt.input.limit, tt.input.offset)
 			is.NoErr(err)
 			is.Equal(got, tt.want)
 			is.Equal(count, tt.wantCount)

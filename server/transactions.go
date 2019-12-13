@@ -21,7 +21,7 @@ func RegisterTransactionServer(server *grpc.Server, storage models.TransactionSt
 func (t *transactionServer) ListTransactions(ctx context.Context, req *api.ListTransactionRequest) (*api.ListTransactionsResponse, error) {
 	limit, offset := pagingOptions(req.Paging)
 
-	transactions, count, err := t.storage.GetAll(0, req.Order, limit, offset)
+	transactions, count, err := t.storage.GetAll(ctx, 0, req.Order, limit, offset)
 	if err != nil {
 		return nil, ErrSomethingWentWrong
 	}
@@ -49,7 +49,7 @@ func pagingOptions(req *api.Paging) (int32, int32) {
 func (t *transactionServer) ListTransactionsByAccount(ctx context.Context, req *api.ListTransactionsByAccountRequest) (*api.ListTransactionsResponse, error) {
 	limit, offset := pagingOptions(req.Paging)
 
-	transactions, count, err := t.storage.GetAll(req.AccountId, req.Order, limit, offset)
+	transactions, count, err := t.storage.GetAll(ctx, req.AccountId, req.Order, limit, offset)
 	if err != nil {
 		return nil, ErrSomethingWentWrong
 	}
@@ -61,7 +61,7 @@ func (t *transactionServer) ListTransactionsByAccount(ctx context.Context, req *
 }
 
 func (t *transactionServer) CreateTransaction(ctx context.Context, req *api.CreateTransactionRequest) (*api.Transaction, error) {
-	transaction, err := t.storage.Create(req.Amount, req.AccountId)
+	transaction, err := t.storage.Create(ctx, req.Amount, req.AccountId)
 	if err != nil {
 		return nil, ErrSomethingWentWrong
 	}
@@ -70,7 +70,7 @@ func (t *transactionServer) CreateTransaction(ctx context.Context, req *api.Crea
 }
 
 func (t *transactionServer) GetTransaction(ctx context.Context, req *api.GetTransactionRequest) (*api.Transaction, error) {
-	transaction, err := t.storage.Read(req.Id)
+	transaction, err := t.storage.Read(ctx, req.Id)
 	if err != nil {
 		return nil, status.Error(codes.Internal, ErrSomethingWentWrong.Error())
 	}
