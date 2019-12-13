@@ -10,3 +10,7 @@ CREATE TABLE transactions
 
 ALTER TABLE `transactions`
     ADD FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`);
+
+
+CREATE INDEX idx_created ON transactions(`created`);
+CREATE INDEX idx_id ON transactions(`id`)

@@ -12,3 +12,6 @@ CREATE TABLE `accounts`
 
 ALTER TABLE `accounts`
     ADD FOREIGN KEY (`group_id`) REFERENCES `account_groups` (`id`);
+
+CREATE INDEX idx_id ON accounts(`id`);
+CREATE INDEX idx_nfc_chip_uid ON accounts(`nfc_chip_uid`)
