@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 
@@ -73,7 +74,7 @@ func TestGroupModel_Create(t *testing.T) {
 				db: db,
 			}
 
-			got, err := model.Create(tt.args.name, tt.args.description, tt.args.canOverdraw)
+			got, err := model.Create(context.Background(), tt.args.name, tt.args.description, tt.args.canOverdraw)
 			is.NoErr(err)
 			is.Equal(got, &tt.want) // does not return expected group
 
@@ -155,7 +156,7 @@ func TestGroupModel_Read(t *testing.T) {
 				is.NoErr(err)
 			}
 
-			got, err := model.Read(tt.want.Id)
+			got, err := model.Read(context.Background(), tt.want.Id)
 
 			if tt.wantErr {
 				if err != tt.expectedErr {
@@ -264,7 +265,7 @@ func TestGroupModel_Update(t *testing.T) {
 				is.NoErr(err)
 			}
 
-			got, err := model.Update(tt.want)
+			got, err := model.Update(context.Background(), tt.want)
 
 			if tt.wantErr {
 				if err != tt.expectedErr {
@@ -301,7 +302,7 @@ func TestGroupModel_Delete(t *testing.T) {
 		groupId, err := res.LastInsertId()
 		is.NoErr(err)
 
-		err = model.Delete(int32(groupId))
+		err = model.Delete(context.Background(), int32(groupId))
 		is.NoErr(err)
 
 		var groupName string
@@ -331,7 +332,7 @@ func TestGroupModel_Delete(t *testing.T) {
 		_, err = db.Exec("INSERT INTO `accounts` (name, group_id, nfc_chip_uid) VALUES (?,?,?)", "test", int(groupId), "testchipid")
 		is.NoErr(err)
 
-		err = model.Delete(int32(groupId))
+		err = model.Delete(context.Background(), int32(groupId))
 		if err == nil {
 			t.Errorf("expected error, got none")
 		}
@@ -397,7 +398,7 @@ func TestGroupModel_GetAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			got, count, err := model.GetAll(tt.input.limit, tt.input.offset)
+			got, count, err := model.GetAll(context.Background(), tt.input.limit, tt.input.offset)
 			is.NoErr(err)
 
 			is.Equal(got, tt.want)
@@ -446,7 +447,7 @@ func TestGroupModel_GetAllByIds(t *testing.T) {
 				db: db,
 			}
 
-			got, err := model.GetAllByIds(tt.input)
+			got, err := model.GetAllByIds(context.Background(), tt.input)
 			if tt.wantErr != nil {
 				is.Equal(err, tt.wantErr)
 				return

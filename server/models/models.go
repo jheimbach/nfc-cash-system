@@ -33,14 +33,14 @@ type AccountStorager interface {
 }
 
 type GroupStorager interface {
-	Create(name, description string, canOverdraw bool) (*api.Group, error)
+	Create(ctx context.Context, name, description string, canOverdraw bool) (*api.Group, error)
 
-	GetAll(limit, offset int32) ([]*api.Group, int, error)
-	GetAllByIds(ids []int32) (map[int32]*api.Group, error)
+	GetAll(ctx context.Context, limit, offset int32) ([]*api.Group, int, error)
+	GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Group, error)
 
-	Read(id int32) (*api.Group, error)
-	Update(group *api.Group) (*api.Group, error)
-	Delete(id int32) error
+	Read(ctx context.Context, id int32) (*api.Group, error)
+	Update(ctx context.Context, group *api.Group) (*api.Group, error)
+	Delete(ctx context.Context, id int32) error
 }
 
 type TransactionStorager interface {

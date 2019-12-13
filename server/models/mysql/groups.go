@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -20,11 +21,11 @@ func NewGroupModel(db *sql.DB) *GroupModel {
 }
 
 // Creates inserts new group with given fields
-func (g *GroupModel) Create(name, description string, canOverdraw bool) (*api.Group, error) {
+func (g *GroupModel) Create(ctx context.Context, name, description string, canOverdraw bool) (*api.Group, error) {
 	nullDescription := createNullableString(description)
 
 	createStmt := "INSERT INTO `account_groups` (name, description, can_overdraw) VALUES (?,?,?)"
-	res, err := g.db.Exec(createStmt, name, nullDescription, canOverdraw)
+	res, err := g.db.ExecContext(ctx, createStmt, name, nullDescription, canOverdraw)
 
 	if err != nil {
 		return nil, err
@@ -45,11 +46,11 @@ func (g *GroupModel) Create(name, description string, canOverdraw bool) (*api.Gr
 }
 
 // Read returns models.Group struct for given id, will return models.ErrNotFound if no group is found
-func (g *GroupModel) Read(id int32) (*api.Group, error) {
+func (g *GroupModel) Read(ctx context.Context, id int32) (*api.Group, error) {
 	readStmt := "SELECT id, name, description, can_overdraw FROM `account_groups` WHERE id = ?"
 
 	var group api.Group
-	row := g.db.QueryRow(readStmt, id)
+	row := g.db.QueryRowContext(ctx, readStmt, id)
 
 	var nullDesc sql.NullString
 	err := row.Scan(&group.Id, &group.Name, &nullDesc, &group.CanOverdraw)
@@ -67,12 +68,12 @@ func (g *GroupModel) Read(id int32) (*api.Group, error) {
 // Update saves given (changed) group to the database
 // will return models.ErrNotFound if group is not found
 // NOTE: every field will be overwritten with given value
-func (g *GroupModel) Update(group *api.Group) (*api.Group, error) {
+func (g *GroupModel) Update(ctx context.Context, group *api.Group) (*api.Group, error) {
 	if group.Id == 0 {
 		return nil, models.ErrModelNotSaved
 	}
 
-	_, err := g.db.Exec(
+	_, err := g.db.ExecContext(ctx,
 		"UPDATE `account_groups` SET name=?,description=?, can_overdraw=? WHERE id=?",
 		group.Name,
 		group.Description,
@@ -89,8 +90,8 @@ func (g *GroupModel) Update(group *api.Group) (*api.Group, error) {
 
 // Delete removes group with given id from the database
 // returns models.ErrNonEmptyDelete if accounts are associated with group
-func (g *GroupModel) Delete(id int32) error {
-	_, err := g.db.Exec("DELETE FROM `account_groups` WHERE id=?", id)
+func (g *GroupModel) Delete(ctx context.Context, id int32) error {
+	_, err := g.db.ExecContext(ctx, "DELETE FROM `account_groups` WHERE id=?", id)
 
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok {
@@ -105,7 +106,7 @@ func (g *GroupModel) Delete(id int32) error {
 	return nil
 }
 
-func (g *GroupModel) GetAll(limit, offset int32) ([]*api.Group, int, error) {
+func (g *GroupModel) GetAll(ctx context.Context, limit, offset int32) ([]*api.Group, int, error) {
 	stmt := "SELECT id, name, description, can_overdraw FROM account_groups"
 
 	var args []interface{}
@@ -118,7 +119,7 @@ func (g *GroupModel) GetAll(limit, offset int32) ([]*api.Group, int, error) {
 		}
 	}
 
-	rows, err := g.db.Query(stmt, args...)
+	rows, err := g.db.QueryContext(ctx, stmt, args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -131,7 +132,7 @@ func (g *GroupModel) GetAll(limit, offset int32) ([]*api.Group, int, error) {
 
 	totalCount := len(groups)
 	if limit > 0 {
-		totalCount, err = g.countAll()
+		totalCount, err = g.countAll(ctx)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -140,11 +141,11 @@ func (g *GroupModel) GetAll(limit, offset int32) ([]*api.Group, int, error) {
 	return groups, totalCount, nil
 }
 
-func (g *GroupModel) countAll() (int, error) {
+func (g *GroupModel) countAll(ctx context.Context) (int, error) {
 	stmt := `SELECT COUNT(id) FROM account_groups`
 
 	var totalCount int
-	err := g.db.QueryRow(stmt).Scan(&totalCount)
+	err := g.db.QueryRowContext(ctx, stmt).Scan(&totalCount)
 	if err != nil {
 		return 0, err
 	}
@@ -152,7 +153,7 @@ func (g *GroupModel) countAll() (int, error) {
 	return totalCount, nil
 }
 
-func (g *GroupModel) GetAllByIds(ids []int32) (map[int32]*api.Group, error) {
+func (g *GroupModel) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Group, error) {
 	if len(ids) == 0 {
 		return nil, models.ErrNotFound //todo maybe own error?
 	}
@@ -163,7 +164,7 @@ func (g *GroupModel) GetAllByIds(ids []int32) (map[int32]*api.Group, error) {
 	}
 
 	readStmt := `SELECT id,name,description,can_overdraw FROM account_groups WHERE id IN (?` + strings.Repeat(",?", len(ids)-1) + `)`
-	rows, err := g.db.Query(readStmt, args...)
+	rows, err := g.db.QueryContext(ctx, readStmt, args...)
 
 	if err != nil {
 		return nil, err

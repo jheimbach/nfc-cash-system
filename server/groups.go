@@ -28,7 +28,7 @@ func (g *groupserver) ListGroups(ctx context.Context, req *api.ListGroupsRequest
 		limit = req.Paging.Limit
 		offset = req.Paging.Offset
 	}
-	groups, count, err := g.storage.GetAll(limit, offset)
+	groups, count, err := g.storage.GetAll(ctx, limit, offset)
 
 	if err != nil {
 		return nil, ErrGetAll
@@ -40,7 +40,7 @@ func (g *groupserver) ListGroups(ctx context.Context, req *api.ListGroupsRequest
 }
 
 func (g *groupserver) CreateGroup(ctx context.Context, req *api.CreateGroupRequest) (*api.Group, error) {
-	group, err := g.storage.Create(req.Name, req.Description, req.CanOverdraw)
+	group, err := g.storage.Create(ctx, req.Name, req.Description, req.CanOverdraw)
 
 	if err != nil {
 		return nil, ErrCouldNotCreateGroup
@@ -50,7 +50,7 @@ func (g *groupserver) CreateGroup(ctx context.Context, req *api.CreateGroupReque
 }
 
 func (g *groupserver) GetGroup(ctx context.Context, req *api.GetGroupRequest) (*api.Group, error) {
-	group, err := g.storage.Read(req.Id)
+	group, err := g.storage.Read(ctx, req.Id)
 
 	if err != nil {
 		return nil, ErrNotFound
@@ -60,7 +60,7 @@ func (g *groupserver) GetGroup(ctx context.Context, req *api.GetGroupRequest) (*
 }
 
 func (g *groupserver) UpdateGroup(ctx context.Context, req *api.Group) (*api.Group, error) {
-	group, err := g.storage.Update(req)
+	group, err := g.storage.Update(ctx, req)
 	if err != nil {
 		return nil, ErrSomethingWentWrong
 	}
@@ -68,7 +68,7 @@ func (g *groupserver) UpdateGroup(ctx context.Context, req *api.Group) (*api.Gro
 }
 
 func (g *groupserver) DeleteGroup(ctx context.Context, req *api.DeleteGroupRequest) (*empty.Empty, error) {
-	err := g.storage.Delete(req.Id)
+	err := g.storage.Delete(ctx, req.Id)
 
 	if err != nil {
 		return &empty.Empty{}, ErrSomethingWentWrong

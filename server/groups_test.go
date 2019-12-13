@@ -22,26 +22,26 @@ type groupMockStorage struct {
 	getAllByIds func(ids []int32) (map[int32]*api.Group, error)
 }
 
-func (g *groupMockStorage) Create(name, description string, canOverdraw bool) (*api.Group, error) {
+func (g *groupMockStorage) Create(ctx context.Context, name, description string, canOverdraw bool) (*api.Group, error) {
 	return g.create(name, description, canOverdraw)
 }
 
-func (g *groupMockStorage) GetAll(limit, offset int32) ([]*api.Group, int, error) {
+func (g *groupMockStorage) GetAll(ctx context.Context, limit, offset int32) ([]*api.Group, int, error) {
 	return g.getAll(limit, offset)
 }
 
-func (g *groupMockStorage) Read(id int32) (*api.Group, error) {
+func (g *groupMockStorage) Read(ctx context.Context, id int32) (*api.Group, error) {
 	return g.read(id)
 }
 
-func (g *groupMockStorage) Update(group *api.Group) (*api.Group, error) {
+func (g *groupMockStorage) Update(ctx context.Context, group *api.Group) (*api.Group, error) {
 	return g.update(group)
 }
 
-func (g *groupMockStorage) Delete(id int32) error {
+func (g *groupMockStorage) Delete(ctx context.Context, id int32) error {
 	return g.delete(id)
 }
-func (g groupMockStorage) GetAllByIds(ids []int32) (map[int32]*api.Group, error) {
+func (g groupMockStorage) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Group, error) {
 	return g.getAllByIds(ids)
 }
 

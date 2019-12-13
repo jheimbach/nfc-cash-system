@@ -31,7 +31,7 @@ func NewAccountModel(db *sql.DB, model models.GroupStorager) *AccountModel {
 func (a *AccountModel) Create(ctx context.Context, name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
 	nullDescription := createNullableString(description)
 
-	group, err := a.groups.Read(groupId)
+	group, err := a.groups.Read(ctx, groupId)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (a *AccountModel) Read(ctx context.Context, id int32) (*api.Account, error)
 	}
 	m.Description = decodeNullableString(nullDesc)
 
-	group, err := a.groups.Read(groupId)
+	group, err := a.groups.Read(ctx, groupId)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +166,7 @@ func (a *AccountModel) GetAll(ctx context.Context, groupId int32, limit int32, o
 	defer rows.Close()
 
 	// scan rows to account objects
-	accounts, err := a.scanRowsToAccounts(rows)
+	accounts, err := a.scanRowsToAccounts(ctx, rows)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -222,7 +222,7 @@ func (a *AccountModel) GetAllByIds(ctx context.Context, ids []int32) (map[int32]
 	}
 	defer rows.Close()
 
-	accounts, err := a.scanRowsToAccounts(rows)
+	accounts, err := a.scanRowsToAccounts(ctx, rows)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +235,7 @@ func (a *AccountModel) GetAllByIds(ctx context.Context, ids []int32) (map[int32]
 }
 
 // scanRowsToAccounts returns slice of Accounts from given sql.Rows
-func (a *AccountModel) scanRowsToAccounts(rows *sql.Rows) ([]*api.Account, error) {
+func (a *AccountModel) scanRowsToAccounts(ctx context.Context, rows *sql.Rows) ([]*api.Account, error) {
 	var accounts []*api.Account
 	var groupIds []int32
 
@@ -255,7 +255,7 @@ func (a *AccountModel) scanRowsToAccounts(rows *sql.Rows) ([]*api.Account, error
 		accounts = append(accounts, s)
 	}
 
-	groups, err := a.groups.GetAllByIds(groupIds)
+	groups, err := a.groups.GetAllByIds(ctx, groupIds)
 
 	if err != nil {
 		return nil, err

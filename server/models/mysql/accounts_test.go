@@ -35,7 +35,7 @@ type groupModelMock struct {
 	groups map[int32]*api.Group
 }
 
-func (g *groupModelMock) GetAllByIds(ids []int32) (map[int32]*api.Group, error) {
+func (g *groupModelMock) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Group, error) {
 	m := make(map[int32]*api.Group, len(ids))
 
 	for _, id := range ids {
@@ -47,12 +47,12 @@ func (g *groupModelMock) GetAllByIds(ids []int32) (map[int32]*api.Group, error) 
 	return m, nil
 }
 
-func (g *groupModelMock) Create(name, description string, canOverdraw bool) (*api.Group, error) {
+func (g *groupModelMock) Create(ctx context.Context, name, description string, canOverdraw bool) (*api.Group, error) {
 	g.test.Fatalf("create of groupmodelmock is not implemented and should not be used")
 	return nil, nil
 }
 
-func (g *groupModelMock) GetAll(limit, offset int32) ([]*api.Group, int, error) {
+func (g *groupModelMock) GetAll(ctx context.Context, limit, offset int32) ([]*api.Group, int, error) {
 	if len(g.groups) < 1 {
 		return nil, 0, models.ErrNotFound
 	}
@@ -63,7 +63,7 @@ func (g *groupModelMock) GetAll(limit, offset int32) ([]*api.Group, int, error) 
 	return groups, len(groups), nil
 }
 
-func (g *groupModelMock) Read(id int32) (*api.Group, error) {
+func (g *groupModelMock) Read(ctx context.Context, id int32) (*api.Group, error) {
 	if group, ok := g.groups[id]; ok {
 		return group, nil
 	}
@@ -71,12 +71,12 @@ func (g *groupModelMock) Read(id int32) (*api.Group, error) {
 	return nil, models.ErrGroupNotFound
 }
 
-func (g *groupModelMock) Update(group *api.Group) (*api.Group, error) {
+func (g *groupModelMock) Update(ctx context.Context, group *api.Group) (*api.Group, error) {
 	g.test.Fatalf("update of groupmodelmock is not implemented and should not be used")
 	return nil, nil
 }
 
-func (g *groupModelMock) Delete(id int32) error {
+func (g *groupModelMock) Delete(ctx context.Context, id int32) error {
 	g.test.Fatalf("delete of groupmodelmock is not implemented and should not be used")
 	return nil
 }
