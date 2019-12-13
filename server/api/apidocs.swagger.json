@@ -538,14 +538,6 @@
     "apiCreateTransactionRequest": {
       "type": "object",
       "properties": {
-        "old_saldo": {
-          "type": "number",
-          "format": "double"
-        },
-        "new_saldo": {
-          "type": "number",
-          "format": "double"
-        },
         "amount": {
           "type": "number",
           "format": "double"

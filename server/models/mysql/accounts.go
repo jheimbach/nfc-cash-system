@@ -123,8 +123,8 @@ func (a *AccountModel) Delete(id int32) error {
 }
 
 // UpdateSaldo provides a simpler update method for the saldo field
-func (a *AccountModel) UpdateSaldo(id int32, newSaldo float64) error {
-	_, err := a.db.Exec(`UPDATE accounts SET saldo=? WHERE id=?`, newSaldo, id)
+func (a *AccountModel) UpdateSaldo(m *api.Account, newSaldo float64) error {
+	_, err := a.db.Exec(`UPDATE accounts SET saldo=? WHERE id=?`, newSaldo, m.Id)
 
 	return err
 }

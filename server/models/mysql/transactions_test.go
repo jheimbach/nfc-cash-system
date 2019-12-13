@@ -26,20 +26,18 @@ func TestTransactionModel_Create(t *testing.T) {
 		{
 			name: "create new transaction",
 			input: &api.CreateTransactionRequest{
-				Amount:    -6,
-				OldSaldo:  12,
-				NewSaldo:  6,
+				Amount:    6,
 				AccountId: 1,
 			},
 			want: &api.Transaction{
 				Id:       1,
 				OldSaldo: 12,
 				NewSaldo: 6,
-				Amount:   -6,
+				Amount:   6,
 				Account: &api.Account{
 					Id:        1,
 					Name:      "testaccount",
-					Saldo:     12,
+					Saldo:     6,
 					NfcChipId: "testchipid",
 					Group: &api.Group{
 						Id:   1,
@@ -50,9 +48,7 @@ func TestTransactionModel_Create(t *testing.T) {
 		}, {
 			name: "create new transaction with nonexistent account",
 			input: &api.CreateTransactionRequest{
-				Amount:    -6,
-				OldSaldo:  12,
-				NewSaldo:  6,
+				Amount:    6,
 				AccountId: 100,
 			},
 			wantErr:     true,
@@ -71,7 +67,7 @@ func TestTransactionModel_Create(t *testing.T) {
 				accounts: NewAccountModel(db, NewGroupModel(db)), //todo create mock
 			}
 
-			got, err := model.Create(tt.input.Amount, tt.input.OldSaldo, tt.input.NewSaldo, tt.input.AccountId)
+			got, err := model.Create(tt.input.Amount, tt.input.AccountId)
 
 			if tt.wantErr {
 				if err != tt.expectedErr {
@@ -272,10 +268,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 func TestTransactionModel_GetAllByAccount(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.New(t)
-	/**
-	    	[id:9 old_saldo:105 new_saldo:110 amount:-5 created:<seconds:1568736914 > account:<id:2 name:"testaccount1" saldo:120 nfc_chip_id:"testchipid2" group:<id:1 name:"testgroup1" > >  id:8 old_saldo:110 new_saldo:105 amount:5 created:<seconds:1566058514 > account:<id:2 name:"testaccount1" saldo:120 nfc_chip_id:"testchipid2" group:<id:1 name:"testgroup1" > >  id:7 old_saldo:115 new_saldo:110 amount:5 created:<seconds:1563380114 > account:<id:2 name:"testaccount1" saldo:120 nfc_chip_id:"testchipid2" group:<id:1 name:"testgroup1" > >  id:6 old_saldo:120 new_saldo:115 amount:5 created:<seconds:1560788114 > account:<id:2 name:"testaccount1" saldo:120 nfc_chip_id:"testchipid2" group:<id:1 name:"testgroup1" > >  id:5 old_saldo:100 new_saldo:105 amount:-5 created:<seconds:1558109714 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:4 old_saldo:105 new_saldo:100 amount:5 created:<seconds:1555517714 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:3 old_saldo:110 new_saldo:105 amount:5 created:<seconds:1552839314 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:2 old_saldo:115 new_saldo:110 amount:5 created:<seconds:1550420114 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:1 old_saldo:120 new_saldo:115 amount:5 created:<seconds:1547741714 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > > ]
-	  	[id:5 old_saldo:100 new_saldo:105 amount:-5 created:<seconds:1558109714 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:4 old_saldo:105 new_saldo:100 amount:5 created:<seconds:1555517714 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:3 old_saldo:110 new_saldo:105 amount:5 created:<seconds:1552839314 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:2 old_saldo:115 new_saldo:110 amount:5 created:<seconds:1550420114 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:1 old_saldo:120 new_saldo:115 amount:5 created:<seconds:1547741714 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > > ]
-	*/
+
 	db, dbSetup, dbTeardown := getTestDb(t)
 	defer db.Close()
 

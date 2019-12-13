@@ -23,6 +23,7 @@ type accountMockStorager struct {
 	read        func(id int32) (*api.Account, error)
 	delete      func(id int32) error
 	update      func(m *api.Account) error
+	updateSaldo func(m *api.Account, newSaldo float64) error
 }
 
 func (a accountMockStorager) Create(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
@@ -47,6 +48,10 @@ func (a accountMockStorager) Delete(id int32) error {
 
 func (a accountMockStorager) Update(m *api.Account) error {
 	return a.update(m)
+}
+
+func (a accountMockStorager) UpdateSaldo(m *api.Account, newSaldo float64) error {
+	return a.updateSaldo(m, newSaldo)
 }
 
 func TestAccountserver_List(t *testing.T) {

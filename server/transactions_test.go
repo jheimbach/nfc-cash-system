@@ -18,7 +18,7 @@ import (
 type transactionMockStorage struct {
 	getAll          func(order string, limit, offset int32) ([]*api.Transaction, error)
 	read            func(id int32) (*api.Transaction, error)
-	create          func(amount, oldSaldo, newSaldo float64, accountId int32) (*api.Transaction, error)
+	create          func(amount float64, accountId int32) (*api.Transaction, error)
 	getAllByAccount func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, error)
 }
 
@@ -30,8 +30,8 @@ func (t *transactionMockStorage) Read(id int32) (*api.Transaction, error) {
 	return t.read(id)
 }
 
-func (t *transactionMockStorage) Create(amount, oldSaldo, newSaldo float64, accountId int32) (*api.Transaction, error) {
-	return t.create(amount, oldSaldo, newSaldo, accountId)
+func (t *transactionMockStorage) Create(amount float64, accountId int32) (*api.Transaction, error) {
+	return t.create(amount, accountId)
 }
 
 func (t *transactionMockStorage) GetAllByAccount(accountId int32, order string, limit, offset int32) ([]*api.Transaction, error) {
@@ -233,17 +233,13 @@ func TestTransactionServer_Create(t *testing.T) {
 		{
 			name: "create transaction",
 			input: &api.CreateTransactionRequest{
-				OldSaldo:  120,
-				NewSaldo:  115,
-				Amount:    -5,
+				Amount:    5,
 				AccountId: 1,
 			},
 		},
 		{
 			name: "storage returns AccountNotFound",
 			input: &api.CreateTransactionRequest{
-				OldSaldo:  120,
-				NewSaldo:  115,
 				Amount:    -5,
 				AccountId: 100,
 			},
@@ -256,15 +252,15 @@ func TestTransactionServer_Create(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := transactionServer{
 				storage: &transactionMockStorage{
-					create: func(amount, oldSaldo, newSaldo float64, accountId int32) (*api.Transaction, error) {
+					create: func(amount float64, accountId int32) (*api.Transaction, error) {
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
 						}
 						return &api.Transaction{
 							Id:       1,
 							Amount:   amount,
-							OldSaldo: oldSaldo,
-							NewSaldo: newSaldo,
+							OldSaldo: 120,
+							NewSaldo: 120 - amount,
 							Account:  &api.Account{Id: accountId},
 							Created:  timeStamp(),
 						}, nil
@@ -285,8 +281,8 @@ func TestTransactionServer_Create(t *testing.T) {
 			}
 			want := &api.Transaction{
 				Id:       1,
-				OldSaldo: tt.input.OldSaldo,
-				NewSaldo: tt.input.NewSaldo,
+				OldSaldo: 120,
+				NewSaldo: 120 - tt.input.Amount,
 				Amount:   tt.input.Amount,
 				Created:  timeStamp(),
 				Account:  &api.Account{Id: 1},

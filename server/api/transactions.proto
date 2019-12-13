@@ -87,8 +87,6 @@ message Transaction {
 message CreateTransactionRequest {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
         json_schema: {title:"TransactionCreation"} };
-    double old_saldo = 1;
-    double new_saldo = 2;
     double amount = 3;
     int32 account_id = 4;
 }

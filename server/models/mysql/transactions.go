@@ -25,36 +25,55 @@ func NewTransactionModel(db *sql.DB, accounts models.AccountStorager) *Transacti
 	}
 }
 
-// Create inserts new Transaction to database will return models.ErrAccountNotFound if account is not associated with account
-func (t *TransactionModel) Create(amount, oldSaldo, newSaldo float64, accountId int32) (*api.Transaction, error) {
+// Create inserts new Transaction to database
+// with account.saldo and amount, the fields OldSaldo and NewSaldo are calculated
+// It will return models.ErrAccountNotFound if account with accountId is not found
+func (t *TransactionModel) Create(amount float64, accountId int32) (*api.Transaction, error) {
+	// load account
 	account, err := t.accounts.Read(accountId)
 	if err != nil {
 		return nil, models.ErrAccountNotFound
 	}
 
+	// calculate saldos
+	oldSaldo := account.Saldo
+	newSaldo := oldSaldo - amount
+
+	// created time
 	now := time.Now()
 	nowProto, _ := ptypes.TimestampProto(now)
+
+	// create transaction
 	insertStatement := `INSERT INTO transactions (new_saldo, old_saldo, amount, account_id, created) VALUES (?,?,?,?,?)`
 	res, err := t.db.Exec(insertStatement, newSaldo, oldSaldo, amount, accountId, now)
-
 	if err != nil {
+		// theoretically this error should not be true, we recieve the account in the beginning from accountmodel.
+		// but someone could create a transactions and someone else deletes the account
 		if err, ok := err.(*mysql.MySQLError); ok && err.Number == 1452 {
 			return nil, models.ErrAccountNotFound
 		}
 		return nil, err
 	}
 
+	// update account saldo
+	err = t.accounts.UpdateSaldo(account, newSaldo) //in database
+	if err != nil {
+		return nil, err
+	}
+	account.Saldo = newSaldo // in object
+
+	// get id for transaction
 	lastId, _ := res.LastInsertId()
-	transaction := &api.Transaction{
+
+	// create transaction object and return it
+	return &api.Transaction{
 		Id:       int32(lastId),
 		OldSaldo: oldSaldo,
 		NewSaldo: newSaldo,
 		Amount:   amount,
 		Created:  nowProto,
 		Account:  account,
-	}
-
-	return transaction, nil
+	}, nil
 }
 
 // Read returns Transaction with given id, returns models.ErrNotFound if transaction with id does not exist

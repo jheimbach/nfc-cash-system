@@ -59,8 +59,7 @@ func (t *transactionServer) ListTransactionsByAccount(ctx context.Context, req *
 }
 
 func (t *transactionServer) CreateTransaction(ctx context.Context, req *api.CreateTransactionRequest) (*api.Transaction, error) {
-	// Todo compute old and new saldo
-	transaction, err := t.storage.Create(req.Amount, req.OldSaldo, req.NewSaldo, req.AccountId)
+	transaction, err := t.storage.Create(req.Amount, req.AccountId)
 	if err != nil {
 		return nil, ErrSomethingWentWrong
 	}

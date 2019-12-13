@@ -486,7 +486,7 @@ func TestAccountModel_UpdateSaldo(t *testing.T) {
 			}
 
 			model := AccountModel{db: db}
-			err := model.UpdateSaldo(tt.obj.Id, tt.newSaldo)
+			err := model.UpdateSaldo(&tt.obj, tt.newSaldo)
 			is.NoErr(err)
 
 			if tt.expectDbChange {
