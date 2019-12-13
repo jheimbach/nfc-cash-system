@@ -2,11 +2,12 @@ package mysql
 
 import (
 	"database/sql"
-	"github.com/JHeimbach/nfc-cash-system/internals/database"
 	"io/ioutil"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/JHeimbach/nfc-cash-system/internals/database"
 )
 
 const (
@@ -32,7 +33,8 @@ func getEnvWithDefault(envName, defaultVal string) string {
 
 // testDb will hold a db connection for multiple usages
 type testDb struct {
-	db *sql.DB
+	db             *sql.DB
+	teardownScript string
 }
 
 // initDb connects to the database. will skip the calling test if TEST_DB_DSN is not set
@@ -65,7 +67,8 @@ var testDBconn testDb
 func getTestDb(t *testing.T) (db *sql.DB, setup func(...string), teardown func()) {
 	t.Helper()
 	db = testDBconn.initDb(t)
-	db.SetConnMaxLifetime(10 * time.Second)
+	db.SetConnMaxLifetime(1 * time.Second)
+	db.SetMaxOpenConns(100)
 
 	if err := db.Ping(); err != nil {
 		t.Skipf("could not connect to database, skipping test, err: %v", err)
@@ -73,9 +76,16 @@ func getTestDb(t *testing.T) (db *sql.DB, setup func(...string), teardown func()
 
 	migrationDir := getEnvWithDefault("DB_MIGRATIONS_DIR", defaultMigrationDir)
 	dbName := getEnvWithDefault("TEST_DB_NAME", defaultDbName)
+	testDBconn.teardownScript = func() string {
+		content, err := ioutil.ReadFile("../testdata/teardown.sql")
+		if err != nil {
+			t.Fatalf("could not load teardown script: %v", err)
+		}
+		return string(content)
+	}()
 
 	teardown = func() {
-		err := database.DowngradeDatabase(db, dbName, migrationDir)
+		_, err := db.Exec(testDBconn.teardownScript)
 		if err != nil {
 			t.Errorf("got error from teardown: %v", err)
 		}
