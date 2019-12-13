@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"errors"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
@@ -19,16 +20,16 @@ var (
 )
 
 type AccountStorager interface {
-	Create(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error)
+	Create(ctx context.Context, name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error)
 
-	GetAll(groupId, limit, offset int32) ([]*api.Account, int, error)
-	GetAllByIds(ids []int32) (map[int32]*api.Account, error)
+	GetAll(ctx context.Context, groupId, limit, offset int32) ([]*api.Account, int, error)
+	GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Account, error)
 
-	Read(id int32) (*api.Account, error)
-	Delete(id int32) error
-	Update(m *api.Account) error
+	Read(ctx context.Context, id int32) (*api.Account, error)
+	Delete(ctx context.Context, id int32) error
+	Update(ctx context.Context, m *api.Account) error
 
-	UpdateSaldo(m *api.Account, newSaldo float64) error
+	UpdateSaldo(ctx context.Context, m *api.Account, newSaldo float64) error
 }
 
 type GroupStorager interface {

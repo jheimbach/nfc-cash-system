@@ -35,7 +35,7 @@ func (a *accountserver) ListAccounts(ctx context.Context, req *api.ListAccountsR
 		limit = req.Paging.Limit
 		offset = req.Paging.Offset
 	}
-	accounts, totalCount, err := a.storage.GetAll(req.GroupId, limit, offset)
+	accounts, totalCount, err := a.storage.GetAll(ctx, req.GroupId, limit, offset)
 
 	if err != nil {
 		return nil, ErrGetAll
@@ -48,7 +48,7 @@ func (a *accountserver) ListAccounts(ctx context.Context, req *api.ListAccountsR
 }
 
 func (a *accountserver) CreateAccount(ctx context.Context, req *api.CreateAccountRequest) (*api.Account, error) {
-	account, err := a.storage.Create(req.Name, req.Description, req.Saldo, req.GroupId, req.NfcChipId)
+	account, err := a.storage.Create(ctx, req.Name, req.Description, req.Saldo, req.GroupId, req.NfcChipId)
 	if err != nil {
 		return nil, ErrCouldNotCreateAccount
 	}
@@ -57,7 +57,7 @@ func (a *accountserver) CreateAccount(ctx context.Context, req *api.CreateAccoun
 }
 
 func (a *accountserver) GetAccount(ctx context.Context, req *api.GetAccountRequest) (*api.Account, error) {
-	account, err := a.storage.Read(req.Id)
+	account, err := a.storage.Read(ctx, req.Id)
 
 	if err != nil {
 		return nil, ErrNotFound
@@ -67,7 +67,7 @@ func (a *accountserver) GetAccount(ctx context.Context, req *api.GetAccountReque
 }
 
 func (a *accountserver) UpdateAccount(ctx context.Context, req *api.Account) (*api.Account, error) {
-	err := a.storage.Update(req)
+	err := a.storage.Update(ctx, req)
 
 	if err != nil {
 		return nil, ErrSomethingWentWrong
@@ -76,8 +76,8 @@ func (a *accountserver) UpdateAccount(ctx context.Context, req *api.Account) (*a
 	return req, nil
 }
 
-func (a *accountserver) DeleteAccount(ctw context.Context, req *api.DeleteAccountRequest) (*empty.Empty, error) {
-	err := a.storage.Delete(req.Id)
+func (a *accountserver) DeleteAccount(ctx context.Context, req *api.DeleteAccountRequest) (*empty.Empty, error) {
+	err := a.storage.Delete(ctx, req.Id)
 
 	if err != nil {
 		if err == models.ErrNotFound {

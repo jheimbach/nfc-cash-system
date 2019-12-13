@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -27,7 +28,7 @@ func NewAccountModel(db *sql.DB, model models.GroupStorager) *AccountModel {
 
 // Create inserts new account it returns error models.ErrGroupNotFound if the groupId is not associated with a group
 // it returns models.ErrDuplicateNfcChipId if the provided nfcchipid is already in the database present
-func (a *AccountModel) Create(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
+func (a *AccountModel) Create(ctx context.Context, name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
 	nullDescription := createNullableString(description)
 
 	group, err := a.groups.Read(groupId)
@@ -37,7 +38,7 @@ func (a *AccountModel) Create(name, description string, startSaldo float64, grou
 
 	createStmt := `INSERT INTO accounts (name, description, saldo, group_id, nfc_chip_uid) VALUES (?,?,?,?,?)`
 
-	res, err := a.db.Exec(createStmt, name, nullDescription, startSaldo, group.Id, nfcChipId)
+	res, err := a.db.ExecContext(ctx, createStmt, name, nullDescription, startSaldo, group.Id, nfcChipId)
 
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok {
@@ -65,12 +66,12 @@ func (a *AccountModel) Create(name, description string, startSaldo float64, grou
 }
 
 // Read returns account struct for given id
-func (a *AccountModel) Read(id int32) (*api.Account, error) {
+func (a *AccountModel) Read(ctx context.Context, id int32) (*api.Account, error) {
 	readStmt := `SELECT ` + accountFields + ` FROM accounts WHERE id=?`
 
 	m := &api.Account{}
 	var groupId int32
-	row := a.db.QueryRow(readStmt, id)
+	row := a.db.QueryRowContext(ctx, readStmt, id)
 	var nullDesc sql.NullString
 	err := row.Scan(&m.Id, &m.Name, &nullDesc, &m.Saldo, &groupId, &m.NfcChipId)
 	if err != nil {
@@ -91,10 +92,10 @@ func (a *AccountModel) Read(id int32) (*api.Account, error) {
 }
 
 // Update saves the (changed) model in the database will return models.ErrGroupNotFound if group id is not associated with a group
-func (a *AccountModel) Update(m *api.Account) error {
+func (a *AccountModel) Update(ctx context.Context, m *api.Account) error {
 	updateStmt := `UPDATE accounts SET name=?, description=?, saldo=?, group_id=?, nfc_chip_uid=? WHERE id=?`
 
-	_, err := a.db.Exec(updateStmt, m.Name, m.Description, m.Saldo, m.Group.Id, m.NfcChipId, m.Id)
+	_, err := a.db.ExecContext(ctx, updateStmt, m.Name, m.Description, m.Saldo, m.Group.Id, m.NfcChipId, m.Id)
 
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok {
@@ -109,11 +110,11 @@ func (a *AccountModel) Update(m *api.Account) error {
 }
 
 // Delete deletes a account
-func (a *AccountModel) Delete(id int32) error {
+func (a *AccountModel) Delete(ctx context.Context, id int32) error {
 
 	deleteStmt := `DELETE FROM accounts WHERE id=?`
 
-	_, err := a.db.Exec(deleteStmt, id)
+	_, err := a.db.ExecContext(ctx, deleteStmt, id)
 
 	if err == sql.ErrNoRows {
 		return models.ErrNotFound
@@ -123,14 +124,14 @@ func (a *AccountModel) Delete(id int32) error {
 }
 
 // UpdateSaldo provides a simpler update method for the saldo field
-func (a *AccountModel) UpdateSaldo(m *api.Account, newSaldo float64) error {
-	_, err := a.db.Exec(`UPDATE accounts SET saldo=? WHERE id=?`, newSaldo, m.Id)
+func (a *AccountModel) UpdateSaldo(ctx context.Context, m *api.Account, newSaldo float64) error {
+	_, err := a.db.ExecContext(ctx, `UPDATE accounts SET saldo=? WHERE id=?`, newSaldo, m.Id)
 
 	return err
 }
 
 // GetAll returns slice with all accounts in the database
-func (a *AccountModel) GetAll(groupId int32, limit int32, offset int32) ([]*api.Account, int, error) {
+func (a *AccountModel) GetAll(ctx context.Context, groupId int32, limit int32, offset int32) ([]*api.Account, int, error) {
 	// default select statement
 	stmt := `SELECT ` + accountFields + ` FROM accounts`
 
@@ -158,7 +159,7 @@ func (a *AccountModel) GetAll(groupId int32, limit int32, offset int32) ([]*api.
 	}
 
 	// get rows from database
-	rows, err := a.db.Query(stmt, args...)
+	rows, err := a.db.QueryContext(ctx, stmt, args...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -176,7 +177,7 @@ func (a *AccountModel) GetAll(groupId int32, limit int32, offset int32) ([]*api.
 	// if limit is set, ask the database for the total amount
 	// we don't have to ask the database if no limit is set, because all account (in this group) are in the account slice
 	if limit > 0 {
-		totalCount, err = a.countAll(groupId)
+		totalCount, err = a.countAll(ctx, groupId)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -186,7 +187,7 @@ func (a *AccountModel) GetAll(groupId int32, limit int32, offset int32) ([]*api.
 }
 
 // countAll counts the account rows in the database and returns a total count
-func (a *AccountModel) countAll(groupId int32) (int, error) {
+func (a *AccountModel) countAll(ctx context.Context, groupId int32) (int, error) {
 	countStmt := `SELECT COUNT(id) FROM accounts`
 	var countArgs []interface{}
 
@@ -197,7 +198,7 @@ func (a *AccountModel) countAll(groupId int32) (int, error) {
 	}
 
 	var totalCount int
-	err := a.db.QueryRow(countStmt, countArgs...).Scan(&totalCount)
+	err := a.db.QueryRowContext(ctx, countStmt, countArgs...).Scan(&totalCount)
 	if err != nil {
 		return 0, err
 	}
@@ -206,7 +207,7 @@ func (a *AccountModel) countAll(groupId int32) (int, error) {
 }
 
 // GetAllByIds returns map of accounts, is used by to complete objects that are dependent on accounts
-func (a *AccountModel) GetAllByIds(ids []int32) (map[int32]*api.Account, error) {
+func (a *AccountModel) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Account, error) {
 	m := make(map[int32]*api.Account, len(ids))
 
 	args := make([]interface{}, len(ids))
@@ -215,7 +216,7 @@ func (a *AccountModel) GetAllByIds(ids []int32) (map[int32]*api.Account, error) 
 	}
 
 	stmt := `SELECT ` + accountFields + ` FROM accounts WHERE id IN (?` + strings.Repeat(",?", len(ids)-1) + `)`
-	rows, err := a.db.Query(stmt, args...)
+	rows, err := a.db.QueryContext(ctx, stmt, args...)
 	if err != nil {
 		return nil, err
 	}

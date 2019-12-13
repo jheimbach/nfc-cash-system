@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -30,7 +31,7 @@ func NewTransactionModel(db *sql.DB, accounts models.AccountStorager) *Transacti
 // It will return models.ErrAccountNotFound if account with accountId is not found
 func (t *TransactionModel) Create(amount float64, accountId int32) (*api.Transaction, error) {
 	// load account
-	account, err := t.accounts.Read(accountId)
+	account, err := t.accounts.Read(context.Background(), accountId)
 	if err != nil {
 		return nil, models.ErrAccountNotFound
 	}
@@ -56,7 +57,7 @@ func (t *TransactionModel) Create(amount float64, accountId int32) (*api.Transac
 	}
 
 	// update account saldo
-	err = t.accounts.UpdateSaldo(account, newSaldo) //in database
+	err = t.accounts.UpdateSaldo(context.Background(), account, newSaldo) //in database
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +210,7 @@ func (t *TransactionModel) loadTransactions(rows *sql.Rows) ([]*api.Transaction,
 		return nil, nil
 	}
 
-	accounts, err := t.accounts.GetAllByIds(accountIds)
+	accounts, err := t.accounts.GetAllByIds(context.Background(), accountIds)
 	if err != nil {
 		return nil, err
 	}

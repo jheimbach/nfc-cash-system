@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"testing"
@@ -134,7 +135,7 @@ func TestAccountModel_Create(t *testing.T) {
 					groups: mockGroupMap,
 				},
 			}
-			account, err := model.Create(tt.accountCreate.Name, tt.accountCreate.Description, tt.accountCreate.Saldo, tt.accountCreate.GroupId, tt.accountCreate.NfcChipId)
+			account, err := model.Create(context.Background(), tt.accountCreate.Name, tt.accountCreate.Description, tt.accountCreate.Saldo, tt.accountCreate.GroupId, tt.accountCreate.NfcChipId)
 
 			if tt.wantErr {
 				is.Equal(err, tt.expectedErr) // got not the expected error
@@ -179,7 +180,7 @@ func TestAccountModel_Create(t *testing.T) {
 			NfcChipId:   "same_id",
 			Group:       mockGroupOne,
 		})
-		_, err := model.Create("another tim", "", 0, 1, "same_id")
+		_, err := model.Create(context.Background(), "another tim", "", 0, 1, "same_id")
 		if err != nil && err != models.ErrDuplicateNfcChipId {
 			t.Errorf("got err %q, expected %q", err, models.ErrDuplicateNfcChipId)
 		}
@@ -213,7 +214,7 @@ func TestAccountModel_Read(t *testing.T) {
 			},
 		}
 
-		got, err := model.Read(1)
+		got, err := model.Read(context.Background(), 1)
 		is.NoErr(err) // got error from read, did not expect it
 
 		is.Equal(got, want)
@@ -241,7 +242,7 @@ func TestAccountModel_Read(t *testing.T) {
 			},
 		}
 
-		got, err := model.Read(1)
+		got, err := model.Read(context.Background(), 1)
 		is.NoErr(err) // got error from read, did not expect it
 
 		is.Equal(got, want)
@@ -259,7 +260,7 @@ func TestAccountModel_Read(t *testing.T) {
 			},
 		}
 
-		_, err := model.Read(100)
+		_, err := model.Read(context.Background(), 100)
 
 		if err != models.ErrNotFound {
 			t.Errorf("got %v expected %v", err, models.ErrNotFound)
@@ -354,7 +355,7 @@ func TestAccountModel_Update(t *testing.T) {
 				db: db,
 			}
 
-			err := model.Update(&tt.want)
+			err := model.Update(context.Background(), &tt.want)
 
 			if tt.wantErr {
 				is.Equal(err, tt.expectedErr) // got not the expected error
@@ -424,7 +425,7 @@ func TestAccountModel_Delete(t *testing.T) {
 			model := AccountModel{
 				db: db,
 			}
-			err := model.Delete(tt.obj.Id)
+			err := model.Delete(context.Background(), tt.obj.Id)
 			is.NoErr(err)
 
 			var dbName string
@@ -486,7 +487,7 @@ func TestAccountModel_UpdateSaldo(t *testing.T) {
 			}
 
 			model := AccountModel{db: db}
-			err := model.UpdateSaldo(&tt.obj, tt.newSaldo)
+			err := model.UpdateSaldo(context.Background(), &tt.obj, tt.newSaldo)
 			is.NoErr(err)
 
 			if tt.expectDbChange {
@@ -562,7 +563,7 @@ func TestAccountModel_GetAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			accounts, count, err := model.GetAll(tt.input.groupId, tt.input.limit, tt.input.offset)
+			accounts, count, err := model.GetAll(context.Background(), tt.input.groupId, tt.input.limit, tt.input.offset)
 			is.NoErr(err)
 			is.Equal(accounts, tt.want)
 			is.Equal(count, tt.wantCount)
@@ -616,7 +617,7 @@ func TestAccountModel_GetAllByIds(t *testing.T) {
 					groups: mockGroupMap,
 				},
 			}
-			got, err := model.GetAllByIds(tt.input)
+			got, err := model.GetAllByIds(context.Background(), tt.input)
 			if tt.wantErr != nil {
 				is.Equal(err, tt.wantErr) // errors don't match
 				return

@@ -26,31 +26,31 @@ type accountMockStorager struct {
 	updateSaldo func(m *api.Account, newSaldo float64) error
 }
 
-func (a accountMockStorager) Create(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
+func (a accountMockStorager) Create(ctx context.Context, name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
 	return a.create(name, description, startSaldo, groupId, nfcChipId)
 }
 
-func (a accountMockStorager) GetAll(groupId, limit, offset int32) ([]*api.Account, int, error) {
+func (a accountMockStorager) GetAll(ctx context.Context, groupId, limit, offset int32) ([]*api.Account, int, error) {
 	return a.getAll(groupId, limit, offset)
 }
 
-func (a accountMockStorager) GetAllByIds(ids []int32) (map[int32]*api.Account, error) {
+func (a accountMockStorager) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Account, error) {
 	return a.getAllByIds(ids)
 }
 
-func (a accountMockStorager) Read(id int32) (*api.Account, error) {
+func (a accountMockStorager) Read(ctx context.Context, id int32) (*api.Account, error) {
 	return a.read(id)
 }
 
-func (a accountMockStorager) Delete(id int32) error {
+func (a accountMockStorager) Delete(ctx context.Context, id int32) error {
 	return a.delete(id)
 }
 
-func (a accountMockStorager) Update(m *api.Account) error {
+func (a accountMockStorager) Update(ctx context.Context, m *api.Account) error {
 	return a.update(m)
 }
 
-func (a accountMockStorager) UpdateSaldo(m *api.Account, newSaldo float64) error {
+func (a accountMockStorager) UpdateSaldo(ctx context.Context, m *api.Account, newSaldo float64) error {
 	return a.updateSaldo(m, newSaldo)
 }
 
