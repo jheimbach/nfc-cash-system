@@ -106,45 +106,6 @@ func TestTransactionModel_Create(t *testing.T) {
 	}
 }
 
-func TestTransactionModel_GetAll(t *testing.T) {
-	isIntegrationTest(t)
-	is := isPkg.New(t)
-
-	db, dbSetup, dbTeardown := getTestDb(t)
-	defer db.Close()
-
-	t.Run("get all transactions", func(t *testing.T) {
-		is := is.New(t)
-		dbSetup("../testdata/transaction.sql", "../testdata/transaction_list.sql")
-		defer dbTeardown()
-
-		model := TransactionModel{
-			db:       db,
-			accounts: NewAccountModel(db, NewGroupModel(db)),
-		}
-		transactions, err := model.GetAll()
-		is.NoErr(err)
-
-		is.Equal(len(transactions), 9) // expected 9 transactions
-
-	})
-
-	t.Run("no transactions found", func(t *testing.T) {
-		dbSetup()
-		defer dbTeardown()
-
-		model := TransactionModel{
-			db:       db,
-			accounts: NewAccountModel(db, NewGroupModel(db)),
-		}
-		transactions, err := model.GetAll()
-		is.NoErr(err)
-
-		is.Equal(len(transactions), 0) // expected 0 transactions
-	})
-
-}
-
 func TestTransactionModel_Get(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.New(t)
@@ -195,100 +156,250 @@ func TestTransactionModel_Get(t *testing.T) {
 
 }
 
-func TestTransactionModel_GetAllByAccount(t *testing.T) {
+func TestTransactionModel_GetAll(t *testing.T) {
 	isIntegrationTest(t)
 	is := isPkg.New(t)
 
 	db, dbSetup, dbTeardown := getTestDb(t)
 	defer db.Close()
 
-	t.Run("get all transactions for account 1", func(t *testing.T) {
-		is := is.New(t)
-
-		dbSetup("../testdata/transaction.sql", "../testdata/transaction_list.sql")
-		defer dbTeardown()
-
-		model := TransactionModel{
-			db:       db,
-			accounts: NewAccountModel(db, NewGroupModel(db)),
-		}
-		transactions, err := model.GetAllByAccount(1)
-		is.NoErr(err)
-		is.Equal(len(transactions), 5) // expected 5 transactions
-
-		account := &api.Account{
-			Id:        1,
-			Name:      "testaccount",
-			Saldo:     12,
-			NfcChipId: "testchipid",
-			Group: &api.Group{
-				Id:   1,
-				Name: "testgroup1",
+	type args struct {
+		limit, offset int32
+	}
+	tests := []struct {
+		name    string
+		dbSetup []string
+		input   args
+		want    []*api.Transaction
+	}{
+		{
+			name:    "get all transactions",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input:   args{},
+			want:    transisitonList(0),
+		},
+		{
+			name:  "no transactions found",
+			input: args{},
+		},
+		{
+			name:    "get transactions with limit",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				limit: 5,
 			},
-		}
-
-		wantList := []*api.Transaction{
-			{
-				Id:       5,
-				OldSaldo: 100,
-				NewSaldo: 105,
-				Amount:   -5,
-				Created:  timeStampMock(5),
-				Account:  account,
+			want: transisitonList(0)[:5],
+		},
+		{
+			name:    "get transactions with limit and offset",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				limit:  3,
+				offset: 2,
 			},
-			{
-				Id:       4,
-				OldSaldo: 105,
-				NewSaldo: 100,
-				Amount:   5,
-				Created:  timeStampMock(4),
-				Account:  account,
+			want: transisitonList(0)[2:5],
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			dbSetup(tt.dbSetup...)
+			defer dbTeardown()
+
+			model := TransactionModel{
+				db:       db,
+				accounts: NewAccountModel(db, NewGroupModel(db)),
+			}
+			got, err := model.GetAll(tt.input.limit, tt.input.offset)
+			is.NoErr(err)
+			is.Equal(got, tt.want)
+		})
+	}
+
+}
+
+func TestTransactionModel_GetAllByAccount(t *testing.T) {
+	isIntegrationTest(t)
+	is := isPkg.New(t)
+	/**
+	    	[id:9 old_saldo:105 new_saldo:110 amount:-5 created:<seconds:1568736914 > account:<id:2 name:"testaccount1" saldo:120 nfc_chip_id:"testchipid2" group:<id:1 name:"testgroup1" > >  id:8 old_saldo:110 new_saldo:105 amount:5 created:<seconds:1566058514 > account:<id:2 name:"testaccount1" saldo:120 nfc_chip_id:"testchipid2" group:<id:1 name:"testgroup1" > >  id:7 old_saldo:115 new_saldo:110 amount:5 created:<seconds:1563380114 > account:<id:2 name:"testaccount1" saldo:120 nfc_chip_id:"testchipid2" group:<id:1 name:"testgroup1" > >  id:6 old_saldo:120 new_saldo:115 amount:5 created:<seconds:1560788114 > account:<id:2 name:"testaccount1" saldo:120 nfc_chip_id:"testchipid2" group:<id:1 name:"testgroup1" > >  id:5 old_saldo:100 new_saldo:105 amount:-5 created:<seconds:1558109714 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:4 old_saldo:105 new_saldo:100 amount:5 created:<seconds:1555517714 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:3 old_saldo:110 new_saldo:105 amount:5 created:<seconds:1552839314 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:2 old_saldo:115 new_saldo:110 amount:5 created:<seconds:1550420114 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:1 old_saldo:120 new_saldo:115 amount:5 created:<seconds:1547741714 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > > ]
+	  	[id:5 old_saldo:100 new_saldo:105 amount:-5 created:<seconds:1558109714 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:4 old_saldo:105 new_saldo:100 amount:5 created:<seconds:1555517714 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:3 old_saldo:110 new_saldo:105 amount:5 created:<seconds:1552839314 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:2 old_saldo:115 new_saldo:110 amount:5 created:<seconds:1550420114 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > >  id:1 old_saldo:120 new_saldo:115 amount:5 created:<seconds:1547741714 > account:<id:1 name:"testaccount" saldo:12 nfc_chip_id:"testchipid" group:<id:1 name:"testgroup1" > > ]
+	*/
+	db, dbSetup, dbTeardown := getTestDb(t)
+	defer db.Close()
+
+	type args struct {
+		accountId, limit, offset int32
+	}
+	tests := []struct {
+		name    string
+		dbSetup []string
+		input   args
+		want    []*api.Transaction
+	}{
+		{
+			name:    "get all transactions by account with id 1",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				accountId: 1,
 			},
-			{
-				Id:       3,
-				OldSaldo: 110,
-				NewSaldo: 105,
-				Amount:   5,
-				Created:  timeStampMock(3),
-				Account:  account,
+			want: transisitonList(1),
+		},
+		{
+			name: "no transactions found",
+			input: args{
+				accountId: 1,
 			},
-			{
-				Id:       2,
-				OldSaldo: 115,
-				NewSaldo: 110,
-				Amount:   5,
-				Created:  timeStampMock(2),
-				Account:  account,
+		},
+		{
+			name:    "get transactions with limit",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				accountId: 1,
+				limit:     3,
 			},
-			{
-				Id:       1,
-				OldSaldo: 120,
-				NewSaldo: 115,
-				Amount:   5,
-				Created:  timeStampMock(1),
-				Account:  account,
+			want: transisitonList(1)[:3],
+		},
+		{
+			name:    "get transactions with limit and offset",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				accountId: 1,
+				limit:     3,
+				offset:    2,
 			},
-		}
+			want: transisitonList(1)[2:5],
+		},
+	}
 
-		is.Equal(transactions, wantList)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			dbSetup(tt.dbSetup...)
+			defer dbTeardown()
 
-	t.Run("no transactions found for account id 100", func(t *testing.T) {
-		dbSetup()
-		defer dbTeardown()
+			model := TransactionModel{
+				db:       db,
+				accounts: NewAccountModel(db, NewGroupModel(db)),
+			}
+			got, err := model.GetAllByAccount(tt.input.accountId, tt.input.limit, tt.input.offset)
+			is.NoErr(err)
+			is.Equal(got, tt.want)
+		})
+	}
 
-		model := TransactionModel{
-			db: db,
-		}
-
-		transactions, err := model.GetAllByAccount(100)
-		is.NoErr(err)
-
-		is.Equal(len(transactions), 0) // expected 0 transactions
-	})
 }
 
 func timeStampMock(month int) *timestamp.Timestamp {
 	ts, _ := ptypes.TimestampProto(time.Date(2019, time.Month(month), 17, 16, 15, 14, 0, time.UTC))
 	return ts
+}
+
+func transisitonList(accountId int) []*api.Transaction {
+	accountOne := &api.Account{
+		Id:        1,
+		Name:      "testaccount",
+		Saldo:     12,
+		NfcChipId: "testchipid",
+		Group: &api.Group{
+			Id:   1,
+			Name: "testgroup1",
+		},
+	}
+	accountTwo := &api.Account{
+		Id:        2,
+		Name:      "testaccount1",
+		Saldo:     120,
+		NfcChipId: "testchipid2",
+		Group: &api.Group{
+			Id:   1,
+			Name: "testgroup1",
+		},
+	}
+
+	transactionsTwo := []*api.Transaction{
+		{
+			Id:       9,
+			OldSaldo: 105,
+			NewSaldo: 110,
+			Amount:   -5,
+			Created:  timeStampMock(9),
+			Account:  accountTwo,
+		},
+		{
+			Id:       8,
+			OldSaldo: 110,
+			NewSaldo: 105,
+			Amount:   5,
+			Created:  timeStampMock(8),
+			Account:  accountTwo,
+		},
+		{
+			Id:       7,
+			OldSaldo: 115,
+			NewSaldo: 110,
+			Amount:   5,
+			Created:  timeStampMock(7),
+			Account:  accountTwo,
+		},
+		{
+			Id:       6,
+			OldSaldo: 120,
+			NewSaldo: 115,
+			Amount:   5,
+			Created:  timeStampMock(6),
+			Account:  accountTwo,
+		},
+	}
+	transactionsOne := []*api.Transaction{
+		{
+			Id:       5,
+			OldSaldo: 100,
+			NewSaldo: 105,
+			Amount:   -5,
+			Created:  timeStampMock(5),
+			Account:  accountOne,
+		},
+		{
+			Id:       4,
+			OldSaldo: 105,
+			NewSaldo: 100,
+			Amount:   5,
+			Created:  timeStampMock(4),
+			Account:  accountOne,
+		},
+		{
+			Id:       3,
+			OldSaldo: 110,
+			NewSaldo: 105,
+			Amount:   5,
+			Created:  timeStampMock(3),
+			Account:  accountOne,
+		},
+		{
+			Id:       2,
+			OldSaldo: 115,
+			NewSaldo: 110,
+			Amount:   5,
+			Created:  timeStampMock(2),
+			Account:  accountOne,
+		},
+		{
+			Id:       1,
+			OldSaldo: 120,
+			NewSaldo: 115,
+			Amount:   5,
+			Created:  timeStampMock(1),
+			Account:  accountOne,
+		},
+	}
+	switch accountId {
+	case 1:
+		return transactionsOne
+	case 2:
+		return transactionsTwo
+	default:
+		return append(transactionsTwo, transactionsOne...)
+	}
 }

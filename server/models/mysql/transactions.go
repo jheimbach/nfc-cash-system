@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
@@ -82,26 +83,53 @@ func (t *TransactionModel) Read(id int32) (*api.Transaction, error) {
 
 // GetAll returns all transactions
 // CAUTION: due to the nature of Transactions, this could be a lot
-func (t *TransactionModel) GetAll() ([]*api.Transaction, error) {
-	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions ORDER BY created`
+func (t *TransactionModel) GetAll(limit, offset int32) ([]*api.Transaction, error) {
+	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions ORDER BY created DESC`
 
-	return t.loadTransactions(selectStmt)
-}
+	var args []interface{}
+	if limit > 0 {
+		selectStmt = fmt.Sprintf("%s LIMIT ?", selectStmt)
+		args = append(args, limit)
+		if offset > 0 {
+			selectStmt = fmt.Sprintf("%s OFFSET ?", selectStmt)
+			args = append(args, offset)
+		}
+	}
 
-// GetAllByAccount returns transactions for given account id
-func (t *TransactionModel) GetAllByAccount(accountId int32) ([]*api.Transaction, error) {
-	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions WHERE account_id=? ORDER BY created DESC`
-
-	return t.loadTransactions(selectStmt, accountId)
-}
-
-// loadTransactions will Transactions for given query
-func (t *TransactionModel) loadTransactions(query string, args ...interface{}) ([]*api.Transaction, error) {
-	rows, err := t.db.Query(query, args...)
+	rows, err := t.db.Query(selectStmt, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
+
+	return t.loadTransactions(rows)
+}
+
+// GetAllByAccount returns transactions for given account id
+func (t *TransactionModel) GetAllByAccount(accountId, limit, offset int32) ([]*api.Transaction, error) {
+	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions WHERE account_id=? ORDER BY created DESC`
+
+	args := []interface{}{accountId}
+	if limit > 0 {
+		selectStmt = fmt.Sprintf("%s LIMIT ?", selectStmt)
+		args = append(args, limit)
+		if offset > 0 {
+			selectStmt = fmt.Sprintf("%s OFFSET ?", selectStmt)
+			args = append(args, offset)
+		}
+	}
+
+	rows, err := t.db.Query(selectStmt, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return t.loadTransactions(rows)
+}
+
+// loadTransactions will Transactions for given query
+func (t *TransactionModel) loadTransactions(rows *sql.Rows) ([]*api.Transaction, error) {
 
 	var transactions []*api.Transaction
 	var accountIdsLookup = make(map[int32]bool)

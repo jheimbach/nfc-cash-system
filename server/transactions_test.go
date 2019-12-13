@@ -16,14 +16,14 @@ import (
 )
 
 type transactionMockStorage struct {
-	getAll          func() ([]*api.Transaction, error)
+	getAll          func(limit, offset int32) ([]*api.Transaction, error)
 	read            func(id int32) (*api.Transaction, error)
 	create          func(amount, oldSaldo, newSaldo float64, accountId int32) (*api.Transaction, error)
-	getAllByAccount func(accountId int32) ([]*api.Transaction, error)
+	getAllByAccount func(accountId, limit, offset int32) ([]*api.Transaction, error)
 }
 
-func (t *transactionMockStorage) GetAll() ([]*api.Transaction, error) {
-	return t.getAll()
+func (t *transactionMockStorage) GetAll(limit, offset int32) ([]*api.Transaction, error) {
+	return t.getAll(limit, offset)
 }
 
 func (t *transactionMockStorage) Read(id int32) (*api.Transaction, error) {
@@ -34,8 +34,8 @@ func (t *transactionMockStorage) Create(amount, oldSaldo, newSaldo float64, acco
 	return t.create(amount, oldSaldo, newSaldo, accountId)
 }
 
-func (t *transactionMockStorage) GetAllByAccount(accountId int32) ([]*api.Transaction, error) {
-	return t.getAllByAccount(accountId)
+func (t *transactionMockStorage) GetAllByAccount(accountId, limit, offset int32) ([]*api.Transaction, error) {
+	return t.getAllByAccount(accountId, limit, offset)
 }
 
 func TestTransactionServer_ListTransactions(t *testing.T) {
@@ -60,15 +60,49 @@ func TestTransactionServer_ListTransactions(t *testing.T) {
 			wantErr:   ErrSomethingWentWrong,
 			returnErr: errors.New("test error"),
 		},
+		{
+			name: "return transactions with limit",
+			input: &api.ListTransactionRequest{
+				Paging: &api.Paging{
+					Limit: 5,
+				},
+			},
+			want: &api.ListTransactionsResponse{
+				Transactions: genTransactionModels(5, 1),
+				TotalCount:   5,
+			},
+		},
+		{
+			name: "return transactions with limit and offset",
+			input: &api.ListTransactionRequest{
+				Paging: &api.Paging{
+					Limit:  5,
+					Offset: 5,
+				},
+			},
+			want: &api.ListTransactionsResponse{
+				Transactions: genTransactionModels(10, 1)[5:10],
+				TotalCount:   5,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := transactionServer{
 				storage: &transactionMockStorage{
-					getAll: func() ([]*api.Transaction, error) {
+					getAll: func(limit, offset int32) ([]*api.Transaction, error) {
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
 						}
+						if tt.input.Paging != nil {
+							if limit != tt.input.Paging.Limit {
+								t.Errorf("got limit %d, expected %d", limit, tt.input.Paging.Limit)
+							}
+							if offset != tt.input.Paging.Offset {
+								t.Errorf("got offset %d, expected %d", offset, tt.input.Paging.Offset)
+							}
+						}
+
 						return tt.want.Transactions, nil
 					},
 				},
@@ -101,10 +135,37 @@ func TestTransactionServer_ListTransactionsByAccount(t *testing.T) {
 		returnErr error
 	}{
 		{
-			name:  "return all transaction for the same account",
+			name:  "return all account transaction",
 			input: &api.ListTransactionsByAccountRequest{AccountId: 1},
 			want: &api.ListTransactionsResponse{
 				Transactions: genTransactionModels(3, 1),
+				TotalCount:   3,
+			},
+		},
+		{
+			name: "return account transaction with limit",
+			input: &api.ListTransactionsByAccountRequest{
+				AccountId: 1,
+				Paging: &api.Paging{
+					Limit: 5,
+				},
+			},
+			want: &api.ListTransactionsResponse{
+				Transactions: genTransactionModels(5, 1),
+				TotalCount:   5,
+			},
+		},
+		{
+			name: "return account transaction with limit and offset",
+			input: &api.ListTransactionsByAccountRequest{
+				AccountId: 1,
+				Paging: &api.Paging{
+					Limit:  3,
+					Offset: 2,
+				},
+			},
+			want: &api.ListTransactionsResponse{
+				Transactions: genTransactionModels(5, 1)[2:5],
 				TotalCount:   3,
 			},
 		},
@@ -113,14 +174,24 @@ func TestTransactionServer_ListTransactionsByAccount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := &transactionServer{
 				storage: &transactionMockStorage{
-					getAllByAccount: func(accountId int32) ([]*api.Transaction, error) {
+					getAllByAccount: func(accountId, limit, offset int32) ([]*api.Transaction, error) {
 						if accountId != tt.input.AccountId {
 							t.Fatalf("got accountid %d, expected %d", accountId, tt.input.AccountId)
 						}
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
 						}
+						if tt.input.Paging != nil {
+							if limit != tt.input.Paging.Limit {
+								t.Errorf("got limit %d, expected %d", limit, tt.input.Paging.Limit)
+							}
+							if offset != tt.input.Paging.Offset {
+								t.Errorf("got offset %d, expected %d", offset, tt.input.Paging.Offset)
+							}
+						}
+
 						return tt.want.Transactions, nil
+
 					},
 				},
 			}
