@@ -50,11 +50,13 @@ service TransactionsService {
 
 message ListTransactionRequest {
     Paging paging = 1;
+    string order = 2;
 }
 
 message ListTransactionsByAccountRequest {
     int32 account_id = 1;
     Paging paging = 2;
+    string order = 3;
 }
 
 message GetTransactionRequest {
@@ -84,8 +86,7 @@ message Transaction {
 
 message CreateTransactionRequest {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-        json_schema: {title:"TransactionCreation"}
-    };
+        json_schema: {title:"TransactionCreation"} };
     double old_saldo = 1;
     double new_saldo = 2;
     double amount = 3;

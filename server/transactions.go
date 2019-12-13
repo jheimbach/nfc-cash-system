@@ -21,7 +21,7 @@ func RegisterTransactionServer(server *grpc.Server, storage models.TransactionSt
 func (t *transactionServer) ListTransactions(ctx context.Context, req *api.ListTransactionRequest) (*api.ListTransactionsResponse, error) {
 	limit, offset := pagingOptions(req.Paging)
 
-	transactions, err := t.storage.GetAll(limit, offset)
+	transactions, err := t.storage.GetAll(req.Order, limit, offset)
 	if err != nil {
 		return nil, ErrSomethingWentWrong
 	}
@@ -48,7 +48,7 @@ func pagingOptions(req *api.Paging) (int32, int32) {
 func (t *transactionServer) ListTransactionsByAccount(ctx context.Context, req *api.ListTransactionsByAccountRequest) (*api.ListTransactionsResponse, error) {
 	limit, offset := pagingOptions(req.Paging)
 
-	transactions, err := t.storage.GetAllByAccount(req.AccountId, limit, offset)
+	transactions, err := t.storage.GetAllByAccount(req.AccountId, req.Order, limit, offset)
 	if err != nil {
 		return nil, ErrSomethingWentWrong
 	}

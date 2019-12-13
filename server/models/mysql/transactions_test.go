@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	isPkg "github.com/matryer/is"
+	"sort"
 	"testing"
 	"time"
 )
@@ -165,6 +166,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 
 	type args struct {
 		limit, offset int32
+		order         string
 	}
 	tests := []struct {
 		name    string
@@ -199,6 +201,54 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			},
 			want: transisitonList(0)[2:5],
 		},
+		{
+			name:    "get all transactions with order DESC",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				order: "DESC",
+			},
+			want: transisitonList(0),
+		},
+		{
+			name:    "get all transactions with order desc",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				order: "desc",
+			},
+			want: transisitonList(0),
+		},
+		{
+			name:    "get all transactions default order is DESC",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				order: "something invalid",
+			},
+			want: transisitonList(0),
+		},
+		{
+			name:    "get all transactions with order ASC",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				order: "ASC",
+			},
+			want: func() []*api.Transaction {
+				s := SortTransactions(transisitonList(0))
+				sort.Sort(s)
+				return s
+			}(),
+		},
+		{
+			name:    "get all transactions with order asc",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				order: "asc",
+			},
+			want: func() []*api.Transaction {
+				s := SortTransactions(transisitonList(0))
+				sort.Sort(s)
+				return s
+			}(),
+		},
 	}
 
 	for _, tt := range tests {
@@ -211,7 +261,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 				db:       db,
 				accounts: NewAccountModel(db, NewGroupModel(db)),
 			}
-			got, err := model.GetAll(tt.input.limit, tt.input.offset)
+			got, err := model.GetAll(tt.input.order, tt.input.limit, tt.input.offset)
 			is.NoErr(err)
 			is.Equal(got, tt.want)
 		})
@@ -231,6 +281,7 @@ func TestTransactionModel_GetAllByAccount(t *testing.T) {
 
 	type args struct {
 		accountId, limit, offset int32
+		order                    string
 	}
 	tests := []struct {
 		name    string
@@ -271,6 +322,59 @@ func TestTransactionModel_GetAllByAccount(t *testing.T) {
 			},
 			want: transisitonList(1)[2:5],
 		},
+		{
+			name:    "get transactions with order DESC",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				accountId: 1,
+				order:     "DESC",
+			},
+			want: transisitonList(1),
+		},
+		{
+			name:    "get transactions with order desc",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				accountId: 1,
+				order:     "desc",
+			},
+			want: transisitonList(1),
+		},
+		{
+			name:    "get transactions default order is DESC",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				accountId: 1,
+				order:     "something invalid",
+			},
+			want: transisitonList(1),
+		},
+		{
+			name:    "get transactions with order ASC",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				accountId: 1,
+				order:     "ASC",
+			},
+			want: func() []*api.Transaction {
+				s := SortTransactions(transisitonList(1))
+				sort.Sort(s)
+				return s
+			}(),
+		},
+		{
+			name:    "get transactions with order asc",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				accountId: 1,
+				order:     "asc",
+			},
+			want: func() []*api.Transaction {
+				s := SortTransactions(transisitonList(1))
+				sort.Sort(s)
+				return s
+			}(),
+		},
 	}
 
 	for _, tt := range tests {
@@ -283,7 +387,7 @@ func TestTransactionModel_GetAllByAccount(t *testing.T) {
 				db:       db,
 				accounts: NewAccountModel(db, NewGroupModel(db)),
 			}
-			got, err := model.GetAllByAccount(tt.input.accountId, tt.input.limit, tt.input.offset)
+			got, err := model.GetAllByAccount(tt.input.accountId, tt.input.order, tt.input.limit, tt.input.offset)
 			is.NoErr(err)
 			is.Equal(got, tt.want)
 		})
@@ -402,4 +506,21 @@ func transisitonList(accountId int) []*api.Transaction {
 	default:
 		return append(transactionsTwo, transactionsOne...)
 	}
+}
+
+type SortTransactions []*api.Transaction
+
+func (s SortTransactions) Less(i, j int) bool {
+	timeI, _ := ptypes.Timestamp(s[i].Created)
+	timeJ, _ := ptypes.Timestamp(s[j].Created)
+
+	return timeI.Before(timeJ)
+}
+
+func (s SortTransactions) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s SortTransactions) Len() int {
+	return len(s)
 }

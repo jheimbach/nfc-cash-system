@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
@@ -81,10 +82,12 @@ func (t *TransactionModel) Read(id int32) (*api.Transaction, error) {
 	return transaction, nil
 }
 
-// GetAll returns all transactions
+// GetAll returns all transactions ordered by create date with parameter `order` can be changed (default DESC)
 // CAUTION: due to the nature of Transactions, this could be a lot
-func (t *TransactionModel) GetAll(limit, offset int32) ([]*api.Transaction, error) {
-	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions ORDER BY created DESC`
+func (t *TransactionModel) GetAll(order string, limit, offset int32) ([]*api.Transaction, error) {
+	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions`
+
+	selectStmt = addOrder(order, selectStmt)
 
 	var args []interface{}
 	if limit > 0 {
@@ -105,9 +108,11 @@ func (t *TransactionModel) GetAll(limit, offset int32) ([]*api.Transaction, erro
 	return t.loadTransactions(rows)
 }
 
-// GetAllByAccount returns transactions for given account id
-func (t *TransactionModel) GetAllByAccount(accountId, limit, offset int32) ([]*api.Transaction, error) {
-	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions WHERE account_id=? ORDER BY created DESC`
+// GetAllByAccount returns transactions for given account id ordered by create date with parameter `order` can be changed (default DESC)
+func (t *TransactionModel) GetAllByAccount(accountId int32, order string, limit, offset int32) ([]*api.Transaction, error) {
+	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions WHERE account_id=?`
+
+	selectStmt = addOrder(order, selectStmt)
 
 	args := []interface{}{accountId}
 	if limit > 0 {
@@ -126,6 +131,17 @@ func (t *TransactionModel) GetAllByAccount(accountId, limit, offset int32) ([]*a
 	defer rows.Close()
 
 	return t.loadTransactions(rows)
+}
+
+func addOrder(order string, selectStmt string) string {
+	switch {
+	case strings.ToLower(order) == "asc":
+		order = "ASC"
+	default:
+		order = "DESC"
+	}
+	selectStmt = fmt.Sprintf("%s ORDER BY created %s", selectStmt, order)
+	return selectStmt
 }
 
 // loadTransactions will Transactions for given query
