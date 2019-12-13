@@ -2,10 +2,11 @@ package mysql
 
 import (
 	"database/sql"
+	"testing"
+
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	isPkg "github.com/matryer/is"
-	"testing"
 )
 
 func TestGroupModel_Create(t *testing.T) {
