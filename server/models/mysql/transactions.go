@@ -103,12 +103,16 @@ func (t *TransactionModel) Read(id int32) (*api.Transaction, error) {
 
 // GetAll returns all transactions ordered by create date with parameter `order` can be changed (default DESC)
 // CAUTION: due to the nature of Transactions, this could be a lot
-func (t *TransactionModel) GetAll(order string, limit, offset int32) ([]*api.Transaction, error) {
+func (t *TransactionModel) GetAll(accountId int32, order string, limit, offset int32) ([]*api.Transaction, error) {
 	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions`
 
-	selectStmt = addOrder(order, selectStmt)
-
 	var args []interface{}
+	if accountId > 0 {
+		selectStmt = fmt.Sprintf("%s WHERE account_id = ?", selectStmt)
+		args = append(args, accountId)
+	}
+
+	selectStmt = orderByClause(order, selectStmt)
 	if limit > 0 {
 		selectStmt = fmt.Sprintf("%s LIMIT ?", selectStmt)
 		args = append(args, limit)
@@ -127,32 +131,7 @@ func (t *TransactionModel) GetAll(order string, limit, offset int32) ([]*api.Tra
 	return t.loadTransactions(rows)
 }
 
-// GetAllByAccount returns transactions for given account id ordered by create date with parameter `order` can be changed (default DESC)
-func (t *TransactionModel) GetAllByAccount(accountId int32, order string, limit, offset int32) ([]*api.Transaction, error) {
-	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions WHERE account_id=?`
-
-	selectStmt = addOrder(order, selectStmt)
-
-	args := []interface{}{accountId}
-	if limit > 0 {
-		selectStmt = fmt.Sprintf("%s LIMIT ?", selectStmt)
-		args = append(args, limit)
-		if offset > 0 {
-			selectStmt = fmt.Sprintf("%s OFFSET ?", selectStmt)
-			args = append(args, offset)
-		}
-	}
-
-	rows, err := t.db.Query(selectStmt, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	return t.loadTransactions(rows)
-}
-
-func addOrder(order string, selectStmt string) string {
+func orderByClause(order string, selectStmt string) string {
 	switch {
 	case strings.ToLower(order) == "asc":
 		order = "ASC"

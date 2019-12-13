@@ -161,20 +161,30 @@ func TestTransactionModel_GetAll(t *testing.T) {
 	defer db.Close()
 
 	type args struct {
-		limit, offset int32
-		order         string
+		accountId, limit, offset int32
+		order                    string
 	}
 	tests := []struct {
-		name    string
-		dbSetup []string
-		input   args
-		want    []*api.Transaction
+		name      string
+		dbSetup   []string
+		input     args
+		want      []*api.Transaction
+		wantCount int
 	}{
 		{
 			name:    "get all transactions",
 			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
 			input:   args{},
 			want:    transisitonList(0),
+		},
+		{
+			name:    "get all transactions for account id 1",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				accountId: 1,
+			},
+			want:      transisitonList(1),
+			wantCount: 5,
 		},
 		{
 			name:  "no transactions found",
@@ -187,6 +197,16 @@ func TestTransactionModel_GetAll(t *testing.T) {
 				limit: 5,
 			},
 			want: transisitonList(0)[:5],
+		},
+		{
+			name:    "get all transactions for account id 1 with limit",
+			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input: args{
+				accountId: 1,
+				limit:     3,
+			},
+			want:      transisitonList(1)[:3],
+			wantCount: 5,
 		},
 		{
 			name:    "get transactions with limit and offset",
@@ -258,129 +278,6 @@ func TestTransactionModel_GetAll(t *testing.T) {
 				accounts: NewAccountModel(db, NewGroupModel(db)),
 			}
 			got, err := model.GetAll(tt.input.order, tt.input.limit, tt.input.offset)
-			is.NoErr(err)
-			is.Equal(got, tt.want)
-		})
-	}
-
-}
-
-func TestTransactionModel_GetAllByAccount(t *testing.T) {
-	isIntegrationTest(t)
-	is := isPkg.New(t)
-
-	db, dbSetup, dbTeardown := getTestDb(t)
-	defer db.Close()
-
-	type args struct {
-		accountId, limit, offset int32
-		order                    string
-	}
-	tests := []struct {
-		name    string
-		dbSetup []string
-		input   args
-		want    []*api.Transaction
-	}{
-		{
-			name:    "get all transactions by account with id 1",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
-			input: args{
-				accountId: 1,
-			},
-			want: transisitonList(1),
-		},
-		{
-			name: "no transactions found",
-			input: args{
-				accountId: 1,
-			},
-		},
-		{
-			name:    "get transactions with limit",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
-			input: args{
-				accountId: 1,
-				limit:     3,
-			},
-			want: transisitonList(1)[:3],
-		},
-		{
-			name:    "get transactions with limit and offset",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
-			input: args{
-				accountId: 1,
-				limit:     3,
-				offset:    2,
-			},
-			want: transisitonList(1)[2:5],
-		},
-		{
-			name:    "get transactions with order DESC",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
-			input: args{
-				accountId: 1,
-				order:     "DESC",
-			},
-			want: transisitonList(1),
-		},
-		{
-			name:    "get transactions with order desc",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
-			input: args{
-				accountId: 1,
-				order:     "desc",
-			},
-			want: transisitonList(1),
-		},
-		{
-			name:    "get transactions default order is DESC",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
-			input: args{
-				accountId: 1,
-				order:     "something invalid",
-			},
-			want: transisitonList(1),
-		},
-		{
-			name:    "get transactions with order ASC",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
-			input: args{
-				accountId: 1,
-				order:     "ASC",
-			},
-			want: func() []*api.Transaction {
-				s := SortTransactions(transisitonList(1))
-				sort.Sort(s)
-				return s
-			}(),
-		},
-		{
-			name:    "get transactions with order asc",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
-			input: args{
-				accountId: 1,
-				order:     "asc",
-			},
-			want: func() []*api.Transaction {
-				s := SortTransactions(transisitonList(1))
-				sort.Sort(s)
-				return s
-			}(),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			is := is.New(t)
-			dbSetup(tt.dbSetup...)
-			defer dbTeardown()
-
-			model := TransactionModel{
-				db:       db,
-				accounts: NewAccountModel(db, NewGroupModel(db)),
-			}
-			got, err := model.GetAllByAccount(tt.input.accountId, tt.input.order, tt.input.limit, tt.input.offset)
 			is.NoErr(err)
 			is.Equal(got, tt.want)
 		})

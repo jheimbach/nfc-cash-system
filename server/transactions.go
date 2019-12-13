@@ -48,7 +48,7 @@ func pagingOptions(req *api.Paging) (int32, int32) {
 func (t *transactionServer) ListTransactionsByAccount(ctx context.Context, req *api.ListTransactionsByAccountRequest) (*api.ListTransactionsResponse, error) {
 	limit, offset := pagingOptions(req.Paging)
 
-	transactions, err := t.storage.GetAllByAccount(req.AccountId, req.Order, limit, offset)
+	transactions, count, err := t.storage.GetAll(req.AccountId, req.Order, limit, offset)
 	if err != nil {
 		return nil, ErrSomethingWentWrong
 	}
