@@ -359,10 +359,11 @@ func TestGroupModel_GetAll(t *testing.T) {
 		limit, offset int32
 	}
 	tests := []struct {
-		name    string
-		input   args
-		want    []*api.Group
-		wantErr error
+		name      string
+		input     args
+		want      []*api.Group
+		wantCount int
+		wantErr   error
 	}{
 		{
 			name: "get all groups",
@@ -370,7 +371,8 @@ func TestGroupModel_GetAll(t *testing.T) {
 				limit:  0,
 				offset: 0,
 			},
-			want: groupList(0, 0),
+			want:      groupList(0, 0),
+			wantCount: 10,
 		},
 		{
 			name: "get groups with limit",
@@ -378,7 +380,8 @@ func TestGroupModel_GetAll(t *testing.T) {
 				limit:  5,
 				offset: 0,
 			},
-			want: groupList(5, 0),
+			want:      groupList(5, 0),
+			wantCount: 10,
 		},
 		{
 			name: "get groups with limit and offset",
@@ -386,17 +389,19 @@ func TestGroupModel_GetAll(t *testing.T) {
 				limit:  5,
 				offset: 5,
 			},
-			want: groupList(5, 5),
+			want:      groupList(5, 5),
+			wantCount: 10,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			got, err := model.GetAll(tt.input.limit, tt.input.offset)
+			got, count, err := model.GetAll(tt.input.limit, tt.input.offset)
 			is.NoErr(err)
 
 			is.Equal(got, tt.want)
+			is.Equal(count, tt.wantCount)
 		})
 	}
 }

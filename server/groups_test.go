@@ -15,7 +15,7 @@ import (
 
 type groupMockStorage struct {
 	create      func(name, description string, canOverdraw bool) (*api.Group, error)
-	getAll      func(limit, offset int32) ([]*api.Group, error)
+	getAll      func(limit, offset int32) ([]*api.Group, int, error)
 	read        func(id int32) (*api.Group, error)
 	update      func(group *api.Group) (*api.Group, error)
 	delete      func(id int32) error
@@ -26,7 +26,7 @@ func (g *groupMockStorage) Create(name, description string, canOverdraw bool) (*
 	return g.create(name, description, canOverdraw)
 }
 
-func (g *groupMockStorage) GetAll(limit, offset int32) ([]*api.Group, error) {
+func (g *groupMockStorage) GetAll(limit, offset int32) ([]*api.Group, int, error) {
 	return g.getAll(limit, offset)
 }
 
@@ -97,9 +97,9 @@ func TestGroupserver_List(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &groupserver{
 				storage: &groupMockStorage{
-					getAll: func(limit, offset int32) ([]*api.Group, error) {
+					getAll: func(limit, offset int32) ([]*api.Group, int, error) {
 						if tt.returnErr != nil {
-							return nil, tt.returnErr
+							return nil, 0, tt.returnErr
 						}
 						groups := genGroupModels(10)
 
@@ -108,10 +108,10 @@ func TestGroupserver_List(t *testing.T) {
 							if offset > 0 {
 								off = offset
 							}
-							return groups[off : off+limit], nil
+							return groups[off : off+limit], int(limit), nil
 						}
 
-						return groups, nil
+						return groups, len(groups), nil
 					},
 				},
 			}

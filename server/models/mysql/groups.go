@@ -105,7 +105,7 @@ func (g *GroupModel) Delete(id int32) error {
 	return nil
 }
 
-func (g *GroupModel) GetAll(limit, offset int32) ([]*api.Group, error) {
+func (g *GroupModel) GetAll(limit, offset int32) ([]*api.Group, int, error) {
 	stmt := "SELECT id, name, description, can_overdraw FROM account_groups"
 
 	var args []interface{}
@@ -120,16 +120,36 @@ func (g *GroupModel) GetAll(limit, offset int32) ([]*api.Group, error) {
 
 	rows, err := g.db.Query(stmt, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
 	groups, err := scanGroups(rows)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return groups, nil
+	totalCount := len(groups)
+	if limit > 0 {
+		totalCount, err = g.countAll()
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+
+	return groups, totalCount, nil
+}
+
+func (g *GroupModel) countAll() (int, error) {
+	stmt := `SELECT COUNT(id) FROM account_groups`
+
+	var totalCount int
+	err := g.db.QueryRow(stmt).Scan(&totalCount)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalCount, nil
 }
 
 func (g *GroupModel) GetAllByIds(ids []int32) (map[int32]*api.Group, error) {

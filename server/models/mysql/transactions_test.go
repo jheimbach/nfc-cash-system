@@ -172,10 +172,11 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		wantCount int
 	}{
 		{
-			name:    "get all transactions",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
-			input:   args{},
-			want:    transisitonList(0),
+			name:      "get all transactions",
+			dbSetup:   []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			input:     args{},
+			want:      transisitonList(0),
+			wantCount: 9,
 		},
 		{
 			name:    "get all transactions for account id 1",
@@ -187,8 +188,9 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			wantCount: 5,
 		},
 		{
-			name:  "no transactions found",
-			input: args{},
+			name:      "no transactions found",
+			input:     args{},
+			wantCount: 0,
 		},
 		{
 			name:    "get transactions with limit",
@@ -196,7 +198,8 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			input: args{
 				limit: 5,
 			},
-			want: transisitonList(0)[:5],
+			want:      transisitonList(0)[:5],
+			wantCount: 9,
 		},
 		{
 			name:    "get all transactions for account id 1 with limit",
@@ -215,7 +218,8 @@ func TestTransactionModel_GetAll(t *testing.T) {
 				limit:  3,
 				offset: 2,
 			},
-			want: transisitonList(0)[2:5],
+			want:      transisitonList(0)[2:5],
+			wantCount: 9,
 		},
 		{
 			name:    "get all transactions with order DESC",
@@ -223,7 +227,8 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			input: args{
 				order: "DESC",
 			},
-			want: transisitonList(0),
+			want:      transisitonList(0),
+			wantCount: 9,
 		},
 		{
 			name:    "get all transactions with order desc",
@@ -231,7 +236,8 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			input: args{
 				order: "desc",
 			},
-			want: transisitonList(0),
+			want:      transisitonList(0),
+			wantCount: 9,
 		},
 		{
 			name:    "get all transactions default order is DESC",
@@ -239,7 +245,8 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			input: args{
 				order: "something invalid",
 			},
-			want: transisitonList(0),
+			want:      transisitonList(0),
+			wantCount: 9,
 		},
 		{
 			name:    "get all transactions with order ASC",
@@ -252,6 +259,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 				sort.Sort(s)
 				return s
 			}(),
+			wantCount: 9,
 		},
 		{
 			name:    "get all transactions with order asc",
@@ -264,6 +272,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 				sort.Sort(s)
 				return s
 			}(),
+			wantCount: 9,
 		},
 	}
 
@@ -277,9 +286,10 @@ func TestTransactionModel_GetAll(t *testing.T) {
 				db:       db,
 				accounts: NewAccountModel(db, NewGroupModel(db)),
 			}
-			got, err := model.GetAll(tt.input.order, tt.input.limit, tt.input.offset)
+			got, count, err := model.GetAll(tt.input.accountId, tt.input.order, tt.input.limit, tt.input.offset)
 			is.NoErr(err)
 			is.Equal(got, tt.want)
+			is.Equal(count, tt.wantCount)
 		})
 	}
 

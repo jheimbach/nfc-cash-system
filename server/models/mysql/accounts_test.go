@@ -51,15 +51,15 @@ func (g *groupModelMock) Create(name, description string, canOverdraw bool) (*ap
 	return nil, nil
 }
 
-func (g *groupModelMock) GetAll(limit, offset int32) ([]*api.Group, error) {
+func (g *groupModelMock) GetAll(limit, offset int32) ([]*api.Group, int, error) {
 	if len(g.groups) < 1 {
-		return nil, models.ErrNotFound
+		return nil, 0, models.ErrNotFound
 	}
 	var groups []*api.Group
 	for _, group := range g.groups {
 		groups = append(groups, group)
 	}
-	return groups, nil
+	return groups, len(groups), nil
 }
 
 func (g *groupModelMock) Read(id int32) (*api.Group, error) {
@@ -513,35 +513,41 @@ func TestAccountModel_GetAll(t *testing.T) {
 		groupId, limit, offset int32
 	}
 	tests := []struct {
-		name    string
-		input   args
-		want    []*api.Account
-		wantErr error
+		name      string
+		input     args
+		want      []*api.Account
+		wantErr   error
+		wantCount int
 	}{
 		{
-			name:  "return all accounts",
-			input: args{0, 0, 0},
-			want:  mockListAccounts(9),
+			name:      "return all accounts",
+			input:     args{0, 0, 0},
+			want:      mockListAccounts(9),
+			wantCount: 9,
 		},
 		{
-			name:  "return all accounts with group id 1",
-			input: args{1, 0, 0},
-			want:  mockListAccounts(5),
+			name:      "return all accounts with group id 1",
+			input:     args{1, 0, 0},
+			want:      mockListAccounts(5),
+			wantCount: 5,
 		},
 		{
-			name:  "return all accounts limit 5",
-			input: args{0, 5, 0},
-			want:  mockListAccounts(5),
+			name:      "return all accounts limit 5",
+			input:     args{0, 5, 0},
+			want:      mockListAccounts(5),
+			wantCount: 9,
 		},
 		{
-			name:  "return all accounts limit 2 offset 3",
-			input: args{0, 2, 3},
-			want:  mockListAccounts(5)[3:5],
+			name:      "return all accounts limit 2 offset 3",
+			input:     args{0, 2, 3},
+			want:      mockListAccounts(5)[3:5],
+			wantCount: 9,
 		},
 		{
-			name:  "return all accounts in group 1 limit 1 offset 2",
-			input: args{1, 1, 2},
-			want:  mockListAccounts(5)[2:3],
+			name:      "return all accounts in group 1 limit 1 offset 2",
+			input:     args{1, 1, 2},
+			want:      mockListAccounts(5)[2:3],
+			wantCount: 5,
 		},
 	}
 
@@ -556,34 +562,12 @@ func TestAccountModel_GetAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			accounts, err := model.GetAll(tt.input.groupId, tt.input.limit, tt.input.offset)
+			accounts, count, err := model.GetAll(tt.input.groupId, tt.input.limit, tt.input.offset)
 			is.NoErr(err)
 			is.Equal(accounts, tt.want)
+			is.Equal(count, tt.wantCount)
 		})
 	}
-}
-
-func TestAccountModel_GetAllByGroup(t *testing.T) {
-	isIntegrationTest(t)
-
-	is := isPkg.New(t)
-	db, dbTeardown := dbInitializedForAccountLists(t)
-	defer func() {
-		dbTeardown()
-		db.Close()
-	}()
-
-	model := AccountModel{
-		db: db,
-		groups: &groupModelMock{
-			test:   t,
-			groups: mockGroupMap,
-		},
-	}
-
-	accounts, err := model.GetAllByGroup(1)
-	is.NoErr(err)
-	is.Equal(len(accounts), 5)
 }
 
 func TestAccountModel_GetAllByIds(t *testing.T) {

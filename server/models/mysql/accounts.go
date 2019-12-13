@@ -130,46 +130,82 @@ func (a *AccountModel) UpdateSaldo(m *api.Account, newSaldo float64) error {
 }
 
 // GetAll returns slice with all accounts in the database
-func (a *AccountModel) GetAll(groupId int32, limit int32, offset int32) ([]*api.Account, error) {
+func (a *AccountModel) GetAll(groupId int32, limit int32, offset int32) ([]*api.Account, int, error) {
+	// default select statement
 	stmt := `SELECT ` + accountFields + ` FROM accounts`
 
+	// args slice for query we have max 3 entries (groupid, limit, offset), so we can set the capacity
 	args := make([]interface{}, 0, 3)
+
+	// if groupId is set (and not the default value of zero)
+	// add WHERE clause to select query
 	if groupId > 0 {
 		stmt = fmt.Sprintf("%s WHERE group_id = ?", stmt)
 		args = append(args, groupId)
 	}
+	// if limit is set
+	// add LIMIT clause to select query
 	if limit > 0 {
 		stmt = fmt.Sprintf("%s LIMIT ?", stmt)
 		args = append(args, limit)
 
+		// if limit and offset is set
+		// add OFFSET clause to select query
 		if offset > 0 {
 			stmt = fmt.Sprintf("%s OFFSET ?", stmt)
 			args = append(args, offset)
 		}
 	}
 
+	// get rows from database
 	rows, err := a.db.Query(stmt, args...)
-
 	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	return a.scanRowsToAccounts(rows)
-}
-
-// GetAllByGroup returns slice with all accounts with given group id
-func (a *AccountModel) GetAllByGroup(groupId int) ([]*api.Account, error) {
-	rows, err := a.db.Query(`SELECT `+accountFields+` FROM accounts WHERE group_id=?`, groupId)
-	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
-	return a.scanRowsToAccounts(rows)
+	// scan rows to account objects
+	accounts, err := a.scanRowsToAccounts(rows)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// set totalCount to length of accounts slice
+	totalCount := len(accounts)
+
+	// if limit is set, ask the database for the total amount
+	// we don't have to ask the database if no limit is set, because all account (in this group) are in the account slice
+	if limit > 0 {
+		totalCount, err = a.countAll(groupId)
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+
+	return accounts, totalCount, nil
 }
 
+// countAll counts the account rows in the database and returns a total count
+func (a *AccountModel) countAll(groupId int32) (int, error) {
+	countStmt := `SELECT COUNT(id) FROM accounts`
+	var countArgs []interface{}
+
+	// if groupId is set, add WHERE clause to count statement
+	if groupId > 0 {
+		countStmt = fmt.Sprintf("%s WHERE group_id = ?", countStmt)
+		countArgs = append(countArgs, groupId)
+	}
+
+	var totalCount int
+	err := a.db.QueryRow(countStmt, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalCount, nil
+}
+
+// GetAllByIds returns map of accounts, is used by to complete objects that are dependent on accounts
 func (a *AccountModel) GetAllByIds(ids []int32) (map[int32]*api.Account, error) {
 	m := make(map[int32]*api.Account, len(ids))
 

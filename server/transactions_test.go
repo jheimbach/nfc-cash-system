@@ -16,14 +16,9 @@ import (
 )
 
 type transactionMockStorage struct {
-	getAll          func(order string, limit, offset int32) ([]*api.Transaction, error)
-	read            func(id int32) (*api.Transaction, error)
-	create          func(amount float64, accountId int32) (*api.Transaction, error)
-	getAllByAccount func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, error)
-}
-
-func (t *transactionMockStorage) GetAll(order string, limit, offset int32) ([]*api.Transaction, error) {
-	return t.getAll(order, limit, offset)
+	read   func(id int32) (*api.Transaction, error)
+	create func(amount float64, accountId int32) (*api.Transaction, error)
+	getAll func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error)
 }
 
 func (t *transactionMockStorage) Read(id int32) (*api.Transaction, error) {
@@ -34,8 +29,8 @@ func (t *transactionMockStorage) Create(amount float64, accountId int32) (*api.T
 	return t.create(amount, accountId)
 }
 
-func (t *transactionMockStorage) GetAllByAccount(accountId int32, order string, limit, offset int32) ([]*api.Transaction, error) {
-	return t.getAllByAccount(accountId, order, limit, offset)
+func (t *transactionMockStorage) GetAll(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
+	return t.getAll(accountId, order, limit, offset)
 }
 
 func TestTransactionServer_ListTransactions(t *testing.T) {
@@ -90,9 +85,9 @@ func TestTransactionServer_ListTransactions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := transactionServer{
 				storage: &transactionMockStorage{
-					getAll: func(order string, limit, offset int32) ([]*api.Transaction, error) {
+					getAll: func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
 						if tt.returnErr != nil {
-							return nil, tt.returnErr
+							return nil, 0, tt.returnErr
 						}
 
 						if tt.input.Order != order {
@@ -108,7 +103,7 @@ func TestTransactionServer_ListTransactions(t *testing.T) {
 							}
 						}
 
-						return tt.want.Transactions, nil
+						return tt.want.Transactions, len(tt.want.Transactions), nil
 					},
 				},
 			}
@@ -179,12 +174,12 @@ func TestTransactionServer_ListTransactionsByAccount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := &transactionServer{
 				storage: &transactionMockStorage{
-					getAllByAccount: func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, error) {
+					getAll: func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
 						if accountId != tt.input.AccountId {
 							t.Fatalf("got accountid %d, expected %d", accountId, tt.input.AccountId)
 						}
 						if tt.returnErr != nil {
-							return nil, tt.returnErr
+							return nil, 0, tt.returnErr
 						}
 
 						if tt.input.Order != order {
@@ -199,7 +194,7 @@ func TestTransactionServer_ListTransactionsByAccount(t *testing.T) {
 							}
 						}
 
-						return tt.want.Transactions, nil
+						return tt.want.Transactions, len(tt.want.Transactions), nil
 
 					},
 				},

@@ -103,7 +103,7 @@ func (t *TransactionModel) Read(id int32) (*api.Transaction, error) {
 
 // GetAll returns all transactions ordered by create date with parameter `order` can be changed (default DESC)
 // CAUTION: due to the nature of Transactions, this could be a lot
-func (t *TransactionModel) GetAll(accountId int32, order string, limit, offset int32) ([]*api.Transaction, error) {
+func (t *TransactionModel) GetAll(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
 	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions`
 
 	var args []interface{}
@@ -124,11 +124,21 @@ func (t *TransactionModel) GetAll(accountId int32, order string, limit, offset i
 
 	rows, err := t.db.Query(selectStmt, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
-	return t.loadTransactions(rows)
+	transactions, err := t.loadTransactions(rows)
+
+	totalCount := len(transactions)
+	if limit > 0 {
+		totalCount, err = t.countAll(accountId)
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+
+	return transactions, totalCount, err
 }
 
 func orderByClause(order string, selectStmt string) string {
@@ -140,6 +150,26 @@ func orderByClause(order string, selectStmt string) string {
 	}
 	selectStmt = fmt.Sprintf("%s ORDER BY created %s", selectStmt, order)
 	return selectStmt
+}
+
+// countAll counts the account rows in the database and returns a total count
+func (t *TransactionModel) countAll(accountId int32) (int, error) {
+	countStmt := `SELECT COUNT(id) FROM transactions`
+	var countArgs []interface{}
+
+	// if accountId is set, add WHERE clause to count statement
+	if accountId > 0 {
+		countStmt = fmt.Sprintf("%s WHERE account_id = ?", countStmt)
+		countArgs = append(countArgs, accountId)
+	}
+
+	var totalCount int
+	err := t.db.QueryRow(countStmt, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalCount, nil
 }
 
 // loadTransactions will Transactions for given query

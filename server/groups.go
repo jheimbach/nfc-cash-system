@@ -28,14 +28,14 @@ func (g *groupserver) ListGroups(ctx context.Context, req *api.ListGroupsRequest
 		limit = req.Paging.Limit
 		offset = req.Paging.Offset
 	}
-	groups, err := g.storage.GetAll(limit, offset)
+	groups, count, err := g.storage.GetAll(limit, offset)
 
 	if err != nil {
 		return nil, ErrGetAll
 	}
 	return &api.ListGroupsResponse{
 		Groups:     groups,
-		TotalCount: int32(len(groups)),
+		TotalCount: int32(count),
 	}, nil
 }
 

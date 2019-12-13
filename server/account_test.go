@@ -18,7 +18,7 @@ import (
 
 type accountMockStorager struct {
 	create      func(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error)
-	getAll      func(groupId, limit, offset int32) ([]*api.Account, error)
+	getAll      func(groupId, limit, offset int32) ([]*api.Account, int, error)
 	getAllByIds func(ids []int32) (map[int32]*api.Account, error)
 	read        func(id int32) (*api.Account, error)
 	delete      func(id int32) error
@@ -30,7 +30,7 @@ func (a accountMockStorager) Create(name, description string, startSaldo float64
 	return a.create(name, description, startSaldo, groupId, nfcChipId)
 }
 
-func (a accountMockStorager) GetAll(groupId, limit, offset int32) ([]*api.Account, error) {
+func (a accountMockStorager) GetAll(groupId, limit, offset int32) ([]*api.Account, int, error) {
 	return a.getAll(groupId, limit, offset)
 }
 
@@ -135,20 +135,20 @@ func TestAccountserver_List(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &accountserver{
-				storage: accountMockStorager{getAll: func(groupId, limit, offset int32) ([]*api.Account, error) {
+				storage: accountMockStorager{getAll: func(groupId, limit, offset int32) ([]*api.Account, int, error) {
 					if tt.wantErr != nil {
-						return nil, sql.ErrNoRows
+						return nil, 0, sql.ErrNoRows
 					}
 
 					groupOne := getAccountModels(2, 1)
 					groupTwo := getAccountModels(2, 2)
 
 					if groupId == 1 {
-						return groupOne, nil
+						return groupOne, len(groupOne), nil
 					}
 
 					if groupId == 2 {
-						return groupTwo, nil
+						return groupTwo, len(groupTwo), nil
 					}
 
 					groups := append(groupOne, groupTwo...)
@@ -157,9 +157,9 @@ func TestAccountserver_List(t *testing.T) {
 						if offset > 0 {
 							off = offset
 						}
-						return groups[off : off+limit], nil
+						return groups[off : off+limit], int(limit), nil
 					}
-					return groups, nil
+					return groups, len(groups), nil
 				},
 				},
 			}

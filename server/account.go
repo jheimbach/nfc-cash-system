@@ -35,7 +35,7 @@ func (a *accountserver) ListAccounts(ctx context.Context, req *api.ListAccountsR
 		limit = req.Paging.Limit
 		offset = req.Paging.Offset
 	}
-	accounts, err := a.storage.GetAll(req.GroupId, limit, offset)
+	accounts, totalCount, err := a.storage.GetAll(req.GroupId, limit, offset)
 
 	if err != nil {
 		return nil, ErrGetAll
@@ -43,7 +43,7 @@ func (a *accountserver) ListAccounts(ctx context.Context, req *api.ListAccountsR
 
 	return &api.ListAccountsResponse{
 		Accounts:   accounts,
-		TotalCount: int32(len(accounts)),
+		TotalCount: int32(totalCount),
 	}, nil
 }
 
