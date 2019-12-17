@@ -8,15 +8,17 @@ import (
 )
 
 var (
-	ErrDuplicateEmail      = errors.New("duplicate user email")
-	ErrDuplicateNfcChipId  = errors.New("duplicate account nfc chip id")
-	ErrNotFound            = errors.New("not found")
-	ErrInvalidCredentials  = errors.New("email or password incorrect")
-	ErrModelNotSaved       = errors.New("got no id on update, did you mean to create the group")
-	ErrNonEmptyDelete      = errors.New("can not delete, item is still referenced")
-	ErrGroupNotFound       = errors.New("group for given id does not exist")
-	ErrAccountNotFound     = errors.New("account for given id does not exist")
-	ErrTransactionNotFound = errors.New("transaction for given id does not exist")
+	ErrDuplicateEmail     = errors.New("duplicate user email")
+	ErrDuplicateNfcChipId = errors.New("duplicate account nfc chip id")
+	ErrNotFound           = errors.New("not found")
+	ErrInvalidCredentials = errors.New("email or password incorrect")
+	ErrModelNotSaved      = errors.New("got no id on update, did you mean to create the group")
+	ErrNonEmptyDelete     = errors.New("can not delete, item is still referenced")
+	ErrGroupNotFound      = errors.New("group for given id does not exist")
+	ErrAccountNotFound    = errors.New("account for given id does not exist")
+	ErrUserNotFound       = errors.New("user for given id does not exist")
+	ErrUserHasRefreshKey  = errors.New("user has a refresh key associated with him, remove the old key first")
+	ErrRefreshKeyIsInUse  = errors.New("given refresh key is associated with different user, please use a different one")
 )
 
 type AccountStorager interface {
@@ -49,4 +51,19 @@ type TransactionStorager interface {
 	GetAll(ctx context.Context, accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error)
 
 	Read(ctx context.Context, id int32) (*api.Transaction, error)
+}
+
+type Authenticator interface {
+	Authenticate(ctx context.Context, email, password string) (*api.User, error)
+}
+
+type RefreshKeySaver interface {
+	GetRefreshKey(ctx context.Context, userId int32) ([]byte, error)
+	InsertRefreshKey(ctx context.Context, userId int32, key []byte) error
+	DeleteRefreshKey(ctx context.Context, userId int32) error
+}
+
+type UserStorager interface {
+	Authenticator
+	RefreshKeySaver
 }

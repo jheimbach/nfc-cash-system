@@ -4,9 +4,16 @@
 package api
 
 import (
+	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
+	_ "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger/options"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -21,51 +28,89 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type UserLogin struct {
-	Email                string   `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	Password             string   `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+type AuthenticateResponse_TokenType int32
+
+const (
+	AuthenticateResponse_BEARER AuthenticateResponse_TokenType = 0
+)
+
+var AuthenticateResponse_TokenType_name = map[int32]string{
+	0: "BEARER",
 }
 
-func (m *UserLogin) Reset()         { *m = UserLogin{} }
-func (m *UserLogin) String() string { return proto.CompactTextString(m) }
-func (*UserLogin) ProtoMessage()    {}
-func (*UserLogin) Descriptor() ([]byte, []int) {
+var AuthenticateResponse_TokenType_value = map[string]int32{
+	"BEARER": 0,
+}
+
+func (x AuthenticateResponse_TokenType) String() string {
+	return proto.EnumName(AuthenticateResponse_TokenType_name, int32(x))
+}
+
+func (AuthenticateResponse_TokenType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_030765f334c86cea, []int{0, 0}
+}
+
+type AuthenticateResponse struct {
+	TokenType            AuthenticateResponse_TokenType `protobuf:"varint,1,opt,name=token_type,json=tokenType,proto3,enum=api.AuthenticateResponse_TokenType" json:"token_type,omitempty"`
+	AccessToken          string                         `protobuf:"bytes,2,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	RefreshToken         string                         `protobuf:"bytes,3,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	ExpiresIn            int64                          `protobuf:"varint,4,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                       `json:"-"`
+	XXX_unrecognized     []byte                         `json:"-"`
+	XXX_sizecache        int32                          `json:"-"`
+}
+
+func (m *AuthenticateResponse) Reset()         { *m = AuthenticateResponse{} }
+func (m *AuthenticateResponse) String() string { return proto.CompactTextString(m) }
+func (*AuthenticateResponse) ProtoMessage()    {}
+func (*AuthenticateResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_030765f334c86cea, []int{0}
 }
 
-func (m *UserLogin) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_UserLogin.Unmarshal(m, b)
+func (m *AuthenticateResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AuthenticateResponse.Unmarshal(m, b)
 }
-func (m *UserLogin) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_UserLogin.Marshal(b, m, deterministic)
+func (m *AuthenticateResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AuthenticateResponse.Marshal(b, m, deterministic)
 }
-func (m *UserLogin) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UserLogin.Merge(m, src)
+func (m *AuthenticateResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AuthenticateResponse.Merge(m, src)
 }
-func (m *UserLogin) XXX_Size() int {
-	return xxx_messageInfo_UserLogin.Size(m)
+func (m *AuthenticateResponse) XXX_Size() int {
+	return xxx_messageInfo_AuthenticateResponse.Size(m)
 }
-func (m *UserLogin) XXX_DiscardUnknown() {
-	xxx_messageInfo_UserLogin.DiscardUnknown(m)
+func (m *AuthenticateResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_AuthenticateResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_UserLogin proto.InternalMessageInfo
+var xxx_messageInfo_AuthenticateResponse proto.InternalMessageInfo
 
-func (m *UserLogin) GetEmail() string {
+func (m *AuthenticateResponse) GetTokenType() AuthenticateResponse_TokenType {
 	if m != nil {
-		return m.Email
+		return m.TokenType
+	}
+	return AuthenticateResponse_BEARER
+}
+
+func (m *AuthenticateResponse) GetAccessToken() string {
+	if m != nil {
+		return m.AccessToken
 	}
 	return ""
 }
 
-func (m *UserLogin) GetPassword() string {
+func (m *AuthenticateResponse) GetRefreshToken() string {
 	if m != nil {
-		return m.Password
+		return m.RefreshToken
 	}
 	return ""
+}
+
+func (m *AuthenticateResponse) GetExpiresIn() int64 {
+	if m != nil {
+		return m.ExpiresIn
+	}
+	return 0
 }
 
 type User struct {
@@ -132,24 +177,159 @@ func (m *User) GetCreated() *timestamp.Timestamp {
 }
 
 func init() {
-	proto.RegisterType((*UserLogin)(nil), "api.UserLogin")
+	proto.RegisterEnum("api.AuthenticateResponse_TokenType", AuthenticateResponse_TokenType_name, AuthenticateResponse_TokenType_value)
+	proto.RegisterType((*AuthenticateResponse)(nil), "api.AuthenticateResponse")
 	proto.RegisterType((*User)(nil), "api.User")
 }
 
 func init() { proto.RegisterFile("users.proto", fileDescriptor_030765f334c86cea) }
 
 var fileDescriptor_030765f334c86cea = []byte{
-	// 187 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x4c, 0x8e, 0xbd, 0xce, 0x82, 0x30,
-	0x14, 0x86, 0xc3, 0xdf, 0xf7, 0xc9, 0x21, 0x71, 0x68, 0x1c, 0x08, 0x8b, 0x84, 0x89, 0xa9, 0x24,
-	0xea, 0xea, 0x1d, 0x38, 0x11, 0xbd, 0x80, 0x62, 0x8f, 0xa4, 0x09, 0xa5, 0x4d, 0x5b, 0xf4, 0xf6,
-	0x8d, 0x45, 0xd4, 0xed, 0xbc, 0xe7, 0xfd, 0xc9, 0x03, 0xd9, 0x64, 0xd1, 0x58, 0xaa, 0x8d, 0x72,
-	0x8a, 0x44, 0x4c, 0x8b, 0x62, 0xdb, 0x2b, 0xd5, 0x0f, 0xd8, 0xf8, 0x57, 0x37, 0xdd, 0x1a, 0x27,
-	0x24, 0x5a, 0xc7, 0xa4, 0x9e, 0x53, 0xd5, 0x11, 0xd2, 0x8b, 0x45, 0x73, 0x52, 0xbd, 0x18, 0xc9,
-	0x06, 0x12, 0x94, 0x4c, 0x0c, 0x79, 0x50, 0x06, 0x75, 0xda, 0xce, 0x82, 0x14, 0xb0, 0xd2, 0xcc,
-	0xda, 0x87, 0x32, 0x3c, 0x0f, 0xbd, 0xf1, 0xd1, 0xd5, 0x1d, 0xe2, 0x57, 0x9d, 0xac, 0x21, 0x14,
-	0xdc, 0xd7, 0x92, 0x36, 0x14, 0x9c, 0x10, 0x88, 0x47, 0x26, 0xf1, 0x9d, 0xf7, 0xf7, 0x77, 0x3d,
-	0xfa, 0x5d, 0x3f, 0xc0, 0xff, 0xd5, 0x20, 0x73, 0xc8, 0xf3, 0xb8, 0x0c, 0xea, 0x6c, 0x57, 0xd0,
-	0x99, 0x99, 0x2e, 0xcc, 0xf4, 0xbc, 0x30, 0xb7, 0x4b, 0xb4, 0xfb, 0xf3, 0xe6, 0xfe, 0x19, 0x00,
-	0x00, 0xff, 0xff, 0x19, 0xd7, 0xe0, 0x97, 0xf2, 0x00, 0x00, 0x00,
+	// 474 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x52, 0xcb, 0x6e, 0xd3, 0x4c,
+	0x14, 0xae, 0x9d, 0xb4, 0xbf, 0x7c, 0xdc, 0xa6, 0xd1, 0x28, 0xfa, 0x09, 0xe6, 0x66, 0x5c, 0x21,
+	0x45, 0x11, 0xb5, 0x45, 0x60, 0x05, 0xab, 0x44, 0x64, 0x01, 0x62, 0x65, 0x82, 0x58, 0xa1, 0x68,
+	0xe2, 0x9c, 0xb8, 0x23, 0xe2, 0x99, 0xd1, 0xcc, 0x38, 0x90, 0x2d, 0x8f, 0x50, 0x5e, 0x81, 0x3d,
+	0x0f, 0xc3, 0x8e, 0x35, 0x0f, 0x82, 0x3c, 0x76, 0x20, 0xa2, 0x94, 0x95, 0xc7, 0x9f, 0xbf, 0xdb,
+	0x9c, 0x63, 0xf0, 0x4b, 0x8d, 0x4a, 0xc7, 0x52, 0x09, 0x23, 0x48, 0x8b, 0x4a, 0x16, 0xdc, 0xcb,
+	0x85, 0xc8, 0xd7, 0x98, 0x58, 0x68, 0x51, 0xae, 0x12, 0xc3, 0x0a, 0xd4, 0x86, 0x16, 0xb2, 0x66,
+	0x05, 0xb7, 0x1b, 0x02, 0x95, 0x2c, 0xa1, 0x9c, 0x0b, 0x43, 0x0d, 0x13, 0xbc, 0xf1, 0x08, 0x6e,
+	0xfd, 0x29, 0xc7, 0x42, 0x9a, 0x6d, 0xf3, 0xf1, 0xa1, 0x7d, 0x64, 0xe7, 0x39, 0xf2, 0x73, 0xfd,
+	0x81, 0xe6, 0x39, 0xaa, 0x44, 0x48, 0x2b, 0xbf, 0x6a, 0x15, 0x7d, 0x77, 0xa0, 0x37, 0x2e, 0xcd,
+	0x05, 0x72, 0xc3, 0x32, 0x6a, 0x30, 0x45, 0x2d, 0x05, 0xd7, 0x48, 0x26, 0x00, 0x46, 0xbc, 0x47,
+	0x3e, 0x37, 0x5b, 0x89, 0x7d, 0x27, 0x74, 0x06, 0x9d, 0xd1, 0x59, 0x4c, 0x25, 0x8b, 0xff, 0x46,
+	0x8f, 0x67, 0x15, 0x77, 0xb6, 0x95, 0x98, 0x7a, 0x66, 0x77, 0x24, 0xf7, 0xe1, 0x98, 0x66, 0x19,
+	0x6a, 0x3d, 0xb7, 0x58, 0xdf, 0x0d, 0x9d, 0x81, 0x97, 0xfa, 0x35, 0x66, 0x15, 0xe4, 0x0c, 0x4e,
+	0x14, 0xae, 0x14, 0xea, 0x8b, 0x86, 0xd3, 0xb2, 0x9c, 0xe3, 0x06, 0xac, 0x49, 0x77, 0x00, 0xf0,
+	0xa3, 0x64, 0x0a, 0xf5, 0x9c, 0xf1, 0x7e, 0x3b, 0x74, 0x06, 0xad, 0xd4, 0x6b, 0x90, 0x17, 0x3c,
+	0xba, 0x01, 0xde, 0xaf, 0x78, 0x02, 0x70, 0x34, 0x99, 0x8e, 0xd3, 0x69, 0xda, 0x3d, 0x88, 0x36,
+	0xd0, 0x7e, 0xa3, 0x51, 0x91, 0x0e, 0xb8, 0x6c, 0x69, 0xef, 0x70, 0x98, 0xba, 0x6c, 0x49, 0x08,
+	0xb4, 0x39, 0x2d, 0xb0, 0xe9, 0x63, 0xcf, 0xa4, 0x07, 0x87, 0x58, 0x50, 0xb6, 0x6e, 0x0a, 0xd4,
+	0x2f, 0xe4, 0x09, 0xfc, 0x97, 0x29, 0xa4, 0x06, 0x97, 0x36, 0xd6, 0x1f, 0x05, 0x71, 0x3d, 0xfb,
+	0x78, 0x37, 0xfb, 0x78, 0xb6, 0x5b, 0x5d, 0xba, 0xa3, 0x8e, 0xbe, 0xba, 0xe0, 0x57, 0xc1, 0xaf,
+	0x51, 0x6d, 0x58, 0x86, 0xe4, 0x8b, 0x03, 0xdd, 0xfd, 0xa9, 0xd9, 0x52, 0xff, 0x5f, 0x71, 0x9a,
+	0x56, 0x5b, 0x0c, 0x6e, 0x5e, 0x3b, 0xe4, 0xe8, 0xdd, 0xe5, 0xf8, 0x79, 0xf0, 0x20, 0x45, 0x53,
+	0x2a, 0xae, 0xc3, 0x97, 0x6f, 0x67, 0xa1, 0xbd, 0xb7, 0x0e, 0x57, 0x42, 0x85, 0xf4, 0xb7, 0x82,
+	0x09, 0x3e, 0x84, 0x57, 0x22, 0x67, 0x3c, 0xac, 0xa2, 0x16, 0xa7, 0x70, 0x02, 0xde, 0x84, 0x6a,
+	0x96, 0x55, 0xb6, 0xe4, 0xe0, 0xd3, 0xb7, 0x1f, 0x9f, 0xdd, 0x2e, 0xe9, 0x24, 0x9b, 0x47, 0x49,
+	0xf5, 0x6f, 0x26, 0xeb, 0x8a, 0x4b, 0xb6, 0x50, 0x89, 0x44, 0x69, 0xfe, 0xd9, 0xef, 0x1a, 0x3c,
+	0x7a, 0x76, 0x39, 0xbe, 0x3b, 0xf4, 0x6b, 0x83, 0xbd, 0x58, 0xdb, 0x70, 0x2f, 0xb6, 0x17, 0x9d,
+	0xee, 0xc7, 0x8a, 0xd2, 0x3c, 0x75, 0x86, 0x8b, 0x23, 0x6b, 0xf6, 0xf8, 0x67, 0x00, 0x00, 0x00,
+	0xff, 0xff, 0xd6, 0x2d, 0x53, 0x43, 0x2b, 0x03, 0x00, 0x00,
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion4
+
+// UserServiceClient is the client API for UserService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type UserServiceClient interface {
+	AuthenticateUser(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*AuthenticateResponse, error)
+	LogoutUser(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*empty.Empty, error)
+}
+
+type userServiceClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewUserServiceClient(cc *grpc.ClientConn) UserServiceClient {
+	return &userServiceClient{cc}
+}
+
+func (c *userServiceClient) AuthenticateUser(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*AuthenticateResponse, error) {
+	out := new(AuthenticateResponse)
+	err := c.cc.Invoke(ctx, "/api.UserService/AuthenticateUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) LogoutUser(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/api.UserService/LogoutUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// UserServiceServer is the server API for UserService service.
+type UserServiceServer interface {
+	AuthenticateUser(context.Context, *empty.Empty) (*AuthenticateResponse, error)
+	LogoutUser(context.Context, *empty.Empty) (*empty.Empty, error)
+}
+
+// UnimplementedUserServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedUserServiceServer struct {
+}
+
+func (*UnimplementedUserServiceServer) AuthenticateUser(ctx context.Context, req *empty.Empty) (*AuthenticateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AuthenticateUser not implemented")
+}
+func (*UnimplementedUserServiceServer) LogoutUser(ctx context.Context, req *empty.Empty) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LogoutUser not implemented")
+}
+
+func RegisterUserServiceServer(s *grpc.Server, srv UserServiceServer) {
+	s.RegisterService(&_UserService_serviceDesc, srv)
+}
+
+func _UserService_AuthenticateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).AuthenticateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.UserService/AuthenticateUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).AuthenticateUser(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_LogoutUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).LogoutUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.UserService/LogoutUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).LogoutUser(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _UserService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "api.UserService",
+	HandlerType: (*UserServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AuthenticateUser",
+			Handler:    _UserService_AuthenticateUser_Handler,
+		},
+		{
+			MethodName: "LogoutUser",
+			Handler:    _UserService_LogoutUser_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "users.proto",
 }

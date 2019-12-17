@@ -4,6 +4,40 @@ package api;
 
 import "protoc-gen-swagger/options/annotations.proto";
 
+
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+	info: {
+		title: "NFC Cash System"
+        version: "1.0"
+        contact:
+        {
+            name:"Johannes Heimbach"
+            url:"https://github.com/jheimbach/nfc-cash-system"
+            email:"nfccashsystem@medienstalt.de"
+        };
+    };
+    host: "nfc-cash.evjp.de"
+    schemes: HTTPS
+    consumes: "application/json"
+    produces: "application/json"
+    security_definitions: {
+        security: {
+            key:"BasicAuth"
+            value: {
+                type:TYPE_BASIC
+            }
+        }
+        security: {
+            key: "TokenAuth"
+            value: {
+                type:TYPE_API_KEY
+                in:IN_HEADER
+                name:"Authorization"
+            }
+        }
+    }
+};
+
 message Status {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
         json_schema: {title:"Status"}
@@ -19,25 +53,3 @@ message Paging {
     int32 limit = 1;
     int32 offset = 2;
 }
-
-message IdRequest {
-    int32 id = 1;
-}
-
-option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
-	info: {
-		title: "NFC Cash System"
-        version: "1.0"
-        contact:
-        {
-            name:"Johannes Heimbach"
-            url:"https://github.com/jheimbach/nfc-cash-system"
-            email:"nfccashsystem@medienstalt.de"
-        };
-    };
-    host: "nfc-cash.evjp.de"
-    schemes: HTTP
-    schemes: HTTPS
-    consumes: "application/json"
-    produces: "application/json"
-};

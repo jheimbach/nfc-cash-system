@@ -135,7 +135,7 @@ func (a *AccountModel) GetAll(ctx context.Context, groupId int32, limit int32, o
 	// default select statement
 	stmt := `SELECT ` + accountFields + ` FROM accounts`
 
-	// args slice for query we have max 3 entries (groupid, limit, offset), so we can set the capacity
+	// want slice for query we have max 3 entries (groupid, limit, offset), so we can set the capacity
 	args := make([]interface{}, 0, 3)
 
 	// if groupId is set (and not the default value of zero)

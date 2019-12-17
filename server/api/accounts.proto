@@ -13,6 +13,12 @@ service AccountService {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "List all accounts"
             description: "Returns all account, can be limited with paged options and filtered by group"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
         };
         option (google.api.http) = {
             get: "/v1/accounts"
@@ -22,6 +28,12 @@ service AccountService {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Create account"
             description: "Creates new account"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
         };
         option (google.api.http) = {
             post: "/v1/accounts"
@@ -32,6 +44,12 @@ service AccountService {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Get account"
             description: "Returns single account with given id"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
         };
         option (google.api.http) = {
             get: "/v1/account/{id}"
@@ -41,6 +59,12 @@ service AccountService {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Update account"
             description: "Updates account with given id, all fields must be send"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
         };
         option (google.api.http) = {
             put: "/v1/account/{id}"
@@ -51,6 +75,12 @@ service AccountService {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Delete account"
             description: "Deletes account with given id"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
         };
         option (google.api.http) = {
             delete: "/v1/account/{id}"

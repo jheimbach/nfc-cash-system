@@ -12,6 +12,12 @@ service GroupsService {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "List groups"
             description: "Lists all groups, can be limited with paging options"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
         };
         option (google.api.http) = {
             get: "/v1/groups"
@@ -21,6 +27,12 @@ service GroupsService {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Create group"
             description: "Creates group"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
         };
         option (google.api.http) = {
             post: "/v1/groups"
@@ -31,6 +43,12 @@ service GroupsService {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Get group"
             description: "Returns single group with given id"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
         };
         option (google.api.http) = {
             get: "/v1/group/{id}"
@@ -40,6 +58,12 @@ service GroupsService {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Update group"
             description: "Updates group, all fields must be send"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
         };
         option (google.api.http) = {
             put: "/v1/group/{id}"
@@ -47,6 +71,16 @@ service GroupsService {
         };
     };
     rpc DeleteGroup (DeleteGroupRequest) returns (google.protobuf.Empty) {
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            operation_id: "Delete group"
+            description: "Deletes group with given id"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
+        };
         option (google.api.http) = {
             delete: "/v1/group/{id}"
         };

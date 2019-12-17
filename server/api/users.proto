@@ -1,12 +1,53 @@
 syntax = "proto3";
 
 package api;
+
 import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
+service UserService {
+    rpc AuthenticateUser(google.protobuf.Empty) returns (AuthenticateResponse) {
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            operation_id: "Login User"
+            description: "Returns JWT Tokens for authentication"
+            security: {
+                security_requirement: {
+                    key: "BasicAuth"
+                    value: {}
+                }
+            }
+        };
+        option (google.api.http) = {
+            get: "/v1/user/login"
+        };
+    };
+    rpc LogoutUser(google.protobuf.Empty) returns (google.protobuf.Empty) {
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            operation_id: "Logout User"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
+        };
+        option (google.api.http) = {
+            post: "/v1/user/logout"
+            body: "*"
+        };
+    }
+}
 
-message UserLogin {
-    string email = 1;
-    string password = 2;
+message AuthenticateResponse {
+    enum TokenType {
+        BEARER = 0;
+    }
+    TokenType token_type = 1;
+    string access_token = 2;
+    string refresh_token = 3;
+    int64 expires_in = 4;
 }
 
 message User {

@@ -1,7 +1,10 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
@@ -16,16 +19,20 @@ type UserModel struct {
 	db *sql.DB
 }
 
-// Create creates a new user in the database.
-// if a user with the same email already exists, Create will return a models.ErrDuplicateEmail
-func (u *UserModel) Create(name, email, password string) error {
+func NewUserModel(db *sql.DB) *UserModel {
+	return &UserModel{db: db}
+}
+
+// Create creates a new userId in the database.
+// if a userId with the same email already exists, Create will return a models.ErrDuplicateEmail
+func (u *UserModel) Create(ctx context.Context, name, email, password string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
 		return err
 	}
 
 	insertSql := `INSERT INTO users (name,email,hashed_password,created) VALUES(?,?,?,UTC_TIMESTAMP())`
-	_, err = u.db.Exec(insertSql, name, email, string(hashedPassword))
+	_, err = u.db.ExecContext(ctx, insertSql, name, email, string(hashedPassword))
 	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			if mysqlErr.Number == 1062 {
@@ -38,11 +45,11 @@ func (u *UserModel) Create(name, email, password string) error {
 }
 
 // Get returns a models.User from given id, if id does not exists Get will return a models.ErrNotFound
-func (u *UserModel) Get(id int) (*api.User, error) {
+func (u *UserModel) Get(ctx context.Context, id int) (*api.User, error) {
 	m := &api.User{}
 	var t time.Time
 	getSql := `SELECT id,name,email,created FROM users WHERE id = ?`
-	err := u.db.QueryRow(getSql, id).Scan(&m.Id, &m.Name, &m.Email, &t)
+	err := u.db.QueryRowContext(ctx, getSql, id).Scan(&m.Id, &m.Name, &m.Email, &t)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -59,26 +66,79 @@ func (u *UserModel) Get(id int) (*api.User, error) {
 	return m, nil
 }
 
-// Authenticate returns the id for a user if it exists with given email and password
+// Authenticate returns the id for a userId if it exists with given email and password
 // if email does not exists or the password is wrong Authenticate will return a models.ErrInvalidCredentials
-func (u *UserModel) Authenticate(email, password string) (int, error) {
-	var id int
+func (u *UserModel) Authenticate(ctx context.Context, email, password string) (*api.User, error) {
+	var user = &api.User{}
 	var hashedPassword []byte
-	row := u.db.QueryRow("SELECT id, hashed_password FROM users WHERE email = ?", email)
-	err := row.Scan(&id, &hashedPassword)
+	var created time.Time
+	row := u.db.QueryRowContext(ctx, "SELECT id, name, email, hashed_password, created FROM users WHERE email = ?", email)
+	err := row.Scan(&user.Id, &user.Name, &user.Email, &hashedPassword, &created)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return 0, models.ErrInvalidCredentials
+			return nil, models.ErrInvalidCredentials
 		}
-		return 0, err
+		return nil, err
 	}
+
+	user.Created, _ = ptypes.TimestampProto(created)
+
 	err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(password))
 	if err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
-			return 0, models.ErrInvalidCredentials
+			return nil, models.ErrInvalidCredentials
 		}
-		return 0, err
+		return nil, err
 	}
 
-	return id, nil
+	return user, nil
+}
+
+func (u *UserModel) InsertRefreshKey(ctx context.Context, userId int32, key []byte) error {
+	insertStmt := `INSERT INTO users_refreshkeys (user_id, refresh_key) VALUES (?,?)`
+	_, err := u.db.ExecContext(ctx, insertStmt, userId, fmt.Sprintf("%x", key))
+
+	if err != nil {
+		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+			if mysqlErr.Number == 1062 {
+				if strings.Contains(mysqlErr.Message, "user_id") {
+					return models.ErrUserHasRefreshKey
+				} else {
+					return models.ErrRefreshKeyIsInUse
+				}
+			}
+			if mysqlErr.Number == 1452 {
+				return models.ErrUserNotFound
+			}
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (u *UserModel) DeleteRefreshKey(ctx context.Context, userId int32) error {
+	deleteStmt := `DELETE FROM users_refreshkeys WHERE user_id = ?`
+	_, err := u.db.ExecContext(ctx, deleteStmt, userId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *UserModel) GetRefreshKey(ctx context.Context, userId int32) ([]byte, error) {
+	var key string
+	getStmt := `SELECT refresh_key FROM users_refreshkeys WHERE user_id = ?`
+
+	err := u.db.QueryRowContext(ctx, getStmt, userId).Scan(&key)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, models.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return []byte(key), nil
 }

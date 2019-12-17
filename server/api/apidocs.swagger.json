@@ -11,7 +11,6 @@
   },
   "host": "nfc-cash.evjp.de",
   "schemes": [
-    "http",
     "https"
   ],
   "consumes": [
@@ -64,6 +63,11 @@
         ],
         "tags": [
           "TransactionsService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       },
       "post": {
@@ -96,6 +100,11 @@
         ],
         "tags": [
           "TransactionsService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       }
     },
@@ -129,6 +138,11 @@
         ],
         "tags": [
           "TransactionsService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       }
     },
@@ -155,6 +169,11 @@
         ],
         "tags": [
           "AccountService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       },
       "delete": {
@@ -179,6 +198,11 @@
         ],
         "tags": [
           "AccountService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       },
       "put": {
@@ -211,6 +235,11 @@
         ],
         "tags": [
           "AccountService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       }
     },
@@ -251,6 +280,11 @@
         ],
         "tags": [
           "AccountService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       },
       "post": {
@@ -276,6 +310,11 @@
         ],
         "tags": [
           "AccountService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       }
     },
@@ -302,10 +341,16 @@
         ],
         "tags": [
           "GroupsService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       },
       "delete": {
-        "operationId": "DeleteGroup",
+        "description": "Deletes group with given id",
+        "operationId": "Delete group",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -325,6 +370,11 @@
         ],
         "tags": [
           "GroupsService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       },
       "put": {
@@ -357,6 +407,11 @@
         ],
         "tags": [
           "GroupsService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       }
     },
@@ -390,6 +445,11 @@
         ],
         "tags": [
           "GroupsService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       },
       "post": {
@@ -415,6 +475,11 @@
         ],
         "tags": [
           "GroupsService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       }
     },
@@ -454,11 +519,76 @@
         ],
         "tags": [
           "TransactionsService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/user/login": {
+      "get": {
+        "description": "Returns JWT Tokens for authentication",
+        "operationId": "Login User",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiAuthenticateResponse"
+            }
+          }
+        },
+        "tags": [
+          "UserService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/user/logout": {
+      "post": {
+        "operationId": "Logout User",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "properties": {}
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "properties": {}
+            }
+          }
+        ],
+        "tags": [
+          "UserService"
+        ],
+        "security": [
+          {
+            "TokenAuth": []
+          }
         ]
       }
     }
   },
   "definitions": {
+    "AuthenticateResponseTokenType": {
+      "type": "string",
+      "enum": [
+        "BEARER"
+      ],
+      "default": "BEARER"
+    },
     "apiAccount": {
       "type": "object",
       "properties": {
@@ -490,6 +620,24 @@
         }
       },
       "title": "Account"
+    },
+    "apiAuthenticateResponse": {
+      "type": "object",
+      "properties": {
+        "token_type": {
+          "$ref": "#/definitions/AuthenticateResponseTokenType"
+        },
+        "access_token": {
+          "type": "string"
+        },
+        "refresh_token": {
+          "type": "string"
+        },
+        "expires_in": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
     },
     "apiCreateAccountRequest": {
       "type": "object",
@@ -659,6 +807,16 @@
         }
       },
       "title": "Transaction"
+    }
+  },
+  "securityDefinitions": {
+    "BasicAuth": {
+      "type": "basic"
+    },
+    "TokenAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
     }
   }
 }

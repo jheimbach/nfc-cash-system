@@ -13,6 +13,12 @@ service TransactionsService {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "List all transactions"
             description: "Lists all transactions, can be limited with paging options"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
         };
         option (google.api.http) = {
             get: "/v1/transactions"
@@ -22,6 +28,13 @@ service TransactionsService {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "List transactions"
             description: "Lists all Transactions for given account, can be limited with paging options"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
+
         };
         option (google.api.http) = {
             get: "/v1/account/{account_id}/transactions"
@@ -31,6 +44,12 @@ service TransactionsService {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Create transaction"
             description: "Creates new transaction"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
         };
         option (google.api.http) = {
             post: "/v1/account/{account_id}/transactions"
@@ -41,6 +60,12 @@ service TransactionsService {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
             operation_id: "Get transaction"
             description: "Returns single transaction"
+            security: {
+                security_requirement: {
+                    key: "TokenAuth"
+                    value: {}
+                }
+            }
         };
         option (google.api.http) = {
             get: "/v1/account/{account_id}/transactions/{id}"
