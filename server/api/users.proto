@@ -38,6 +38,26 @@ service UserService {
             body: "*"
         };
     }
+    rpc RefreshToken(google.protobuf.Empty) returns (AuthenticateResponse) {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+        operation_id: "Refresh Access Token"
+        security: {
+            security_requirement: {
+                key: "TokenAuth"
+            }
+        }
+        extensions: {
+		key: "x-refresh-token";
+		value {
+			string_value: "<refresh_token>";
+		}
+	}
+    };
+    option (google.api.http) = {
+                post: "/v1/user/refresh"
+                body: "*"
+            };
+    }
 }
 
 message AuthenticateResponse {

@@ -21,33 +21,16 @@ type userServer struct {
 	jwtKey  string
 }
 
-func RegisterAuthServer(s *grpc.Server, storage models.UserStorager) {
+func RegisterUserServer(s *grpc.Server, storage models.UserStorager) {
 	api.RegisterUserServiceServer(s, &userServer{
 		storage: storage,
 	})
 }
 
 func (a *userServer) AuthenticateUser(ctx context.Context, empty *empty.Empty) (*api.AuthenticateResponse, error) {
-	// load metadata
-	mb, _ := metadata.FromIncomingContext(ctx)
-
-	// get authorization metadata (header)
-	authHeader := mb.Get("authorization")
-	if len(authHeader) < 1 {
-		return nil, status.Error(codes.Unauthenticated, "authorization header required")
-	}
-
-	// check if authorization is a basic auth
-	authorization := strings.SplitN(authHeader[0], " ", 2)
-	if len(authorization) != 2 || authorization[0] != "Basic" {
-		return nil, status.Error(codes.Unauthenticated, "basic authorization required")
-	}
-
-	// decode username and password
-	payload, _ := base64.StdEncoding.DecodeString(authorization[1])
-	pair := strings.SplitN(string(payload), ":", 2)
-	if len(pair) != 2 {
-		return nil, status.Error(codes.Unauthenticated, "authorization required username and password")
+	pair, err := basicAuthorization(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	// authenticate user from database
@@ -58,7 +41,7 @@ func (a *userServer) AuthenticateUser(ctx context.Context, empty *empty.Empty) (
 
 	// create access token
 	expire := auth.ExpirationTime(5 * time.Minute)
-	accessToken, err := auth.CreateAccessToken(user, expire, auth.AccessTokenKey)
+	accessToken, err := auth.CreateAccessToken(user, expire)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "authorization failed")
 	}
@@ -69,7 +52,6 @@ func (a *userServer) AuthenticateUser(ctx context.Context, empty *empty.Empty) (
 		return nil, status.Error(codes.Internal, "authorization failed")
 	}
 
-	// return response
 	return &api.AuthenticateResponse{
 		TokenType:    api.AuthenticateResponse_BEARER,
 		AccessToken:  accessToken,
@@ -78,8 +60,59 @@ func (a *userServer) AuthenticateUser(ctx context.Context, empty *empty.Empty) (
 	}, nil
 }
 
-func (a *userServer) LogoutUser(context.Context, *empty.Empty) (*empty.Empty, error) {
+func (a *userServer) LogoutUser(ctx context.Context, e *empty.Empty) (*empty.Empty, error) {
+	recvToken, err := bearerAuthorization(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := auth.VerifyToken(recvToken, auth.AccessTokenKey)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "authentication failed")
+	}
+
+	err = a.storage.DeleteRefreshKey(ctx, user.Id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "could not log user out")
+	}
+
 	return &empty.Empty{}, nil
+}
+
+func (a *userServer) RefreshToken(ctx context.Context, e *empty.Empty) (*api.AuthenticateResponse, error) {
+	aToken, err := bearerAuthorization(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rToken, err := refreshTokenFromHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+	user, err := auth.VerifyToken(aToken, auth.AccessTokenKey)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "authentication failed")
+	}
+	refreshK, err := a.storage.GetRefreshKey(ctx, user.Id)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "authentication failed")
+	}
+	_, err = auth.VerifyToken(rToken, refreshK)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "authentication failed")
+	}
+
+	expire := auth.ExpirationTime(5 * time.Minute)
+	newAToken, err := auth.CreateAccessToken(user, expire)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "authentication failed")
+	}
+
+	return &api.AuthenticateResponse{
+		TokenType:    api.AuthenticateResponse_BEARER,
+		AccessToken:  newAToken,
+		RefreshToken: rToken,
+		ExpiresIn:    expire.Unix(),
+	}, nil
 }
 
 func (a *userServer) refreshToken(ctx context.Context, user *api.User) (string, error) {
@@ -87,7 +120,7 @@ func (a *userServer) refreshToken(ctx context.Context, user *api.User) (string, 
 	refreshKey := auth.CreateRandomKey()
 
 	// create jwt token with userId and random key
-	refreshToken, err := auth.CreateRefreshToken(user, auth.ExpirationTime(7*24*time.Hour), refreshKey)
+	refreshToken, err := auth.CreateToken(user, auth.ExpirationTime(7*24*time.Hour), refreshKey)
 	if err != nil {
 		return "", err
 	}
@@ -107,4 +140,64 @@ func (a *userServer) refreshToken(ctx context.Context, user *api.User) (string, 
 
 	// return jwt refresh token
 	return refreshToken, nil
+}
+
+func basicAuthorization(ctx context.Context) ([]string, error) {
+	header, err := authorizationHeader(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// check if authorization is a basic auth
+	authorization := strings.SplitN(header, " ", 2)
+	if len(authorization) != 2 || authorization[0] != "Basic" {
+		return nil, status.Error(codes.Unauthenticated, "basic authorization required")
+	}
+
+	// decode username and password
+	payload, _ := base64.StdEncoding.DecodeString(authorization[1])
+	pair := strings.SplitN(string(payload), ":", 2)
+	if len(pair) != 2 {
+		return nil, status.Error(codes.Unauthenticated, "authorization required username and password")
+	}
+
+	return pair, nil
+}
+
+func bearerAuthorization(ctx context.Context) (string, error) {
+	header, err := authorizationHeader(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	// check if authorization is a basic auth
+	authorization := strings.SplitN(header, " ", 2)
+	if len(authorization) != 2 || authorization[0] != "Bearer" {
+		return "", status.Error(codes.Unauthenticated, "bearer authorization required")
+	}
+
+	return authorization[1], nil
+}
+
+func authorizationHeader(ctx context.Context) (string, error) {
+	// load metadata
+	mb, _ := metadata.FromIncomingContext(ctx)
+
+	// get authorization metadata (header)
+	authHeader := mb.Get("authorization")
+	if len(authHeader) < 1 {
+		return "", status.Error(codes.Unauthenticated, "authorization header required")
+	}
+	return authHeader[0], nil
+}
+
+func refreshTokenFromHeader(ctx context.Context) (string, error) {
+	// load metadata
+	mb, _ := metadata.FromIncomingContext(ctx)
+
+	// get authorization metadata (header)
+	token := mb.Get("x-refresh-token")
+	if len(token) < 1 {
+		return "", status.Error(codes.Unauthenticated, "refresh token required")
+	}
+	return token[0], nil
 }

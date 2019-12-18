@@ -36,6 +36,12 @@ option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
             }
         }
     }
+    responses: {
+        key: "404";
+        value: {
+            description: "Returned when the resource does not exist.";
+        }
+    }
 };
 
 message Status {
