@@ -96,7 +96,7 @@ func (u *UserModel) Authenticate(ctx context.Context, email, password string) (*
 
 func (u *UserModel) InsertRefreshKey(ctx context.Context, userId int32, key []byte) error {
 	insertStmt := `INSERT INTO users_refreshkeys (user_id, refresh_key) VALUES (?,?)`
-	_, err := u.db.ExecContext(ctx, insertStmt, userId, fmt.Sprintf("%x", key))
+	_, err := u.db.ExecContext(ctx, insertStmt, userId, fmt.Sprintf("%s", key))
 
 	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {

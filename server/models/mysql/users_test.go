@@ -34,7 +34,7 @@ func TestUserModel_Create(t *testing.T) {
 			db: db,
 		}
 
-		err := model.Create(wantName, wantEmail, wantPassword)
+		err := model.Create(context.Background(), wantName, wantEmail, wantPassword)
 		if err != nil {
 			t.Fatalf("got error from inserting in usermodel, did not expect one %v", err)
 		}
@@ -59,8 +59,8 @@ func TestUserModel_Create(t *testing.T) {
 		}
 
 		// insert first userId with same fields than insert again to test duplicate email errors
-		_ = model.Create(wantName, wantEmail, wantPassword)
-		err := model.Create(wantName, wantEmail, wantPassword)
+		_ = model.Create(context.Background(), wantName, wantEmail, wantPassword)
+		err := model.Create(context.Background(), wantName, wantEmail, wantPassword)
 		if err == nil {
 			t.Fatalf("got no error, expected one")
 		}
@@ -100,7 +100,7 @@ func TestUserModel_Get(t *testing.T) {
 			db: db,
 		}
 
-		got, err := model.Get(1)
+		got, err := model.Get(context.Background(), 1)
 		if err != nil {
 			t.Errorf("got error from getting in usermodel, did not expect one %v", err)
 		}
@@ -117,7 +117,7 @@ func TestUserModel_Get(t *testing.T) {
 			db: db,
 		}
 
-		got, err := model.Get(1)
+		got, err := model.Get(context.Background(), 1)
 		if got != nil {
 			t.Errorf("got userId struct, did not expect one %v", got)
 		}
@@ -195,7 +195,7 @@ func TestUserModel_Authenticate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("authenticate userId with %q and %q", tt.email, tt.password), func(t *testing.T) {
 			is := is.New(t)
-			got, err := model.Authenticate(tt.email, tt.password)
+			got, err := model.Authenticate(context.Background(), tt.email, tt.password)
 			if tt.wantErr != nil {
 				is.Equal(err, tt.wantErr)
 				return
@@ -213,7 +213,7 @@ func TestUserModel_InsertRefreshKey(t *testing.T) {
 
 	type args struct {
 		userId     int32
-		refreshKey string
+		refreshKey []byte
 	}
 	tests := []struct {
 		name         string
@@ -225,18 +225,18 @@ func TestUserModel_InsertRefreshKey(t *testing.T) {
 			name: "insert key",
 			input: &args{
 				userId:     1,
-				refreshKey: "55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec",
+				refreshKey: []byte("55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec"),
 			},
 		},
 		{
 			name: "insert for userId id 1 a second key",
 			input: &args{
 				userId:     1,
-				refreshKey: "31722b526ec223ca98f1235613fc822117b551ef49c8b94ffd82e848cae25e6c",
+				refreshKey: []byte("31722b526ec223ca98f1235613fc822117b551ef49c8b94ffd82e848cae25e6c"),
 			},
 			insertBefore: &args{
 				userId:     1,
-				refreshKey: "55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec",
+				refreshKey: []byte("55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec"),
 			},
 			wantErr: models.ErrUserHasRefreshKey,
 		},
@@ -244,11 +244,11 @@ func TestUserModel_InsertRefreshKey(t *testing.T) {
 			name: "insert same key to different userId",
 			input: &args{
 				userId:     2,
-				refreshKey: "55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec",
+				refreshKey: []byte("55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec"),
 			},
 			insertBefore: &args{
 				userId:     1,
-				refreshKey: "55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec",
+				refreshKey: []byte("55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec"),
 			},
 			wantErr: models.ErrRefreshKeyIsInUse,
 		},
@@ -256,7 +256,7 @@ func TestUserModel_InsertRefreshKey(t *testing.T) {
 			name: "insert key for userId that does not exist",
 			input: &args{
 				userId:     100,
-				refreshKey: "55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec",
+				refreshKey: []byte("55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec"),
 			},
 			wantErr: models.ErrUserNotFound,
 		},
@@ -304,7 +304,7 @@ func TestUserModel_InsertRefreshKey(t *testing.T) {
 				t.Errorf("userid does not match: got %d, want %d", userId, tt.input.userId)
 			}
 
-			if key != tt.input.refreshKey {
+			if key != string(tt.input.refreshKey) {
 				t.Errorf("refreshkey does not match: got %q, want %q", key, tt.input.refreshKey)
 			}
 
@@ -443,7 +443,7 @@ func TestUserModel_GetRefreshKey(t *testing.T) {
 				t.Fatalf("got err %v, did not expect one", err)
 			}
 
-			if got != tt.want {
+			if string(got) != tt.want {
 				t.Errorf("refreshkey does not match: got %q, want %q", got, tt.want)
 			}
 
