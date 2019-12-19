@@ -12,10 +12,12 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
+var generator = NewJwtGenerator()
+
 func TestCreateRandomKey(t *testing.T) {
 	t.Run("create some random keys", func(t *testing.T) {
 		for i := 0; i < 10; i++ {
-			got := CreateRandomKey()
+			got := generator.CreateRandomKey()
 			if len(got) != 32 {
 				t.Errorf("createRandomKey should've returned 64 char long string, got %d", len(got))
 			}
@@ -25,7 +27,7 @@ func TestCreateRandomKey(t *testing.T) {
 
 func TestExpirationTime(t *testing.T) {
 	inFiveMinutes := time.Now().Add(5 * time.Minute).Round(time.Second)
-	got := ExpirationTime(5 * time.Minute).Round(time.Second)
+	got := generator.ExpirationTime(5 * time.Minute).Round(time.Second)
 
 	if !got.Equal(inFiveMinutes) {
 		t.Errorf("got %v wanted %v", got, inFiveMinutes)
@@ -64,7 +66,7 @@ func TestCreateToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := CreateToken(tt.input.user, tt.input.time, tt.input.key)
+			got, err := generator.CreateToken(tt.input.user, tt.input.time, tt.input.key)
 			if err != nil {
 				t.Fatalf("could not create token: %v", err)
 			}
@@ -80,32 +82,6 @@ func TestCreateToken(t *testing.T) {
 				t.Errorf("token is not valid: %v", tkn.Claims.Valid())
 			}
 		})
-	}
-}
-
-func TestCreateAccessToken(t *testing.T) {
-	user := &api.User{
-		Id:      1,
-		Name:    "testuser1",
-		Email:   "test@example.com",
-		Created: mockTimeStamp(),
-	}
-	tme := time.Now().Add(time.Minute)
-
-	aToken, err := CreateAccessToken(user, tme)
-	if err != nil {
-		t.Errorf("got error: %v, did not expect one", err)
-	}
-	token, err := CreateToken(user, tme, AccessTokenKey)
-	if err != nil {
-		t.Errorf("got error: %v, did not expect one", err)
-	}
-
-	if aToken != token {
-		t.Errorf(
-			"got different token from CreateAccessToken than CreateToken, expected to be the same\nAccessToken:\t%s\nToken:\t%s\n",
-			aToken, token,
-		)
 	}
 }
 
@@ -168,13 +144,13 @@ func TestVerifyToken(t *testing.T) {
 			token := tt.token
 			if tt.token == "" {
 				var err error
-				token, err = CreateToken(tt.input.user, tt.input.time, tt.input.key)
+				token, err = generator.CreateToken(tt.input.user, tt.input.time, tt.input.key)
 				if err != nil {
 					t.Fatalf("could not create token: %v", err)
 				}
 			}
 
-			got, err := VerifyToken(token, tt.input.key)
+			got, err := generator.VerifyToken(token, tt.input.key)
 			if tt.wantErr != nil {
 				if err, ok := err.(*jwt.ValidationError); ok {
 					want := tt.wantErr.(*jwt.ValidationError)

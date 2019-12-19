@@ -21,15 +21,24 @@ type claims struct {
 	jwt.StandardClaims
 }
 
-func ExpirationTime(duration time.Duration) time.Time {
+type TokenGenerator interface {
+	ExpirationTime(duration time.Duration) time.Time
+	CreateToken(user *api.User, expirationTime time.Time, key []byte) (string, error)
+	VerifyToken(token string, key []byte) (*api.User, error)
+	CreateRandomKey() []byte
+}
+
+type jwtGenerator int
+
+func NewJwtGenerator() TokenGenerator {
+	return new(jwtGenerator)
+}
+
+func (*jwtGenerator) ExpirationTime(duration time.Duration) time.Time {
 	return time.Now().Add(duration)
 }
 
-func CreateAccessToken(user *api.User, expirationTime time.Time) (string, error) {
-	return CreateToken(user, expirationTime, AccessTokenKey)
-}
-
-func CreateToken(user *api.User, expirationTime time.Time, key []byte) (string, error) {
+func (*jwtGenerator) CreateToken(user *api.User, expirationTime time.Time, key []byte) (string, error) {
 	idHash := md5.New()
 	io.WriteString(idHash, user.Name)
 	io.WriteString(idHash, string(key))
@@ -47,7 +56,7 @@ func CreateToken(user *api.User, expirationTime time.Time, key []byte) (string, 
 	return token.SignedString(key)
 }
 
-func VerifyToken(token string, key []byte) (*api.User, error) {
+func (*jwtGenerator) VerifyToken(token string, key []byte) (*api.User, error) {
 	claims := &claims{}
 	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (i interface{}, err error) {
 		return key, nil
@@ -59,7 +68,7 @@ func VerifyToken(token string, key []byte) (*api.User, error) {
 	return &claims.User, nil
 }
 
-func CreateRandomKey() []byte {
+func (*jwtGenerator) CreateRandomKey() []byte {
 	key := make([]byte, 32)
 	rand.Read(key)
 
