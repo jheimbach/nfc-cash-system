@@ -2,8 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/base64"
-	"strings"
 	"time"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
@@ -17,14 +15,9 @@ import (
 )
 
 var (
-	ErrNoAuthHeader       = status.Error(codes.Unauthenticated, "authorization header required")
-	ErrNoBasicAuth        = status.Error(codes.Unauthenticated, "basic authorization required")
-	ErrNoUserNamePassword = status.Error(codes.Unauthenticated, "basic authorization required")
-	ErrNoBearerAuth       = status.Error(codes.Unauthenticated, "authorization required username and password")
-	ErrNameOrPasswdWrong  = status.Error(codes.Unauthenticated, "username or password wrong")
-	ErrNoRefreshToken     = status.Error(codes.Unauthenticated, "refresh token required")
-	ErrCouldNotAuthorize  = status.Error(codes.Internal, "authorization failed")
-	ErrCouldNotLogOut     = status.Error(codes.Internal, "could not log user out")
+	ErrNameOrPasswdWrong = status.Error(codes.Unauthenticated, "username or password wrong")
+	ErrNoRefreshToken    = status.Error(codes.Unauthenticated, "refresh token required")
+	ErrCouldNotLogOut    = status.Error(codes.Internal, "could not log user out")
 )
 
 type userServer struct {
@@ -40,7 +33,7 @@ func RegisterUserServer(s *grpc.Server, storage models.UserStorager) {
 }
 
 func (a *userServer) AuthenticateUser(ctx context.Context, empty *empty.Empty) (*api.AuthenticateResponse, error) {
-	pair, err := basicAuthorization(ctx)
+	pair, err := auth.UsernameAndPasswortFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -55,13 +48,13 @@ func (a *userServer) AuthenticateUser(ctx context.Context, empty *empty.Empty) (
 	expire := a.tokenGenerator.ExpirationTime(5 * time.Minute)
 	accessToken, err := a.tokenGenerator.CreateToken(user, expire, auth.AccessTokenKey)
 	if err != nil {
-		return nil, ErrCouldNotAuthorize
+		return nil, auth.ErrCouldNotAuthorize
 	}
 
 	// create refresh token
 	refreshToken, err := a.createRefreshToken(ctx, user)
 	if err != nil {
-		return nil, ErrCouldNotAuthorize
+		return nil, auth.ErrCouldNotAuthorize
 	}
 
 	return &api.AuthenticateResponse{
@@ -73,14 +66,9 @@ func (a *userServer) AuthenticateUser(ctx context.Context, empty *empty.Empty) (
 }
 
 func (a *userServer) LogoutUser(ctx context.Context, e *empty.Empty) (*empty.Empty, error) {
-	recvToken, err := bearerAuthorization(ctx)
+	user, err := auth.RetrieveUserFromContext(ctx)
 	if err != nil {
 		return nil, err
-	}
-
-	user, err := a.tokenGenerator.VerifyToken(recvToken, auth.AccessTokenKey)
-	if err != nil {
-		return nil, ErrCouldNotAuthorize
 	}
 
 	err = a.storage.DeleteRefreshKey(ctx, user.Id)
@@ -92,31 +80,29 @@ func (a *userServer) LogoutUser(ctx context.Context, e *empty.Empty) (*empty.Emp
 }
 
 func (a *userServer) RefreshToken(ctx context.Context, e *empty.Empty) (*api.AuthenticateResponse, error) {
-	aToken, err := bearerAuthorization(ctx)
+	user, err := auth.RetrieveUserFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
+
 	rToken, err := refreshTokenFromHeader(ctx)
 	if err != nil {
 		return nil, err
 	}
-	user, err := a.tokenGenerator.VerifyToken(aToken, auth.AccessTokenKey)
-	if err != nil {
-		return nil, ErrCouldNotAuthorize
-	}
+
 	refreshK, err := a.storage.GetRefreshKey(ctx, user.Id)
 	if err != nil {
-		return nil, ErrCouldNotAuthorize
+		return nil, auth.ErrCouldNotAuthorize
 	}
 	_, err = a.tokenGenerator.VerifyToken(rToken, refreshK)
 	if err != nil {
-		return nil, ErrCouldNotAuthorize
+		return nil, auth.ErrCouldNotAuthorize
 	}
 
 	expire := a.tokenGenerator.ExpirationTime(5 * time.Minute)
 	newAToken, err := a.tokenGenerator.CreateToken(user, expire, auth.AccessTokenKey)
 	if err != nil {
-		return nil, ErrCouldNotAuthorize
+		return nil, auth.ErrCouldNotAuthorize
 	}
 
 	return &api.AuthenticateResponse{
@@ -154,54 +140,6 @@ func (a *userServer) createRefreshToken(ctx context.Context, user *api.User) (st
 
 	// return jwt refresh token
 	return refreshToken, nil
-}
-
-func basicAuthorization(ctx context.Context) ([]string, error) {
-	header, err := authorizationHeader(ctx)
-	if err != nil {
-		return nil, err
-	}
-	// check if authorization is a basic auth
-	authorization := strings.SplitN(header, " ", 2)
-	if len(authorization) != 2 || authorization[0] != "Basic" {
-		return nil, ErrNoBasicAuth
-	}
-
-	// decode username and password
-	payload, _ := base64.StdEncoding.DecodeString(authorization[1])
-	pair := strings.SplitN(string(payload), ":", 2)
-	if len(pair) != 2 {
-		return nil, ErrNoUserNamePassword
-	}
-
-	return pair, nil
-}
-
-func bearerAuthorization(ctx context.Context) (string, error) {
-	header, err := authorizationHeader(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	// check if authorization is a basic auth
-	authorization := strings.SplitN(header, " ", 2)
-	if len(authorization) != 2 || authorization[0] != "Bearer" {
-		return "", ErrNoBearerAuth
-	}
-
-	return authorization[1], nil
-}
-
-func authorizationHeader(ctx context.Context) (string, error) {
-	// load metadata
-	mb, _ := metadata.FromIncomingContext(ctx)
-
-	// get authorization metadata (header)
-	authHeader := mb.Get("authorization")
-	if len(authHeader) < 1 {
-		return "", ErrNoAuthHeader
-	}
-	return authHeader[0], nil
 }
 
 func refreshTokenFromHeader(ctx context.Context) (string, error) {

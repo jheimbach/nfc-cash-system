@@ -213,7 +213,7 @@ func TestUserModel_InsertRefreshKey(t *testing.T) {
 
 	type args struct {
 		userId     int32
-		refreshKey []byte
+		refreshKey string
 	}
 	tests := []struct {
 		name         string
@@ -225,18 +225,18 @@ func TestUserModel_InsertRefreshKey(t *testing.T) {
 			name: "insert key",
 			input: &args{
 				userId:     1,
-				refreshKey: []byte("55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec"),
+				refreshKey: "55812817ad1f1baa775955ba2149443a",
 			},
 		},
 		{
 			name: "insert for userId id 1 a second key",
 			input: &args{
 				userId:     1,
-				refreshKey: []byte("31722b526ec223ca98f1235613fc822117b551ef49c8b94ffd82e848cae25e6c"),
+				refreshKey: "31722b526ec223ca98f1235613fc8221",
 			},
 			insertBefore: &args{
 				userId:     1,
-				refreshKey: []byte("55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec"),
+				refreshKey: "55812817ad1f1baa775955ba2149443a",
 			},
 			wantErr: models.ErrUserHasRefreshKey,
 		},
@@ -244,11 +244,11 @@ func TestUserModel_InsertRefreshKey(t *testing.T) {
 			name: "insert same key to different userId",
 			input: &args{
 				userId:     2,
-				refreshKey: []byte("55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec"),
+				refreshKey: "55812817ad1f1baa775955ba2149443a",
 			},
 			insertBefore: &args{
 				userId:     1,
-				refreshKey: []byte("55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec"),
+				refreshKey: "55812817ad1f1baa775955ba2149443a",
 			},
 			wantErr: models.ErrRefreshKeyIsInUse,
 		},
@@ -256,7 +256,7 @@ func TestUserModel_InsertRefreshKey(t *testing.T) {
 			name: "insert key for userId that does not exist",
 			input: &args{
 				userId:     100,
-				refreshKey: []byte("55812817ad1f1baa775955ba2149443a551091c0561afe95c3d4ea796fcf38ec"),
+				refreshKey: "55812817ad1f1baa775955ba2149443a",
 			},
 			wantErr: models.ErrUserNotFound,
 		},
@@ -278,7 +278,7 @@ func TestUserModel_InsertRefreshKey(t *testing.T) {
 				db: db,
 			}
 
-			err := model.InsertRefreshKey(context.Background(), tt.input.userId, tt.input.refreshKey)
+			err := model.InsertRefreshKey(context.Background(), tt.input.userId, []byte(tt.input.refreshKey))
 
 			if tt.wantErr != nil {
 				if err != tt.wantErr {

@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
@@ -47,150 +46,6 @@ func TestRefreshTokenFromHeader(t *testing.T) {
 			t.Errorf("got err:%v, expected %v", err, want)
 		}
 
-	})
-}
-
-func TestAuthorizationHeader(t *testing.T) {
-	t.Run("extract authorization from header", func(t *testing.T) {
-		want := "<token>"
-		md := metadata.New(map[string]string{"authorization": want})
-		ctx := metadata.NewIncomingContext(context.Background(), md)
-
-		got, err := authorizationHeader(ctx)
-		if err != nil {
-			t.Errorf("did not expect error: %v", err)
-		}
-
-		if got != want {
-			t.Errorf("got %s, wanted %s", got, want)
-		}
-
-	})
-
-	t.Run("could not find authorization in header", func(t *testing.T) {
-		md := metadata.New(map[string]string{"authentication": ""})
-		ctx := metadata.NewIncomingContext(context.Background(), md)
-
-		_, err := authorizationHeader(ctx)
-		if err == nil {
-			t.Errorf("expected an error")
-		}
-
-		want := ErrNoAuthHeader
-		if err != want {
-			t.Errorf("got err:%v, expected %v", err, want)
-		}
-
-	})
-}
-
-func TestBearerAuthorization(t *testing.T) {
-	t.Run("extract bearer token from header", func(t *testing.T) {
-		want := "<token>"
-		md := metadata.New(map[string]string{"authorization": "Bearer " + want})
-		ctx := metadata.NewIncomingContext(context.Background(), md)
-
-		got, err := bearerAuthorization(ctx)
-		if err != nil {
-			t.Errorf("did not expect error: %v", err)
-		}
-
-		if got != want {
-			t.Errorf("got %s, wanted %s", got, want)
-		}
-
-	})
-
-	t.Run("could not find bearer token", func(t *testing.T) {
-		md := metadata.New(map[string]string{"authorization": "Basic <token>"})
-		ctx := metadata.NewIncomingContext(context.Background(), md)
-
-		_, err := bearerAuthorization(ctx)
-		if err == nil {
-			t.Errorf("expected an error")
-		}
-
-		want := ErrNoBearerAuth
-		if err != want {
-			t.Errorf("got err:%v, expected %v", err, want)
-		}
-
-	})
-
-	t.Run("could not find authorization header token", func(t *testing.T) {
-		md := metadata.New(map[string]string{})
-		ctx := metadata.NewIncomingContext(context.Background(), md)
-
-		_, err := bearerAuthorization(ctx)
-		if err == nil {
-			t.Errorf("expected an error")
-		}
-
-		want := ErrNoAuthHeader
-		if err != want {
-			t.Errorf("got err:%v, expected %v", err, want)
-		}
-	})
-}
-
-func TestBasicAuthorization(t *testing.T) {
-	t.Run("extract basic token from header", func(t *testing.T) {
-		want := []string{"user", "passwd"}
-		md := metadata.New(map[string]string{"authorization": fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte("user:passwd")))})
-		ctx := metadata.NewIncomingContext(context.Background(), md)
-
-		got, err := basicAuthorization(ctx)
-		if err != nil {
-			t.Errorf("did not expect error: %v", err)
-		}
-
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got %s, wanted %s", got, want)
-		}
-
-	})
-
-	t.Run("returns error if no basic authorization is found", func(t *testing.T) {
-		md := metadata.New(map[string]string{"authorization": "Bearer <token>"})
-		ctx := metadata.NewIncomingContext(context.Background(), md)
-
-		_, err := basicAuthorization(ctx)
-		if err == nil {
-			t.Errorf("expected an error")
-		}
-
-		want := ErrNoBasicAuth
-		if err != want {
-			t.Errorf("got err:%v, expected %v", err, want)
-		}
-
-	})
-
-	t.Run("returns error if no header is found", func(t *testing.T) {
-		md := metadata.New(map[string]string{})
-		ctx := metadata.NewIncomingContext(context.Background(), md)
-
-		_, err := basicAuthorization(ctx)
-		if err == nil {
-			t.Errorf("expected an error")
-		}
-
-		want := ErrNoAuthHeader
-		if err != want {
-			t.Errorf("got err:%v, expected %v", err, want)
-		}
-
-	})
-	t.Run("returns error if is could not find username:password", func(t *testing.T) {
-		md := metadata.New(map[string]string{"authorization": fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte("usernamepassword")))})
-		ctx := metadata.NewIncomingContext(context.Background(), md)
-
-		_, err := basicAuthorization(ctx)
-
-		want := ErrNoUserNamePassword
-		if err != want {
-			t.Errorf("got err:%v, expected %v", err, want)
-		}
 	})
 }
 
@@ -294,22 +149,22 @@ func TestUserServer_AuthenticateUser(t *testing.T) {
 		{
 			name:    "no authorization header returns ErrNoAuthHeader",
 			header:  map[string]string{},
-			wantErr: ErrNoAuthHeader,
+			wantErr: auth.ErrNoAuthHeader,
 		},
 		{
 			name:    "no basic authorization header returns ErrNoBasicAuth",
 			header:  map[string]string{"authorization": "Bearer <token>"},
-			wantErr: ErrNoBasicAuth,
+			wantErr: auth.ErrNoBasicAuth,
 		},
 		{
 			name:    "no basic authorization header returns ErrNoBasicAuth",
 			header:  map[string]string{"authorization": "Bearer <token>"},
-			wantErr: ErrNoBasicAuth,
+			wantErr: auth.ErrNoBasicAuth,
 		},
 		{
 			name:    "generator could not create access token returns ErrCouldNotAuthorize",
 			header:  map[string]string{"authorization": fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte("user:passwd")))},
-			wantErr: ErrCouldNotAuthorize,
+			wantErr: auth.ErrCouldNotAuthorize,
 			returnErr: &returnErrs{
 				generatorCreateAccess: errors.New("verifyToken could not create token"),
 			},
@@ -317,7 +172,7 @@ func TestUserServer_AuthenticateUser(t *testing.T) {
 		{
 			name:    "generator could not create access token returns ErrCouldNotAuthorize",
 			header:  map[string]string{"authorization": fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte("user:passwd")))},
-			wantErr: ErrCouldNotAuthorize,
+			wantErr: auth.ErrCouldNotAuthorize,
 			returnErr: &returnErrs{
 				generatorCreateAccess: errors.New("verifyToken could not create token"),
 			},
@@ -325,7 +180,7 @@ func TestUserServer_AuthenticateUser(t *testing.T) {
 		{
 			name:    "generator could not create refresh token returns ErrCouldNotAuthorize",
 			header:  map[string]string{"authorization": fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte("user:passwd")))},
-			wantErr: ErrCouldNotAuthorize,
+			wantErr: auth.ErrCouldNotAuthorize,
 			returnErr: &returnErrs{
 				generatorCreateRefresh: errors.New("verifyToken could not create token"),
 			},
@@ -513,46 +368,36 @@ func TestUserServer_createRefreshToken(t *testing.T) {
 }
 
 func TestUserServer_LogoutUser(t *testing.T) {
+	mockUser := &api.User{
+		Id:    1,
+		Name:  "test",
+		Email: "test@example.com",
+	}
 	type returnErrs struct {
-		verifyToken error
-		deleteKey   error
+		deleteKey error
 	}
 
 	tests := []struct {
 		name    string
-		header  map[string]string
+		user    *api.User
 		errors  *returnErrs
 		wantErr error
 	}{
 		{
-			name:   "logout user",
-			header: map[string]string{"authorization": "Bearer valid-token"},
+			name: "logout user",
+			user: mockUser,
 		},
 		{
-			name:   "with invalid token returns Err",
-			header: map[string]string{"authorization": "Bearer invalid-token"},
-			errors: &returnErrs{
-				verifyToken: errors.New("verify error"),
-			},
-			wantErr: ErrCouldNotAuthorize,
-		},
-		{
-			name:   "could not delete refresh key",
-			header: map[string]string{"authorization": "Bearer valid-token"},
+			name: "could not delete refresh key",
+			user: mockUser,
 			errors: &returnErrs{
 				deleteKey: errors.New("storage delete error"),
 			},
 			wantErr: ErrCouldNotLogOut,
 		},
 		{
-			name:    "without authorization header returns Err",
-			header:  map[string]string{},
-			wantErr: ErrNoAuthHeader,
-		},
-		{
-			name:    "without bearer authorization header returns Err",
-			header:  map[string]string{"authorization": "Basic valid-token"},
-			wantErr: ErrNoBearerAuth,
+			name:    "without user in context",
+			wantErr: auth.ErrCouldNotAuthorize,
 		},
 	}
 
@@ -568,21 +413,11 @@ func TestUserServer_LogoutUser(t *testing.T) {
 						return nil
 					},
 				},
-				tokenGenerator: &mockGenerator{
-					verify: func(token string, key []byte) (user *api.User, err error) {
-						if tt.errors != nil && tt.errors.verifyToken != nil {
-							return nil, tt.errors.verifyToken
-						}
-						return &api.User{
-							Id:    1,
-							Name:  "test",
-							Email: "test@user.com",
-						}, nil
-					},
-				},
 			}
 
-			_, err := server.LogoutUser(metadata.NewIncomingContext(context.Background(), metadata.New(tt.header)), &empty.Empty{})
+			ctx := context.Background()
+			ctx = context.WithValue(ctx, "user", tt.user)
+			_, err := server.LogoutUser(ctx, &empty.Empty{})
 			if tt.wantErr != nil {
 				if err != tt.wantErr {
 					t.Errorf("got err: %v, wanted %v", err, tt.wantErr)
@@ -598,16 +433,22 @@ func TestUserServer_LogoutUser(t *testing.T) {
 }
 
 func TestUserServer_RefreshToken(t *testing.T) {
+
+	mockUser := &api.User{
+		Id:    1,
+		Name:  "test",
+		Email: "test@example.com",
+	}
 	type returnErrs struct {
-		verifyAccess  error
-		verifyRefresh error
-		createToken   error
-		getKey        error
+		verify      error
+		createToken error
+		getKey      error
 	}
 
 	tests := []struct {
 		name    string
 		header  map[string]string
+		user    *api.User
 		want    *api.AuthenticateResponse
 		wantErr error
 		errors  *returnErrs
@@ -615,9 +456,9 @@ func TestUserServer_RefreshToken(t *testing.T) {
 		{
 			name: "refresh acces token",
 			header: map[string]string{
-				"authorization":   "Bearer thisIsAnAccessTokenForTests",
 				"x-refresh-token": "thisIsARefreshTokenForTests",
 			},
+			user: mockUser,
 			want: &api.AuthenticateResponse{
 				TokenType:    api.AuthenticateResponse_BEARER,
 				AccessToken:  "thisIsAnAccessTokenForTests2",
@@ -626,59 +467,32 @@ func TestUserServer_RefreshToken(t *testing.T) {
 			},
 		},
 		{
-			name: "requires auth header",
-			header: map[string]string{
-				"x-refresh-token": "thisIsARefreshTokenForTests",
-			},
-			wantErr: ErrNoAuthHeader,
-		},
-		{
-			name: "requires bearer header",
-			header: map[string]string{
-				"authorization":   "Basic thisIsAnAccessTokenForTests",
-				"x-refresh-token": "thisIsARefreshTokenForTests",
-			},
-			wantErr: ErrNoBearerAuth,
-		},
-		{
-			name: "requires refresh token header",
-			header: map[string]string{
-				"authorization": "Bearer thisIsAnAccessTokenForTests",
-			},
+			name:    "requires refresh token header",
+			header:  map[string]string{},
+			user:    mockUser,
 			wantErr: ErrNoRefreshToken,
-		},
-		{
-			name: "requires valid token",
-			header: map[string]string{
-				"authorization":   "Bearer thisIsAnAccessTokenForTests",
-				"x-refresh-token": "thisIsARefreshTokenForTests",
-			},
-			errors: &returnErrs{
-				verifyAccess: errors.New("could not verify access token"),
-			},
-			wantErr: ErrCouldNotAuthorize,
 		},
 		{
 			name: "requires refresh key in db",
 			header: map[string]string{
-				"authorization":   "Bearer thisIsAnAccessTokenForTests",
 				"x-refresh-token": "thisIsARefreshTokenForTests",
 			},
+			user: mockUser,
 			errors: &returnErrs{
 				getKey: errors.New("could not access refresh key in storage"),
 			},
-			wantErr: ErrCouldNotAuthorize,
+			wantErr: auth.ErrCouldNotAuthorize,
 		},
 		{
 			name: "requires valid refresh token",
 			header: map[string]string{
-				"authorization":   "Bearer thisIsAnAccessTokenForTests",
 				"x-refresh-token": "thisIsARefreshTokenForTests",
 			},
+			user: mockUser,
 			errors: &returnErrs{
-				verifyRefresh: errors.New("could not verify refresh token"),
+				verify: errors.New("could not verify refresh token"),
 			},
-			wantErr: ErrCouldNotAuthorize,
+			wantErr: auth.ErrCouldNotAuthorize,
 		},
 		{
 			name: "returns error if token could not be created",
@@ -689,7 +503,7 @@ func TestUserServer_RefreshToken(t *testing.T) {
 			errors: &returnErrs{
 				createToken: errors.New("could not create access token"),
 			},
-			wantErr: ErrCouldNotAuthorize,
+			wantErr: auth.ErrCouldNotAuthorize,
 		},
 	}
 
@@ -710,14 +524,8 @@ func TestUserServer_RefreshToken(t *testing.T) {
 						return time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC)
 					},
 					verify: func(token string, key []byte) (user *api.User, err error) {
-						if string(key) != string(auth.AccessTokenKey) {
-							if tt.errors != nil && tt.errors.verifyRefresh != nil {
-								return nil, tt.errors.verifyRefresh
-							}
-						} else {
-							if tt.errors != nil && tt.errors.verifyAccess != nil {
-								return nil, tt.errors.verifyAccess
-							}
+						if tt.errors != nil && tt.errors.verify != nil {
+							return nil, tt.errors.verify
 						}
 
 						return &api.User{
@@ -735,7 +543,9 @@ func TestUserServer_RefreshToken(t *testing.T) {
 				},
 			}
 
-			ctx := metadata.NewIncomingContext(context.Background(), metadata.New(tt.header))
+			ctx := context.Background()
+			ctx = context.WithValue(ctx, "user", tt.user)
+			ctx = metadata.NewIncomingContext(ctx, metadata.New(tt.header))
 
 			got, err := server.RefreshToken(ctx, &empty.Empty{})
 			if tt.wantErr != nil {

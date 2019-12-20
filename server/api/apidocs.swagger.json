@@ -30,6 +30,18 @@
             "schema": {
               "$ref": "#/definitions/apiListTransactionsResponse"
             }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
           }
         },
         "parameters": [
@@ -79,6 +91,18 @@
             "schema": {
               "$ref": "#/definitions/apiTransaction"
             }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
           }
         },
         "parameters": [
@@ -118,6 +142,18 @@
             "schema": {
               "$ref": "#/definitions/apiTransaction"
             }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
           }
         },
         "parameters": [
@@ -156,6 +192,18 @@
             "schema": {
               "$ref": "#/definitions/apiAccount"
             }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
           }
         },
         "parameters": [
@@ -185,6 +233,18 @@
             "schema": {
               "properties": {}
             }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
           }
         },
         "parameters": [
@@ -213,6 +273,18 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/apiAccount"
+            }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
             }
           }
         },
@@ -252,6 +324,18 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/apiListAccountsResponse"
+            }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
             }
           }
         },
@@ -296,6 +380,18 @@
             "schema": {
               "$ref": "#/definitions/apiAccount"
             }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
           }
         },
         "parameters": [
@@ -328,6 +424,18 @@
             "schema": {
               "$ref": "#/definitions/apiGroup"
             }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
           }
         },
         "parameters": [
@@ -357,6 +465,18 @@
             "schema": {
               "properties": {}
             }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
           }
         },
         "parameters": [
@@ -385,6 +505,18 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/apiGroup"
+            }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
             }
           }
         },
@@ -425,6 +557,18 @@
             "schema": {
               "$ref": "#/definitions/apiListGroupsResponse"
             }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
           }
         },
         "parameters": [
@@ -461,6 +605,18 @@
             "schema": {
               "$ref": "#/definitions/apiGroup"
             }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
           }
         },
         "parameters": [
@@ -492,6 +648,18 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/apiListTransactionsResponse"
+            }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
             }
           }
         },
@@ -538,9 +706,17 @@
               "$ref": "#/definitions/apiAuthenticateResponse"
             }
           },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
           "404": {
             "description": "Returned when the resource does not exist.",
-            "schema": {}
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
           }
         },
         "tags": [
@@ -561,6 +737,18 @@
             "description": "A successful response.",
             "schema": {
               "properties": {}
+            }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
             }
           }
         },
@@ -592,6 +780,18 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/apiAuthenticateResponse"
+            }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
             }
           }
         },
@@ -814,6 +1014,22 @@
         }
       },
       "title": "PagingOptions"
+    },
+    "apiStatus": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "title": "Status"
     },
     "apiTransaction": {
       "type": "object",

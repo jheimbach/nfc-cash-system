@@ -128,8 +128,11 @@ func TestVerifyToken(t *testing.T) {
 			}(),
 		},
 		{
-			name:  "tempered token",
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoyLCJuYW1lIjoidGVzdHVzZXIyIiwiZW1haWwiOiJ0ZXN0MkBleGFtcGxlLmNvbSIsImNyZWF0ZWQiOnsic2Vjb25kcyI6MTU0NzgzMTc3NX19LCJleHAiOjE1NzY3NzUwNDMsImp0aSI6IjZkNDRhZTZmNzMwYjJiYWQzMGJmNzBjNzc0NTc3NmJiIiwic3ViIjoidXNlcl90ZXN0dXNlcjFfMSJ9.ku-yJ9VEfzlQ93npmH0fmA-RZXYzMa6pJXFhn_Eb3ho",
+			name: "tempered token",
+			input: args{
+				key: []byte("teststring"),
+			},
+			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoyLCJuYW1lIjoidGVzdHVzZXIyIiwiZW1haWwiOiJ0ZXN0MkBleGFtcGxlLmNvbSIsImNyZWF0ZWQiOnsic2Vjb25kcyI6MTU0NzgzMTc3NX19LCJleHAiOjMyNTAyNjk5ODg1LCJqdGkiOiI2ZDQ0YWU2ZjczMGIyYmFkMzBiZjcwYzc3NDU3NzZiYiIsInN1YiI6InVzZXJfdGVzdHVzZXIxXzEifQ.SdNDLw32Olxh2LPw0FZXhWaYufEE56jzKEKfiwzDWE8",
 			wantErr: func() error {
 				err := new(jwt.ValidationError)
 				err.Inner = fmt.Errorf("signature is invalid")

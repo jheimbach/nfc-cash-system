@@ -37,9 +37,25 @@ option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
         }
     }
     responses: {
+        key: "403";
+        value: {
+            description: "Returned when the user does not have permission to access the resource.";
+            schema: {
+                json_schema: {
+                    ref: ".api.Status";
+                }
+            }
+        }
+    }
+    responses: {
         key: "404";
         value: {
             description: "Returned when the resource does not exist.";
+            schema: {
+                json_schema: {
+                    ref: ".api.Status";
+                }
+            }
         }
     }
 };
@@ -48,8 +64,9 @@ message Status {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
         json_schema: {title:"Status"}
     };
-    bool success = 1;
-    string error_message = 2;
+    string error=1;
+    int32 code=2;
+    string message=3;
 }
 
 message Paging {
