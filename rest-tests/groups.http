@@ -1,0 +1,55 @@
+GET localhost:8080/v1/groups
+Accept: application/json
+Cache-Control: no-cache
+
+###
+
+GET localhost:8080/v1/groups?paging.limit=5
+Accept: application/json
+Cache-Control: no-cache
+
+###
+
+GET localhost:8080/v1/groups?paging.limit=5&paging.offset=5
+Accept: application/json
+Cache-Control: no-cache
+
+###
+POST localhost:8080/v1/groups
+Accept: application/json
+Cache-Control: no-cache
+Content-Type: application/json
+
+{
+  "name": "testgroup1",
+  "description": "",
+  "can_overdraw": true
+}
+
+###
+
+GET localhost:8080/v1/group/11
+Accept: application/json
+Cache-Control: no-cache
+
+###
+
+PUT localhost:8080/v1/group/11
+Accept: application/json
+Cache-Control: no-cache
+Content-Type: application/json
+
+{
+  "id": 11,
+  "name": "testgroup1",
+  "description": "with description",
+  "can_overdraw": false
+}
+
+###
+
+DELETE localhost:8080/v1/group/11
+Accept: application/json
+Cache-Control: no-cache
+
+###

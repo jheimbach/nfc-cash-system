@@ -1,0 +1,12 @@
+### Basic authorization.
+GET localhost:8080/v1/user/login
+Authorization: Basic briste0@angelfire.com lMvZARjM3pwe
+
+
+> {% client.global.set("auth_token", response.body.access_token); client.global.set("refresh_token", response.body.refresh_token); %}
+
+### Authorization by token, part 2. Use token to authorize.
+POST localhost:8080/v1/user/logout
+Authorization: Bearer {{auth_token}}
+
+###

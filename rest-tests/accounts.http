@@ -1,0 +1,80 @@
+###
+GET localhost:8080/v1/accounts
+Accept: application/json
+Cache-Control: no-cache
+Authorization: Bearer {{auth_token}}
+
+###
+GET localhost:8080/v1/accounts?group_id=1
+Accept: application/json
+Cache-Control: no-cache
+Authorization: Bearer {{auth_token}}
+
+###
+GET localhost:8080/v1/accounts?paging.limit=10
+Accept: application/json
+Cache-Control: no-cache
+Authorization: Bearer {{auth_token}}
+
+###
+GET localhost:8080/v1/accounts?paging.limit=10&paging.offset=10
+Accept: application/json
+Cache-Control: no-cache
+Authorization: Bearer {{auth_token}}
+
+###
+GET localhost:8080/v1/accounts?group_id=1&paging.limit=5&paging.offset=5
+Accept: application/json
+Cache-Control: no-cache
+Authorization: Bearer {{auth_token}}
+
+###
+POST localhost:8080/v1/accounts
+Accept: application/json
+Cache-Control: no-cache
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "name": "tests",
+  "description": "testdescription",
+  "saldo": 100,
+  "nfc_chip_id": "ase3d4rf",
+  "group_id": 8
+}
+###
+
+GET localhost:8080/v1/account/101
+Accept: application/json
+Cache-Control: no-cache
+Authorization: Bearer {{auth_token}}
+###
+
+PUT localhost:8080/v1/account/101
+Accept: application/json
+Cache-Control: no-cache
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "id": 101,
+  "name": "tests",
+  "description": "testdescription",
+  "saldo": 200,
+  "nfc_chip_id": "ase3d4rf",
+  "group": {
+    "id": 8,
+    "name": "Kareway Product, Inc.",
+    "description": "Acetaminophen",
+    "can_overdraw": true
+  }
+}
+
+###
+
+DELETE localhost:8080/v1/account/101
+Accept: application/json
+Cache-Control: no-cache
+Authorization: Bearer {{auth_token}}
+
+###
