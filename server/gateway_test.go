@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -49,14 +49,13 @@ func Test_startRestGatewayServer(t *testing.T) {
 		t.Fatalf("could not create temp file: %v", err)
 	}
 
-	mux, err := newGatewayServer(context.Background(), "localhost:90050", tFile.Name())
+	mux, err := GatewayHandler(context.Background(), "localhost:90050", tFile.Name())
 	if err != nil {
 		t.Fatalf("could not create rest gateway servemux: %v", err)
 	}
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
-	// because we don't start the grpc server, we expect 503 as the "success" code
 	tests := []struct {
 		name   string
 		path   string
@@ -65,11 +64,11 @@ func Test_startRestGatewayServer(t *testing.T) {
 		{
 			name:   "existing route",
 			path:   "/v1/accounts",
-			status: http.StatusServiceUnavailable,
+			status: http.StatusServiceUnavailable, // we don't start the grpc server, we expect 503 as the "success" code
 		},
 		{
 			name:   "non existing route",
-			path:   "/v1/account",
+			path:   "/does/not/exist",
 			status: http.StatusNotFound,
 		},
 		{
@@ -91,7 +90,6 @@ func Test_startRestGatewayServer(t *testing.T) {
 				t.Errorf("got unexpected err: %v", err)
 			}
 
-			// because we don't start the grpc server, we expect 503
 			if res.StatusCode != tt.status {
 				t.Errorf("got %s, expected %s", res.Status, http.StatusText(tt.status))
 			}
