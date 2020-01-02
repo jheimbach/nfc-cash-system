@@ -3,10 +3,12 @@ package mysql
 import (
 	"database/sql"
 	"testing"
+
+	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
 )
 
 func Test_countAllIds(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 
 	db, teardown := dbInitializedForAccountLists(t)
 	defer teardown()

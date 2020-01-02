@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
+	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	isPkg "github.com/matryer/is"
 )
@@ -35,7 +36,7 @@ type groupModelMock struct {
 	groups map[int32]*api.Group
 }
 
-func (g *groupModelMock) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Group, error) {
+func (g *groupModelMock) GetAllByIds(_ context.Context, ids []int32) (map[int32]*api.Group, error) {
 	m := make(map[int32]*api.Group, len(ids))
 
 	for _, id := range ids {
@@ -47,12 +48,12 @@ func (g *groupModelMock) GetAllByIds(ctx context.Context, ids []int32) (map[int3
 	return m, nil
 }
 
-func (g *groupModelMock) Create(ctx context.Context, name, description string, canOverdraw bool) (*api.Group, error) {
+func (g *groupModelMock) Create(_ context.Context, _, _ string, _ bool) (*api.Group, error) {
 	g.test.Fatalf("create of groupmodelmock is not implemented and should not be used")
 	return nil, nil
 }
 
-func (g *groupModelMock) GetAll(ctx context.Context, limit, offset int32) ([]*api.Group, int, error) {
+func (g *groupModelMock) GetAll(_ context.Context, _, _ int32) ([]*api.Group, int, error) {
 	if len(g.groups) < 1 {
 		return nil, 0, models.ErrNotFound
 	}
@@ -63,7 +64,7 @@ func (g *groupModelMock) GetAll(ctx context.Context, limit, offset int32) ([]*ap
 	return groups, len(groups), nil
 }
 
-func (g *groupModelMock) Read(ctx context.Context, id int32) (*api.Group, error) {
+func (g *groupModelMock) Read(_ context.Context, id int32) (*api.Group, error) {
 	if group, ok := g.groups[id]; ok {
 		return group, nil
 	}
@@ -71,18 +72,18 @@ func (g *groupModelMock) Read(ctx context.Context, id int32) (*api.Group, error)
 	return nil, models.ErrGroupNotFound
 }
 
-func (g *groupModelMock) Update(ctx context.Context, group *api.Group) (*api.Group, error) {
+func (g *groupModelMock) Update(_ context.Context, _ *api.Group) (*api.Group, error) {
 	g.test.Fatalf("update of groupmodelmock is not implemented and should not be used")
 	return nil, nil
 }
 
-func (g *groupModelMock) Delete(ctx context.Context, id int32) error {
+func (g *groupModelMock) Delete(_ context.Context, _ int32) error {
 	g.test.Fatalf("delete of groupmodelmock is not implemented and should not be used")
 	return nil
 }
 
 func TestAccountModel_Create(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
 	tests := []struct {
 		name          string
@@ -188,7 +189,7 @@ func TestAccountModel_Create(t *testing.T) {
 }
 
 func TestAccountModel_Read(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
 	t.Run("read account", func(t *testing.T) {
 		is := is.New(t)
@@ -269,7 +270,7 @@ func TestAccountModel_Read(t *testing.T) {
 }
 
 func TestAccountModel_Update(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
 
 	tests := []struct {
@@ -382,7 +383,7 @@ func TestAccountModel_Update(t *testing.T) {
 }
 
 func TestAccountModel_Delete(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
 
 	tests := []struct {
@@ -443,7 +444,7 @@ func TestAccountModel_Delete(t *testing.T) {
 }
 
 func TestAccountModel_UpdateSaldo(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
 	tests := []struct {
 		name           string
@@ -501,7 +502,7 @@ func TestAccountModel_UpdateSaldo(t *testing.T) {
 }
 
 func TestAccountModel_GetAll(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 
 	is := isPkg.New(t)
 	db, dbTeardown := dbInitializedForAccountLists(t)
@@ -572,7 +573,7 @@ func TestAccountModel_GetAll(t *testing.T) {
 }
 
 func TestAccountModel_GetAllByIds(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 
 	is := isPkg.New(t)
 	db, dbTeardown := dbInitializedForAccountLists(t)
@@ -644,13 +645,13 @@ func insertTestAccount(t *testing.T, db *sql.DB, account api.Account) {
 
 func dbInitializedForAccount(t *testing.T) (*sql.DB, func()) {
 	db, setup, teardown := getTestDb(t)
-	setup("../testdata/account.sql")
+	setup(dataFor("account"))
 	return db, teardown
 }
 
 func dbInitializedForAccountLists(t *testing.T) (*sql.DB, func()) {
 	db, setup, teardown := getTestDb(t)
-	setup("../testdata/account.sql", "../testdata/account_list.sql")
+	setup(dataFor("account"), dataFor("account_list"))
 
 	return db, teardown
 }

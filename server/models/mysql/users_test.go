@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
+	"github.com/JHeimbach/nfc-cash-system/server/auth"
+	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -18,7 +20,7 @@ import (
 )
 
 func TestUserModel_Create(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
 	db, dbSetup, dbTeardown := getTestDb(t)
 	defer db.Close()
@@ -79,12 +81,12 @@ func assertEqualPasswords(t *testing.T, got, want string) {
 }
 
 func TestUserModel_Get(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	db, dbSetup, dbTeardown := getTestDb(t)
 	defer db.Close()
 
 	t.Run("returns userId struct if userId with id exists", func(t *testing.T) {
-		dbSetup("../testdata/user.sql")
+		dbSetup(dataFor("user"))
 		defer dbTeardown()
 
 		created, _ := ptypes.TimestampProto(time.Date(2003, 8, 14, 18, 0, 0, 0, time.UTC))
@@ -129,10 +131,10 @@ func TestUserModel_Get(t *testing.T) {
 }
 
 func TestUserModel_Authenticate(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
 	db, dbSetup, dbTeardown := getTestDb(t)
-	dbSetup("../testdata/user.sql")
+	dbSetup(dataFor("user"))
 	defer func() {
 		dbTeardown()
 		db.Close()
@@ -207,7 +209,7 @@ func TestUserModel_Authenticate(t *testing.T) {
 }
 
 func TestUserModel_InsertRefreshKey(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	db, dbSetup, dbTeardown := getTestDb(t)
 	defer db.Close()
 
@@ -226,6 +228,13 @@ func TestUserModel_InsertRefreshKey(t *testing.T) {
 			input: &args{
 				userId:     1,
 				refreshKey: "55812817ad1f1baa775955ba2149443a",
+			},
+		},
+		{
+			name: "insert key generated from auth package",
+			input: &args{
+				userId:     1,
+				refreshKey: string(auth.NewJwtGenerator().CreateRandomKey()),
 			},
 		},
 		{
@@ -264,7 +273,7 @@ func TestUserModel_InsertRefreshKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dbSetup("../testdata/user.sql")
+			dbSetup(dataFor("user"))
 			defer dbTeardown()
 
 			if tt.insertBefore != nil {
@@ -313,7 +322,7 @@ func TestUserModel_InsertRefreshKey(t *testing.T) {
 }
 
 func TestUserModel_DeleteRefreshKey(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	db, dbSetup, dbTeardown := getTestDb(t)
 	defer db.Close()
 
@@ -343,7 +352,7 @@ func TestUserModel_DeleteRefreshKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dbSetup("../testdata/user.sql")
+			dbSetup(dataFor("user"))
 			defer dbTeardown()
 
 			if tt.insertBefore != nil {
@@ -384,7 +393,7 @@ func TestUserModel_DeleteRefreshKey(t *testing.T) {
 }
 
 func TestUserModel_GetRefreshKey(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	db, dbSetup, dbTeardown := getTestDb(t)
 	defer db.Close()
 
@@ -417,7 +426,7 @@ func TestUserModel_GetRefreshKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dbSetup("../testdata/user.sql")
+			dbSetup(dataFor("user"))
 			defer dbTeardown()
 
 			if tt.inserBefore {

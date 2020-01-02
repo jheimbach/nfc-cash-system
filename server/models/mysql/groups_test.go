@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
+	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	isPkg "github.com/matryer/is"
 )
 
 func TestGroupModel_Create(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
 
 	db, dbSetup, dbTeardown := getTestDb(t)
@@ -92,7 +93,7 @@ func TestGroupModel_Create(t *testing.T) {
 }
 
 func TestGroupModel_Read(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
 
 	db, dbSetup, dbTeardown := getTestDb(t)
@@ -172,7 +173,7 @@ func TestGroupModel_Read(t *testing.T) {
 }
 
 func TestGroupModel_Update(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 
 	db, dbSetup, dbTeardown := getTestDb(t)
 	defer db.Close()
@@ -283,7 +284,7 @@ func TestGroupModel_Update(t *testing.T) {
 }
 
 func TestGroupModel_Delete(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 
 	db, dbSetup, dbTeardown := getTestDb(t)
 	defer db.Close()
@@ -343,7 +344,7 @@ func TestGroupModel_Delete(t *testing.T) {
 }
 
 func TestGroupModel_GetAll(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 
 	is := isPkg.New(t)
 	db, dbTeardown := dbInitializedForGroupList(t)
@@ -408,7 +409,7 @@ func TestGroupModel_GetAll(t *testing.T) {
 }
 
 func TestGroupModel_GetAllByIds(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
 
 	db, dbTeardown := dbInitializedForGroupList(t)
@@ -462,7 +463,7 @@ func TestGroupModel_GetAllByIds(t *testing.T) {
 
 func dbInitializedForGroupList(t *testing.T) (*sql.DB, func()) {
 	db, setup, teardown := getTestDb(t)
-	setup("../testdata/group_list.sql")
+	setup(dataFor("group_list"))
 
 	return db, teardown
 }

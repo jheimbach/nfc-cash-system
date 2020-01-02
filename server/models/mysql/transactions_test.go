@@ -2,18 +2,20 @@ package mysql
 
 import (
 	"context"
+	"sort"
+	"testing"
+	"time"
+
 	"github.com/JHeimbach/nfc-cash-system/server/api"
+	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	isPkg "github.com/matryer/is"
-	"sort"
-	"testing"
-	"time"
 )
 
 func TestTransactionModel_Create(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
 	db, dbSetup, dbTeardown := getTestDb(t)
 	defer db.Close()
@@ -60,7 +62,7 @@ func TestTransactionModel_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			dbSetup("../testdata/transaction.sql")
+			dbSetup(dataFor("transaction"))
 			defer dbTeardown()
 
 			model := TransactionModel{
@@ -105,11 +107,11 @@ func TestTransactionModel_Create(t *testing.T) {
 }
 
 func TestTransactionModel_Get(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
 
 	db, dbSetup, dbTeardown := getTestDb(t)
-	dbSetup("../testdata/transaction.sql", "../testdata/transaction_list.sql")
+	dbSetup(dataFor("transaction"), dataFor("transaction_list"))
 	defer db.Close()
 	defer dbTeardown()
 
@@ -155,8 +157,13 @@ func TestTransactionModel_Get(t *testing.T) {
 }
 
 func TestTransactionModel_GetAll(t *testing.T) {
-	isIntegrationTest(t)
+	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
+
+	setupScripts := []string{
+		dataFor("transaction"),
+		dataFor("transaction_list"),
+	}
 
 	db, dbSetup, dbTeardown := getTestDb(t)
 	defer db.Close()
@@ -174,14 +181,14 @@ func TestTransactionModel_GetAll(t *testing.T) {
 	}{
 		{
 			name:      "get all transactions",
-			dbSetup:   []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			dbSetup:   setupScripts,
 			input:     args{},
 			want:      transisitonList(0),
 			wantCount: 9,
 		},
 		{
 			name:    "get all transactions for account id 1",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			dbSetup: setupScripts,
 			input: args{
 				accountId: 1,
 			},
@@ -195,7 +202,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		},
 		{
 			name:    "get transactions with limit",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			dbSetup: setupScripts,
 			input: args{
 				limit: 5,
 			},
@@ -204,7 +211,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		},
 		{
 			name:    "get all transactions for account id 1 with limit",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			dbSetup: setupScripts,
 			input: args{
 				accountId: 1,
 				limit:     3,
@@ -214,7 +221,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		},
 		{
 			name:    "get transactions with limit and offset",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			dbSetup: setupScripts,
 			input: args{
 				limit:  3,
 				offset: 2,
@@ -224,7 +231,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		},
 		{
 			name:    "get all transactions with order DESC",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			dbSetup: setupScripts,
 			input: args{
 				order: "DESC",
 			},
@@ -233,7 +240,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		},
 		{
 			name:    "get all transactions with order desc",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			dbSetup: setupScripts,
 			input: args{
 				order: "desc",
 			},
@@ -242,7 +249,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		},
 		{
 			name:    "get all transactions default order is DESC",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			dbSetup: setupScripts,
 			input: args{
 				order: "something invalid",
 			},
@@ -251,7 +258,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		},
 		{
 			name:    "get all transactions with order ASC",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			dbSetup: setupScripts,
 			input: args{
 				order: "ASC",
 			},
@@ -264,7 +271,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 		},
 		{
 			name:    "get all transactions with order asc",
-			dbSetup: []string{"../testdata/transaction.sql", "../testdata/transaction_list.sql"},
+			dbSetup: setupScripts,
 			input: args{
 				order: "asc",
 			},
