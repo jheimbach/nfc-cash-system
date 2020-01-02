@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/md5"
 	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"time"
@@ -72,5 +73,5 @@ func (*jwtGenerator) CreateRandomKey() []byte {
 	key := make([]byte, 32)
 	rand.Read(key)
 
-	return key
+	return []byte(base64.StdEncoding.EncodeToString(key))
 }
