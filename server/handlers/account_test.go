@@ -268,7 +268,7 @@ func TestAccountserver_CreateAccount(t *testing.T) {
 				GroupId:     1,
 			},
 			returnErr: models.ErrDuplicateNfcChipId,
-			wantErr:   ErrCouldNotCreateAccount,
+			wantErr:   status.Error(codes.AlreadyExists, "nfc chip is already in use"),
 		},
 		{
 			name: "create account with unknown group",
@@ -280,7 +280,7 @@ func TestAccountserver_CreateAccount(t *testing.T) {
 				GroupId:     100,
 			},
 			returnErr: models.ErrGroupNotFound,
-			wantErr:   ErrCouldNotCreateAccount,
+			wantErr:   status.Errorf(codes.NotFound, "group with id %d not found", 100),
 		},
 	}
 
@@ -400,13 +400,13 @@ func TestAccountserver_DeleteAccount(t *testing.T) {
 			name:      "delete account that does not exist",
 			input:     &api.DeleteAccountRequest{Id: 1},
 			returnErr: models.ErrNotFound,
-			wantErr:   status.Error(codes.NotFound, ErrNotFound.Error()),
+			wantErr:   ErrNotFound,
 		},
 		{
 			name:      "delete returns other than models.ErrNotFound",
 			input:     &api.DeleteAccountRequest{Id: 1},
 			returnErr: errors.New("this is a test"),
-			wantErr:   status.Error(codes.Internal, ErrSomethingWentWrong.Error()),
+			wantErr:   ErrSomethingWentWrong,
 		},
 	}
 

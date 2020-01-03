@@ -11,8 +11,6 @@ import (
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type transactionMockStorage struct {
@@ -313,7 +311,7 @@ func TestTransactionServer_GetTransaction(t *testing.T) {
 				AccountId: 1,
 			},
 			want:    genTransactionModels(1, 2)[0],
-			wantErr: status.Error(codes.NotFound, ErrNotFound.Error()),
+			wantErr: ErrNotFound,
 		},
 		{
 			name: "storage returns error",
@@ -322,7 +320,7 @@ func TestTransactionServer_GetTransaction(t *testing.T) {
 				AccountId: 1,
 			},
 			want:      genTransactionModels(1, 1)[0],
-			wantErr:   status.Error(codes.Internal, ErrSomethingWentWrong.Error()),
+			wantErr:   ErrSomethingWentWrong,
 			returnErr: errors.New("test error"),
 		},
 	}
