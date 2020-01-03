@@ -42,6 +42,12 @@ func (a *accountserver) ListAccounts(ctx context.Context, req *api.ListAccountsR
 func (a *accountserver) CreateAccount(ctx context.Context, req *api.CreateAccountRequest) (*api.Account, error) {
 	account, err := a.storage.Create(ctx, req.Name, req.Description, req.Saldo, req.GroupId, req.NfcChipId)
 	if err != nil {
+		if err == models.ErrDuplicateNfcChipId {
+			return nil, status.Error(codes.AlreadyExists, "nfc chip is already in use")
+		}
+		if err == models.ErrGroupNotFound {
+			return nil, status.Errorf(codes.NotFound, "group with id %d not found", req.GroupId)
+		}
 		return nil, ErrCouldNotCreateAccount
 	}
 
