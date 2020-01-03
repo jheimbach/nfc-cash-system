@@ -54,7 +54,7 @@ func (a accountMockStorager) UpdateSaldo(ctx context.Context, m *api.Account, ne
 	return a.updateSaldo(m, newSaldo)
 }
 
-func TestAccountserver_List(t *testing.T) {
+func TestAccountserver_ListAccounts(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   *api.ListAccountsRequest
@@ -177,7 +177,7 @@ func TestAccountserver_List(t *testing.T) {
 	}
 }
 
-func TestAccountserver_Get(t *testing.T) {
+func TestAccountserver_GetAccount(t *testing.T) {
 	is := isPkg.New(t)
 	db := genAccountMap(3)
 
@@ -229,7 +229,7 @@ func TestAccountserver_Get(t *testing.T) {
 	}
 }
 
-func TestAccountserver_Create(t *testing.T) {
+func TestAccountserver_CreateAccount(t *testing.T) {
 
 	is := isPkg.New(t)
 	tests := []struct {
@@ -312,7 +312,7 @@ func TestAccountserver_Create(t *testing.T) {
 	}
 }
 
-func TestAccountserver_Update(t *testing.T) {
+func TestAccountserver_UpdateAccount(t *testing.T) {
 	mockStorage := genAccountMap(3)
 	is := isPkg.New(t)
 
@@ -382,7 +382,7 @@ func TestAccountserver_Update(t *testing.T) {
 	}
 }
 
-func TestAccountserver_Delete(t *testing.T) {
+func TestAccountserver_DeleteAccount(t *testing.T) {
 	mockStorage := genAccountMap(3)
 	is := isPkg.New(t)
 

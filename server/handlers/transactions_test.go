@@ -218,7 +218,7 @@ func TestTransactionServer_ListTransactionsByAccount(t *testing.T) {
 	}
 }
 
-func TestTransactionServer_Create(t *testing.T) {
+func TestTransactionServer_CreateTransaction(t *testing.T) {
 	tests := []struct {
 		name      string
 		input     *api.CreateTransactionRequest
@@ -290,7 +290,7 @@ func TestTransactionServer_Create(t *testing.T) {
 	}
 }
 
-func TestTransactionServer_Get(t *testing.T) {
+func TestTransactionServer_GetTransaction(t *testing.T) {
 	tests := []struct {
 		name      string
 		input     *api.GetTransactionRequest

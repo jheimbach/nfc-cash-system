@@ -45,7 +45,7 @@ func (g groupMockStorage) GetAllByIds(ctx context.Context, ids []int32) (map[int
 	return g.getAllByIds(ids)
 }
 
-func TestGroupserver_List(t *testing.T) {
+func TestGroupserver_ListGroups(t *testing.T) {
 	var tests = []struct {
 		name      string
 		input     *api.ListGroupsRequest
@@ -135,7 +135,7 @@ func TestGroupserver_List(t *testing.T) {
 	}
 }
 
-func TestGroupserver_Create(t *testing.T) {
+func TestGroupserver_CreateGroup(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   *api.CreateGroupRequest
@@ -200,7 +200,7 @@ func TestGroupserver_Create(t *testing.T) {
 	}
 }
 
-func TestGroupserver_Update(t *testing.T) {
+func TestGroupserver_UpdateGroup(t *testing.T) {
 	tests := []struct {
 		name      string
 		want      *api.Group
@@ -261,7 +261,7 @@ func TestGroupserver_Update(t *testing.T) {
 	}
 }
 
-func TestGroupserver_Delete(t *testing.T) {
+func TestGroupserver_DeleteGroup(t *testing.T) {
 	tests := []struct {
 		name    string
 		request *api.DeleteGroupRequest

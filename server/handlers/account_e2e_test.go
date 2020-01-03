@@ -11,7 +11,7 @@ import (
 	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
 )
 
-func TestAccountserver_ListAccounts_Integration(t *testing.T) {
+func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 	test.IsIntegrationTest(t)
 	teardown := startServers(t)
 	defer teardown()
@@ -168,4 +168,12 @@ func TestAccountserver_ListAccounts_Integration(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAccountserver_E2E_GetAccount(t *testing.T) {
+	test.IsIntegrationTest(t)
+	teardown := startServers(t)
+	defer teardown()
+
+	aTkn, _ := login(t)
 }
