@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -9,6 +11,7 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
+	isPkg "github.com/matryer/is"
 )
 
 func TestAccountserver_E2E_ListAccounts(t *testing.T) {
@@ -26,7 +29,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 	}
 	tests := []struct {
 		name         string
-		AccessToken  string
+		accessToken  string
 		want         want
 		pagingLimit  int
 		pagingOffset int
@@ -41,7 +44,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 		},
 		{
 			name:        "get all accounts",
-			AccessToken: aTkn,
+			accessToken: aTkn,
 			want: want{
 				statusCode:   http.StatusOK,
 				accountsLen:  100,
@@ -50,7 +53,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 		},
 		{
 			name:        "get first 10 accounts",
-			AccessToken: aTkn,
+			accessToken: aTkn,
 			pagingLimit: 10,
 			want: want{
 				statusCode:   http.StatusOK,
@@ -60,7 +63,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 		},
 		{
 			name:         "get second 10 accounts",
-			AccessToken:  aTkn,
+			accessToken:  aTkn,
 			pagingLimit:  10,
 			pagingOffset: 10,
 			want: want{
@@ -71,7 +74,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 		},
 		{
 			name:        "filter by group",
-			AccessToken: aTkn,
+			accessToken: aTkn,
 			groupId:     1,
 			want: want{
 				statusCode:   http.StatusOK,
@@ -81,7 +84,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 		},
 		{
 			name:        "filter by group with limit",
-			AccessToken: aTkn,
+			accessToken: aTkn,
 			groupId:     1,
 			pagingLimit: 5,
 			want: want{
@@ -92,7 +95,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 		},
 		{
 			name:         "filter by group with limit and offset",
-			AccessToken:  aTkn,
+			accessToken:  aTkn,
 			groupId:      1,
 			pagingLimit:  5,
 			pagingOffset: 8,
@@ -129,8 +132,8 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not create request: %v", err)
 			}
-			if tt.AccessToken != "" {
-				req.Header.Add("Authorization", "Bearer "+tt.AccessToken)
+			if tt.accessToken != "" {
+				req.Header.Add("Authorization", "Bearer "+tt.accessToken)
 			}
 
 			res, err := http.DefaultClient.Do(req)
@@ -140,15 +143,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.want.statusCode != http.StatusOK {
-				var jsonErr *api.Status
-				err := json.NewDecoder(res.Body).Decode(&jsonErr)
-				if err != nil {
-					t.Fatalf("could not parse error: %v", err)
-				}
-
-				if jsonErr.Message != tt.want.errMsg {
-					t.Errorf("got err msg: %q, wanted: %q", jsonErr.Message, tt.want.errMsg)
-				}
+				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
 				return
 			}
 
@@ -172,8 +167,222 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 
 func TestAccountserver_E2E_GetAccount(t *testing.T) {
 	test.IsIntegrationTest(t)
+	is := isPkg.New(t)
 	teardown := startServers(t)
 	defer teardown()
 
 	aTkn, _ := login(t)
+
+	type want struct {
+		statusCode int
+		errMsg     string
+		account    api.Account
+	}
+	tests := []struct {
+		name        string
+		accessToken string
+		accountId   int
+		want        want
+	}{
+		{
+			name:      "no accesstoken given",
+			accountId: 1,
+			want: want{
+				statusCode: http.StatusUnauthorized,
+				errMsg:     "authorization header required",
+			},
+		},
+		{
+			name:        "get account with id 1",
+			accessToken: aTkn,
+			accountId:   1,
+			want: want{
+				statusCode: http.StatusOK,
+				account: api.Account{
+					Id:          1,
+					Name:        "Laverne Blackstock",
+					Description: "Itchy Eye",
+					Saldo:       436,
+					NfcChipId:   "Hv8mnajqzIKO",
+					Group: &api.Group{
+						Id:          7,
+						Name:        "PSS World Medical, Inc.",
+						Description: "",
+						CanOverdraw: true,
+					},
+				},
+			},
+		},
+		{
+			name:        "account with invalid id",
+			accessToken: aTkn,
+			accountId:   -45,
+			want: want{
+				statusCode: http.StatusNotFound,
+				errMsg:     "could not find account",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			req, err := http.NewRequest(http.MethodGet, RestUrlWithPath(fmt.Sprintf("v1/account/%d", tt.accountId)), nil)
+			is.NoErr(err) // could not create request
+			if tt.accessToken != "" {
+				req.Header.Add("Authorization", "Bearer "+tt.accessToken)
+			}
+
+			res, err := http.DefaultClient.Do(req)
+			is.NoErr(err) // request failed
+			defer res.Body.Close()
+
+			if tt.want.statusCode != http.StatusOK {
+				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				return
+			}
+
+			var account api.Account
+			err = json.NewDecoder(res.Body).Decode(&account)
+			is.NoErr(err) // could not decode account
+
+			is.Equal(account, tt.want.account) // account is not the expected
+		})
+	}
+}
+
+func TestAccountserver_E2E_CreateAccount(t *testing.T) {
+	test.IsIntegrationTest(t)
+	is := isPkg.New(t)
+	teardown := startServers(t)
+	defer teardown()
+
+	aTkn, _ := login(t)
+
+	type want struct {
+		statusCode int
+		errMsg     string
+		account    api.Account
+	}
+	tests := []struct {
+		name        string
+		accessToken string
+		body        *api.CreateAccountRequest
+		want        want
+	}{
+		{
+			name: "no accesstoken given",
+			want: want{
+				statusCode: http.StatusUnauthorized,
+				errMsg:     "authorization header required",
+			},
+		},
+		{
+			name:        "create new account",
+			accessToken: aTkn,
+			body: &api.CreateAccountRequest{
+				Name:        "test account",
+				Description: "for testing",
+				Saldo:       1000,
+				NfcChipId:   "t3stch1p",
+				GroupId:     1,
+			},
+			want: want{
+				statusCode: http.StatusOK,
+				account: api.Account{
+					Id:          101,
+					Name:        "test account",
+					Description: "for testing",
+					Saldo:       1000,
+					NfcChipId:   "t3stch1p",
+					Group: &api.Group{
+						Id:   1,
+						Name: "H2O Plus",
+					},
+				},
+			},
+		},
+		{
+			name:        "create new account with used nfc chip id",
+			accessToken: aTkn,
+			body: &api.CreateAccountRequest{
+				Name:        "test account",
+				Description: "for testing",
+				Saldo:       1000,
+				NfcChipId:   "0XPPQy4ZkO7",
+				GroupId:     1,
+			},
+			want: want{
+				statusCode: http.StatusConflict,
+				errMsg:     "nfc chip is already in use",
+			},
+		},
+		{
+			name:        "create new account with nonexistent group",
+			accessToken: aTkn,
+			body: &api.CreateAccountRequest{
+				Name:        "test account",
+				Description: "for testing",
+				Saldo:       1000,
+				NfcChipId:   "ofzGN0eS34",
+				GroupId:     -45,
+			},
+			want: want{
+				statusCode: http.StatusNotFound,
+				errMsg:     "group with id -45 not found",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+
+			body, err := json.Marshal(tt.body)
+			is.NoErr(err) // could not marshal body
+
+			req, err := http.NewRequest(http.MethodPost, RestUrlWithPath("v1/accounts"), bytes.NewReader(body))
+			is.NoErr(err) // could not create request
+
+			if tt.accessToken != "" {
+				req.Header.Add("Authorization", "Bearer "+tt.accessToken)
+			}
+
+			res, err := http.DefaultClient.Do(req)
+			is.NoErr(err) // request failed
+			defer res.Body.Close()
+
+			if tt.want.statusCode != http.StatusOK {
+				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				return
+			}
+
+			var account api.Account
+			err = json.NewDecoder(res.Body).Decode(&account)
+			is.NoErr(err) // could not decode account
+
+			is.Equal(account, tt.want.account) // account is not the expected
+		})
+	}
+}
+
+func TestAccountserver_E2E_DeleteAccount(t *testing.T) {
+}
+
+func checkError(t *testing.T, response *http.Response, code int, errMsg string) {
+	t.Helper()
+
+	if response.StatusCode != code {
+		t.Errorf("got statuscode %d, expected %d", response.StatusCode, code)
+	}
+
+	var jsonErr *api.Status
+	err := json.NewDecoder(response.Body).Decode(&jsonErr)
+	if err != nil {
+		t.Fatalf("could not parse error: %v", err)
+	}
+
+	if jsonErr.Message != errMsg {
+		t.Errorf("got err msg: %q, wanted: %q", jsonErr.Message, errMsg)
+	}
 }
