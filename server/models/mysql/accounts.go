@@ -33,6 +33,9 @@ func (a *AccountModel) Create(ctx context.Context, name, description string, sta
 
 	group, err := a.groups.Read(ctx, groupId)
 	if err != nil {
+		if err == models.ErrNotFound {
+			return nil, models.ErrGroupNotFound
+		}
 		return nil, err
 	}
 
@@ -42,9 +45,6 @@ func (a *AccountModel) Create(ctx context.Context, name, description string, sta
 
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok {
-			if err.Number == 1452 {
-				return nil, models.ErrGroupNotFound
-			}
 			if err.Number == 1062 {
 				return nil, models.ErrDuplicateNfcChipId
 			}
