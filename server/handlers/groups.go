@@ -2,16 +2,11 @@ package handlers
 
 import (
 	"context"
-	"errors"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
-)
-
-var (
-	ErrCouldNotCreateGroup = errors.New("could not create group")
 )
 
 type groupserver struct {

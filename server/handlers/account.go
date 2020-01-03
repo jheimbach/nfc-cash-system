@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"errors"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
@@ -10,13 +9,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-)
-
-var (
-	ErrGetAll                = errors.New("could not load list of accounts")
-	ErrCouldNotCreateAccount = errors.New("could not save new account")
-	ErrNotFound              = errors.New("could not find account")
-	ErrSomethingWentWrong    = errors.New("something went wrong")
 )
 
 type accountserver struct {
@@ -81,10 +73,10 @@ func (a *accountserver) DeleteAccount(ctx context.Context, req *api.DeleteAccoun
 
 	if err != nil {
 		if err == models.ErrNotFound {
-			return &empty.Empty{}, status.Error(codes.NotFound, ErrNotFound.Error())
+			return &empty.Empty{}, ErrNotFound
 		}
 
-		return &empty.Empty{}, status.Error(codes.Internal, ErrSomethingWentWrong.Error())
+		return &empty.Empty{}, ErrSomethingWentWrong
 	}
 
 	return &empty.Empty{}, nil

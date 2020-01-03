@@ -6,8 +6,6 @@ import (
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type transactionServer struct {
@@ -72,11 +70,11 @@ func (t *transactionServer) CreateTransaction(ctx context.Context, req *api.Crea
 func (t *transactionServer) GetTransaction(ctx context.Context, req *api.GetTransactionRequest) (*api.Transaction, error) {
 	transaction, err := t.storage.Read(ctx, req.Id)
 	if err != nil {
-		return nil, status.Error(codes.Internal, ErrSomethingWentWrong.Error())
+		return nil, ErrSomethingWentWrong
 	}
 
 	if transaction.Account.Id != req.AccountId {
-		return nil, status.Error(codes.NotFound, ErrNotFound.Error())
+		return nil, ErrNotFound
 	}
 
 	return transaction, nil

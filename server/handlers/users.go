@@ -9,15 +9,7 @@ import (
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
-)
-
-var (
-	ErrNameOrPasswdWrong = status.Error(codes.Unauthenticated, "username or password wrong")
-	ErrNoRefreshToken    = status.Error(codes.Unauthenticated, "refresh token required")
-	ErrCouldNotLogOut    = status.Error(codes.Internal, "could not log user out")
 )
 
 type userServer struct {
