@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -366,6 +367,190 @@ func TestAccountserver_E2E_CreateAccount(t *testing.T) {
 	}
 }
 
+func TestAccountserver_E2E_UpdateAccount(t *testing.T) {
+	test.IsIntegrationTest(t)
+	is := isPkg.New(t)
+	teardown := startServers(t)
+	defer teardown()
+
+	aTkn, _ := login(t)
+
+	type want struct {
+		statusCode int
+		errMsg     string
+		account    api.Account
+	}
+	tests := []struct {
+		name        string
+		accessToken string
+		body        *api.Account
+		want        want
+	}{
+		{
+			name: "no accesstoken given",
+			body: &api.Account{
+				Id: 1,
+			},
+			want: want{
+				statusCode: http.StatusUnauthorized,
+				errMsg:     "authorization header required",
+			},
+		},
+		{
+			name:        "update account name",
+			accessToken: aTkn,
+			body: &api.Account{
+				Id:          1,
+				Name:        "Laverne",
+				Description: "Itchy Eye",
+				Saldo:       436,
+				NfcChipId:   "Hv8mnajqzIKO",
+				Group: &api.Group{
+					Id: 7,
+				},
+			},
+			want: want{
+				statusCode: http.StatusOK,
+				account: api.Account{
+					Id:          1,
+					Name:        "Laverne",
+					Description: "Itchy Eye",
+					Saldo:       436,
+					NfcChipId:   "Hv8mnajqzIKO",
+					Group: &api.Group{
+						Id:          7,
+						Name:        "PSS World Medical, Inc.",
+						CanOverdraw: true,
+					},
+				},
+			},
+		},
+		{
+			name:        "update account description",
+			accessToken: aTkn,
+			body: &api.Account{
+				Id:          1,
+				Name:        "Laverne",
+				Description: "",
+				Saldo:       436,
+				NfcChipId:   "Hv8mnajqzIKO",
+				Group: &api.Group{
+					Id: 7,
+				},
+			},
+			want: want{
+				statusCode: http.StatusOK,
+				account: api.Account{
+					Id:          1,
+					Name:        "Laverne",
+					Description: "",
+					Saldo:       436,
+					NfcChipId:   "Hv8mnajqzIKO",
+					Group: &api.Group{
+						Id:          7,
+						Name:        "PSS World Medical, Inc.",
+						CanOverdraw: true,
+					},
+				},
+			},
+		},
+		{
+			name:        "try to update account saldo",
+			accessToken: aTkn,
+			body: &api.Account{
+				Id:          1,
+				Name:        "Laverne",
+				Description: "",
+				Saldo:       1000,
+				NfcChipId:   "Hv8mnajqzIKO",
+				Group: &api.Group{
+					Id: 7,
+				},
+			},
+			want: want{
+				statusCode: http.StatusForbidden,
+				errMsg:     "can not update account saldo trough update",
+			},
+		},
+		{
+			name:        "move acccount to different group",
+			accessToken: aTkn,
+			body: &api.Account{
+				Id:          1,
+				Name:        "Laverne",
+				Description: "",
+				Saldo:       436,
+				NfcChipId:   "Hv8mnajqzIKO",
+				Group: &api.Group{
+					Id: 1,
+				},
+			},
+			want: want{
+				statusCode: http.StatusOK,
+				account: api.Account{
+					Id:          1,
+					Name:        "Laverne",
+					Description: "",
+					Saldo:       436,
+					NfcChipId:   "Hv8mnajqzIKO",
+					Group: &api.Group{
+						Id:   1,
+						Name: "H2O Plus",
+					},
+				},
+			},
+		},
+		{
+			name:        "try to update to non existant group",
+			accessToken: aTkn,
+			body: &api.Account{
+				Id:          1,
+				Name:        "Laverne",
+				Description: "",
+				Saldo:       436,
+				NfcChipId:   "Hv8mnajqzIKO",
+				Group: &api.Group{
+					Id: -45,
+				},
+			},
+			want: want{
+				statusCode: http.StatusNotFound,
+				errMsg:     "could not find group",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+
+			body, err := json.Marshal(tt.body)
+			is.NoErr(err) // could not marshal body
+
+			req, err := http.NewRequest(http.MethodPut, RestUrlWithPath(fmt.Sprintf("v1/account/%d", tt.body.Id)), bytes.NewReader(body))
+			is.NoErr(err) // could not create request
+
+			if tt.accessToken != "" {
+				req.Header.Add("Authorization", "Bearer "+tt.accessToken)
+			}
+
+			res, err := http.DefaultClient.Do(req)
+			is.NoErr(err) // request failed
+			defer res.Body.Close()
+
+			if tt.want.statusCode != http.StatusOK {
+				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				return
+			}
+
+			var account api.Account
+			err = json.NewDecoder(res.Body).Decode(&account)
+			is.NoErr(err) // could not decode account
+
+			is.Equal(account, tt.want.account) // account is not the expected
+		})
+	}
+}
 func TestAccountserver_E2E_DeleteAccount(t *testing.T) {
 }
 

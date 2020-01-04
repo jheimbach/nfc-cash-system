@@ -22,31 +22,31 @@ type accountMockStorager struct {
 	getAllByIds func(ids []int32) (map[int32]*api.Account, error)
 	read        func(id int32) (*api.Account, error)
 	delete      func(id int32) error
-	update      func(m *api.Account) error
+	update      func(m *api.Account) (*api.Account, error)
 	updateSaldo func(m *api.Account, newSaldo float64) error
 }
 
-func (a accountMockStorager) Create(ctx context.Context, name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
+func (a accountMockStorager) Create(_ context.Context, name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
 	return a.create(name, description, startSaldo, groupId, nfcChipId)
 }
 
-func (a accountMockStorager) GetAll(ctx context.Context, groupId, limit, offset int32) ([]*api.Account, int, error) {
+func (a accountMockStorager) GetAll(_ context.Context, groupId, limit, offset int32) ([]*api.Account, int, error) {
 	return a.getAll(groupId, limit, offset)
 }
 
-func (a accountMockStorager) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Account, error) {
+func (a accountMockStorager) GetAllByIds(_ context.Context, ids []int32) (map[int32]*api.Account, error) {
 	return a.getAllByIds(ids)
 }
 
-func (a accountMockStorager) Read(ctx context.Context, id int32) (*api.Account, error) {
+func (a accountMockStorager) Read(_ context.Context, id int32) (*api.Account, error) {
 	return a.read(id)
 }
 
-func (a accountMockStorager) Delete(ctx context.Context, id int32) error {
+func (a accountMockStorager) Delete(_ context.Context, id int32) error {
 	return a.delete(id)
 }
 
-func (a accountMockStorager) Update(ctx context.Context, m *api.Account) error {
+func (a accountMockStorager) Update(ctx context.Context, m *api.Account) (*api.Account, error) {
 	return a.update(m)
 }
 
@@ -200,7 +200,7 @@ func TestAccountserver_GetAccount(t *testing.T) {
 		{
 			name:    "get account that does not exist",
 			input:   &api.GetAccountRequest{Id: 100},
-			wantErr: ErrNotFound,
+			wantErr: ErrAccountNotFound,
 		},
 	}
 
@@ -280,7 +280,19 @@ func TestAccountserver_CreateAccount(t *testing.T) {
 				GroupId:     100,
 			},
 			returnErr: models.ErrGroupNotFound,
-			wantErr:   status.Errorf(codes.NotFound, "group with id %d not found", 100),
+			wantErr:   ErrGroupNotFound,
+		},
+		{
+			name: "create account returns unkown error",
+			input: &api.CreateAccountRequest{
+				Name:        "test",
+				Description: "",
+				Saldo:       120,
+				NfcChipId:   "nfcchip",
+				GroupId:     100,
+			},
+			returnErr: errors.New("test error"),
+			wantErr:   ErrCouldNotCreateAccount,
 		},
 	}
 
@@ -348,7 +360,37 @@ func TestAccountserver_UpdateAccount(t *testing.T) {
 				},
 			},
 			returnErr: models.ErrGroupNotFound,
+			wantErr:   ErrGroupNotFound,
+		},
+		{
+			name: "update returns unkown error",
+			input: &api.Account{
+				Id:          1,
+				Name:        "test",
+				Description: "test",
+				Saldo:       145,
+				NfcChipId:   "nfc_chip_1",
+				Group: &api.Group{
+					Id: 1,
+				},
+			},
+			returnErr: errors.New("test error"),
 			wantErr:   ErrSomethingWentWrong,
+		},
+		{
+			name: "update tries to update saldo",
+			input: &api.Account{
+				Id:          1,
+				Name:        "test",
+				Description: "test",
+				Saldo:       145,
+				NfcChipId:   "nfc_chip_1",
+				Group: &api.Group{
+					Id: 1,
+				},
+			},
+			returnErr: models.ErrUpdateSaldo,
+			wantErr:   status.Error(codes.PermissionDenied, "can not update account saldo trough update"),
 		},
 	}
 
@@ -358,12 +400,12 @@ func TestAccountserver_UpdateAccount(t *testing.T) {
 
 			server := accountserver{
 				storage: accountMockStorager{
-					update: func(m *api.Account) error {
+					update: func(m *api.Account) (*api.Account, error) {
 						if tt.returnErr != nil {
-							return tt.returnErr
+							return nil, tt.returnErr
 						}
 						mockStorage[m.Id] = m
-						return nil
+						return m, nil
 					},
 				},
 			}

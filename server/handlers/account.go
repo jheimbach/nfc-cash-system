@@ -66,13 +66,19 @@ func (a *accountserver) GetAccount(ctx context.Context, req *api.GetAccountReque
 }
 
 func (a *accountserver) UpdateAccount(ctx context.Context, req *api.Account) (*api.Account, error) {
-	err := a.storage.Update(ctx, req)
+	acc, err := a.storage.Update(ctx, req)
 
 	if err != nil {
+		if err == models.ErrUpdateSaldo {
+			return nil, status.Error(codes.PermissionDenied, "can not update account saldo trough update")
+		}
+		if err == models.ErrGroupNotFound {
+			return nil, ErrGroupNotFound
+		}
 		return nil, ErrSomethingWentWrong
 	}
 
-	return req, nil
+	return acc, nil
 }
 
 func (a *accountserver) DeleteAccount(ctx context.Context, req *api.DeleteAccountRequest) (*empty.Empty, error) {

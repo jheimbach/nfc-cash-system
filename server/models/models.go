@@ -19,6 +19,7 @@ var (
 	ErrUserNotFound       = errors.New("user for given id does not exist")
 	ErrUserHasRefreshKey  = errors.New("user has a refresh key associated with him, remove the old key first")
 	ErrRefreshKeyIsInUse  = errors.New("given refresh key is associated with different user, please use a different one")
+	ErrUpdateSaldo        = errors.New("cannot update saldo with update, use UpdateSaldo instead")
 )
 
 type AccountStorager interface {
@@ -29,7 +30,7 @@ type AccountStorager interface {
 
 	Read(ctx context.Context, id int32) (*api.Account, error)
 	Delete(ctx context.Context, id int32) error
-	Update(ctx context.Context, m *api.Account) error
+	Update(ctx context.Context, m *api.Account) (*api.Account, error)
 
 	UpdateSaldo(ctx context.Context, m *api.Account, newSaldo float64) error
 }

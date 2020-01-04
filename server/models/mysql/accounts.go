@@ -92,21 +92,35 @@ func (a *AccountModel) Read(ctx context.Context, id int32) (*api.Account, error)
 }
 
 // Update saves the (changed) model in the database will return models.ErrGroupNotFound if group id is not associated with a group
-func (a *AccountModel) Update(ctx context.Context, m *api.Account) error {
-	updateStmt := `UPDATE accounts SET name=?, description=?, saldo=?, group_id=?, nfc_chip_uid=? WHERE id=?`
-
-	_, err := a.db.ExecContext(ctx, updateStmt, m.Name, m.Description, m.Saldo, m.Group.Id, m.NfcChipId, m.Id)
-
+func (a *AccountModel) Update(ctx context.Context, m *api.Account) (*api.Account, error) {
+	acc, err := a.Read(ctx, m.Id)
 	if err != nil {
-		if err, ok := err.(*mysql.MySQLError); ok {
-			if err.Number == 1452 {
-				return models.ErrGroupNotFound
-			}
-		}
-		return err
+		return nil, err
 	}
 
-	return nil
+	if m.Saldo != 0 && m.Saldo != acc.Saldo {
+		return nil, models.ErrUpdateSaldo
+	}
+
+	g, err := a.groups.Read(ctx, m.Group.Id)
+	if err != nil {
+		return nil, models.ErrGroupNotFound
+	}
+
+	updateStmt := `UPDATE accounts SET name=?, description=?, group_id=?, nfc_chip_uid=? WHERE id=?`
+
+	_, err = a.db.ExecContext(ctx, updateStmt, m.Name, m.Description, m.Group.Id, m.NfcChipId, m.Id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	acc.Name = m.Name
+	acc.Description = m.Description
+	acc.NfcChipId = m.NfcChipId
+	acc.Group = g
+
+	return acc, nil
 }
 
 // Delete deletes a account
@@ -116,14 +130,10 @@ func (a *AccountModel) Delete(ctx context.Context, id int32) error {
 
 	_, err := a.db.ExecContext(ctx, deleteStmt, id)
 
-	if err == sql.ErrNoRows {
-		return models.ErrNotFound
-	}
-
 	return err
 }
 
-// UpdateSaldo provides a simpler update method for the saldo field
+// UpdateSaldo provides update method for the saldo field
 func (a *AccountModel) UpdateSaldo(ctx context.Context, m *api.Account, newSaldo float64) error {
 	_, err := a.db.ExecContext(ctx, `UPDATE accounts SET saldo=? WHERE id=?`, newSaldo, m.Id)
 
