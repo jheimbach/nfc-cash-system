@@ -552,6 +552,68 @@ func TestAccountserver_E2E_UpdateAccount(t *testing.T) {
 	}
 }
 func TestAccountserver_E2E_DeleteAccount(t *testing.T) {
+	test.IsIntegrationTest(t)
+	is := isPkg.New(t)
+	teardown := startServers(t)
+	defer teardown()
+
+	aTkn, _ := login(t)
+
+	tests := []struct {
+		name        string
+		accessToken string
+		accountId   int
+		statusCode  int
+		errMsg      string
+	}{
+		{
+			name:       "no accesstoken given",
+			accountId:  1,
+			statusCode: http.StatusUnauthorized,
+			errMsg:     "authorization header required",
+		},
+		{
+			name:        "delete account with id 1",
+			accessToken: aTkn,
+			accountId:   1,
+			statusCode:  http.StatusOK,
+		},
+		{
+			name:        "delete account with invalid id",
+			accessToken: aTkn,
+			accountId:   -45,
+			statusCode:  http.StatusOK,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			req, err := http.NewRequest(http.MethodDelete, RestUrlWithPath(fmt.Sprintf("v1/account/%d", tt.accountId)), nil)
+			is.NoErr(err) // could not create request
+
+			if tt.accessToken != "" {
+				req.Header.Add("Authorization", "Bearer "+tt.accessToken)
+			}
+			//{1 Laverne Itchy Eye 436 Hv8mnajqzIKO id:7  {} [] 0}
+			//{1 Laverne Itchy Eye 436 Hv8mnajqzIKO id:7 name:"PSS World Medical, Inc." can_overdraw:true  {} [] 0}
+
+			res, err := http.DefaultClient.Do(req)
+			is.NoErr(err) // request failed
+			defer res.Body.Close()
+
+			if tt.statusCode != http.StatusOK {
+				checkError(t, res, tt.statusCode, tt.errMsg)
+				return
+			}
+			b, err := ioutil.ReadAll(res.Body)
+			is.NoErr(err) // could not read body
+
+			if string(b) != "{}" {
+				t.Errorf("expected empty body, got %q", b)
+			}
+		})
+	}
 }
 
 func checkError(t *testing.T, response *http.Response, code int, errMsg string) {
