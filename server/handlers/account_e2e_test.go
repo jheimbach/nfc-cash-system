@@ -329,7 +329,7 @@ func TestAccountserver_E2E_CreateAccount(t *testing.T) {
 			},
 			want: want{
 				statusCode: http.StatusNotFound,
-				errMsg:     "group with id -45 not found",
+				errMsg:     "could not find group",
 			},
 		},
 	}

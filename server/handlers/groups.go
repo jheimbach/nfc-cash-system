@@ -48,7 +48,7 @@ func (g *groupserver) GetGroup(ctx context.Context, req *api.GetGroupRequest) (*
 	group, err := g.storage.Read(ctx, req.Id)
 
 	if err != nil {
-		return nil, ErrNotFound
+		return nil, ErrGroupNotFound
 	}
 
 	return group, nil

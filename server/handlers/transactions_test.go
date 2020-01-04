@@ -316,7 +316,7 @@ func TestTransactionServer_GetTransaction(t *testing.T) {
 				AccountId: 1,
 			},
 			want:    genTransactionModels(1, 2)[0],
-			wantErr: ErrNotFound,
+			wantErr: ErrAccountNotFound,
 		},
 		{
 			name: "storage returns error",

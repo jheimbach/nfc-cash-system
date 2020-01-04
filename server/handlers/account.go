@@ -47,7 +47,7 @@ func (a *accountserver) CreateAccount(ctx context.Context, req *api.CreateAccoun
 			return nil, status.Error(codes.AlreadyExists, "nfc chip is already in use")
 		}
 		if err == models.ErrGroupNotFound {
-			return nil, status.Errorf(codes.NotFound, "group with id %d not found", req.GroupId)
+			return nil, ErrGroupNotFound
 		}
 		return nil, ErrCouldNotCreateAccount
 	}
@@ -59,7 +59,7 @@ func (a *accountserver) GetAccount(ctx context.Context, req *api.GetAccountReque
 	account, err := a.storage.Read(ctx, req.Id)
 
 	if err != nil {
-		return nil, ErrNotFound
+		return nil, ErrAccountNotFound
 	}
 
 	return account, nil

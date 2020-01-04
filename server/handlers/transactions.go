@@ -74,7 +74,7 @@ func (t *transactionServer) GetTransaction(ctx context.Context, req *api.GetTran
 	}
 
 	if transaction.Account.Id != req.AccountId {
-		return nil, ErrNotFound
+		return nil, ErrAccountNotFound
 	}
 
 	return transaction, nil
