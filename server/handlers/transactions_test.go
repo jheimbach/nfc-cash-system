@@ -14,21 +14,26 @@ import (
 )
 
 type transactionMockStorage struct {
-	read   func(id int32) (*api.Transaction, error)
-	create func(amount float64, accountId int32) (*api.Transaction, error)
-	getAll func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error)
+	read               func(id int32) (*api.Transaction, error)
+	create             func(amount float64, accountId int32) (*api.Transaction, error)
+	getAll             func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error)
+	deleteAllByAccount func(accountId int32) error
 }
 
-func (t *transactionMockStorage) Read(ctx context.Context, id int32) (*api.Transaction, error) {
+func (t transactionMockStorage) Read(_ context.Context, id int32) (*api.Transaction, error) {
 	return t.read(id)
 }
 
-func (t *transactionMockStorage) Create(ctx context.Context, amount float64, accountId int32) (*api.Transaction, error) {
+func (t transactionMockStorage) Create(_ context.Context, amount float64, accountId int32) (*api.Transaction, error) {
 	return t.create(amount, accountId)
 }
 
-func (t *transactionMockStorage) GetAll(ctx context.Context, accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
+func (t transactionMockStorage) GetAll(_ context.Context, accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
 	return t.getAll(accountId, order, limit, offset)
+}
+
+func (t transactionMockStorage) DeleteAllByAccount(_ context.Context, accountId int32) error {
+	return t.deleteAllByAccount(accountId)
 }
 
 func TestTransactionServer_ListTransactions(t *testing.T) {
@@ -171,7 +176,7 @@ func TestTransactionServer_ListTransactionsByAccount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := &transactionServer{
-				storage: &transactionMockStorage{
+				storage: transactionMockStorage{
 					getAll: func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
 						if accountId != tt.input.AccountId {
 							t.Fatalf("got accountid %d, expected %d", accountId, tt.input.AccountId)
@@ -244,7 +249,7 @@ func TestTransactionServer_CreateTransaction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := transactionServer{
-				storage: &transactionMockStorage{
+				storage: transactionMockStorage{
 					create: func(amount float64, accountId int32) (*api.Transaction, error) {
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
@@ -327,7 +332,7 @@ func TestTransactionServer_GetTransaction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := transactionServer{
-				storage: &transactionMockStorage{
+				storage: transactionMockStorage{
 					read: func(id int32) (*api.Transaction, error) {
 						if tt.returnErr != nil {
 							return nil, tt.returnErr

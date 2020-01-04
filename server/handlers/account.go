@@ -12,11 +12,12 @@ import (
 )
 
 type accountserver struct {
-	storage models.AccountStorager
+	storage  models.AccountStorager
+	tStorage models.TransactionStorager // only used to delete accounts
 }
 
-func RegisterAccountServer(s *grpc.Server, storage models.AccountStorager) {
-	api.RegisterAccountServiceServer(s, &accountserver{storage: storage})
+func RegisterAccountServer(s *grpc.Server, storage models.AccountStorager, tStorage models.TransactionStorager) {
+	api.RegisterAccountServiceServer(s, &accountserver{storage: storage, tStorage: tStorage})
 }
 
 func (a *accountserver) ListAccounts(ctx context.Context, req *api.ListAccountsRequest) (*api.ListAccountsResponse, error) {
@@ -75,14 +76,15 @@ func (a *accountserver) UpdateAccount(ctx context.Context, req *api.Account) (*a
 }
 
 func (a *accountserver) DeleteAccount(ctx context.Context, req *api.DeleteAccountRequest) (*empty.Empty, error) {
-	err := a.storage.Delete(ctx, req.Id)
+	err := a.tStorage.DeleteAllByAccount(ctx, req.Id)
+	if err != nil {
+		return &empty.Empty{}, status.Errorf(codes.Internal, "could not delete transactions for account %d", req.Id)
+	}
+
+	err = a.storage.Delete(ctx, req.Id)
 
 	if err != nil {
-		if err == models.ErrNotFound {
-			return &empty.Empty{}, ErrNotFound
-		}
-
-		return &empty.Empty{}, ErrSomethingWentWrong
+		return &empty.Empty{}, status.Errorf(codes.Internal, "could not delete account %d", req.Id)
 	}
 
 	return &empty.Empty{}, nil

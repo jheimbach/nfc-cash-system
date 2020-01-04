@@ -51,6 +51,8 @@ type TransactionStorager interface {
 	GetAll(ctx context.Context, accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error)
 
 	Read(ctx context.Context, id int32) (*api.Transaction, error)
+
+	DeleteAllByAccount(ctx context.Context, accountId int32) error
 }
 
 type Authenticator interface {

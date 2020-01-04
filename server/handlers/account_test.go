@@ -387,26 +387,31 @@ func TestAccountserver_DeleteAccount(t *testing.T) {
 	is := isPkg.New(t)
 
 	tests := []struct {
-		name      string
-		input     *api.DeleteAccountRequest
-		returnErr error
-		wantErr   error
+		name       string
+		input      *api.DeleteAccountRequest
+		returnErr  error
+		tReturnErr error
+		wantErr    error
 	}{
 		{
 			name:  "delete account",
 			input: &api.DeleteAccountRequest{Id: 1},
 		},
 		{
-			name:      "delete account that does not exist",
-			input:     &api.DeleteAccountRequest{Id: 1},
-			returnErr: models.ErrNotFound,
-			wantErr:   ErrNotFound,
+			name:  "delete account that does not exist",
+			input: &api.DeleteAccountRequest{Id: -45},
 		},
 		{
 			name:      "delete returns other than models.ErrNotFound",
 			input:     &api.DeleteAccountRequest{Id: 1},
 			returnErr: errors.New("this is a test"),
-			wantErr:   ErrSomethingWentWrong,
+			wantErr:   status.Errorf(codes.Internal, "could not delete account %d", 1),
+		},
+		{
+			name:       "delete transactions returns error",
+			input:      &api.DeleteAccountRequest{Id: 1},
+			tReturnErr: errors.New("this is a test"),
+			wantErr:    status.Errorf(codes.Internal, "could not delete transactions for account %d", 1),
 		},
 	}
 
@@ -422,6 +427,11 @@ func TestAccountserver_DeleteAccount(t *testing.T) {
 						}
 						delete(mockStorage, id)
 						return nil
+					},
+				},
+				tStorage: &transactionMockStorage{
+					deleteAllByAccount: func(accountId int32) error {
+						return tt.tReturnErr
 					},
 				},
 			}

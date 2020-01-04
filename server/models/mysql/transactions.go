@@ -142,6 +142,16 @@ func (t *TransactionModel) GetAll(ctx context.Context, accountId int32, order st
 	return transactions, totalCount, err
 }
 
+// DeleteAllByAccount deletes all transactions for given account id
+func (t *TransactionModel) DeleteAllByAccount(ctx context.Context, accountId int32) error {
+	delStmt := "DELETE FROM transactions WHERE account_id=?"
+	_, err := t.db.ExecContext(ctx, delStmt, accountId)
+
+	return err
+}
+
+// orderByClause returns selectStmt with order by created attached.
+// If order is ASC or asc returns ORDER BY created ASC, otherwise DESC
 func orderByClause(order string, selectStmt string) string {
 	switch {
 	case strings.ToLower(order) == "asc":

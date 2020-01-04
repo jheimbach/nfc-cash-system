@@ -31,9 +31,8 @@ func NewGrpcServer(database *sql.DB, cert, certKey string) (*Grpc, error) {
 	handlers.RegisterGroupServer(s, groupModel)
 
 	accountModel := mysql.NewAccountModel(database, groupModel)
-	handlers.RegisterAccountServer(s, accountModel)
-
 	transactionModel := mysql.NewTransactionModel(database, accountModel)
+	handlers.RegisterAccountServer(s, accountModel, transactionModel)
 	handlers.RegisterTransactionServer(s, transactionModel)
 
 	return &Grpc{Server: s}, nil

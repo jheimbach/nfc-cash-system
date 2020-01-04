@@ -303,6 +303,61 @@ func TestTransactionModel_GetAll(t *testing.T) {
 
 }
 
+func TestTransactionModel_DeleteAllByAccount(t *testing.T) {
+	test.IsIntegrationTest(t)
+	is := isPkg.New(t)
+
+	setupScripts := []string{
+		dataFor("transaction"),
+		dataFor("transaction_list"),
+	}
+
+	db, dbSetup, dbTeardown := getTestDb(t)
+	defer db.Close()
+
+	tests := []struct {
+		name      string
+		dbSetup   []string
+		accountId int32
+	}{
+		{
+			name:      "delete all transactions by account id 1",
+			dbSetup:   setupScripts,
+			accountId: 1,
+		},
+		{
+			name:      "delete all transactions by non existent account",
+			dbSetup:   setupScripts,
+			accountId: -45,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			dbSetup(tt.dbSetup...)
+			defer dbTeardown()
+
+			model := TransactionModel{
+				db:       db,
+				accounts: NewAccountModel(db, NewGroupModel(db)),
+			}
+
+			err := model.DeleteAllByAccount(context.Background(), tt.accountId)
+			is.NoErr(err)
+
+			stmt := `SELECT id from transactions WHERE account_id=?`
+			rows, err := db.Query(stmt, tt.accountId)
+			is.NoErr(err) // could not query transactions
+			defer rows.Close()
+			if rows.Next() {
+				t.Errorf("expected empty result")
+			}
+		})
+	}
+
+}
+
 func timeStampMock(month int) *timestamp.Timestamp {
 	ts, _ := ptypes.TimestampProto(time.Date(2019, time.Month(month), 17, 16, 15, 14, 0, time.UTC))
 	return ts
