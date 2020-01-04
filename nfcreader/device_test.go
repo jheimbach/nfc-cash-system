@@ -5,6 +5,7 @@ import (
 	"github.com/fuzxxl/nfc/2.0/nfc"
 	"github.com/google/go-cmp/cmp"
 	isPkg "github.com/matryer/is"
+	"sync"
 	"testing"
 	"time"
 )
@@ -14,6 +15,7 @@ var targetIdSlice = targetId[:]
 
 type mockReader struct {
 	isClosed          bool
+	mu                sync.Mutex
 	concurrentTargets int
 	createTargets     func(nfc.Modulation, int) ([]nfc.Target, error)
 }
@@ -24,7 +26,15 @@ func (m *mockReader) Close() error {
 }
 
 func (m *mockReader) InitiatorListPassiveTargets(mod nfc.Modulation) ([]nfc.Target, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return m.createTargets(mod, m.concurrentTargets)
+}
+
+func (m *mockReader) setConcurrentTargets(num int) {
+	m.mu.Lock()
+	m.concurrentTargets = num
+	m.mu.Unlock()
 }
 
 func TestDevice_Listen(t *testing.T) {
@@ -57,9 +67,9 @@ func TestDevice_Listen(t *testing.T) {
 	})
 	t.Run("target recieved", func(t *testing.T) {
 		is := isPkg.New(t)
-		reader.concurrentTargets = 1
+		reader.setConcurrentTargets(1)
 		defer func() {
-			reader.concurrentTargets = 0
+			reader.setConcurrentTargets(0)
 		}()
 		dev := &Device{device: reader}
 
@@ -76,9 +86,9 @@ func TestDevice_Listen(t *testing.T) {
 	})
 	t.Run("multiple targets concurrently without AllowMultipleTargets", func(t *testing.T) {
 		is := isPkg.New(t)
-		reader.concurrentTargets = 2
+		reader.setConcurrentTargets(2)
 		defer func() {
-			reader.concurrentTargets = 0
+			reader.setConcurrentTargets(0)
 		}()
 		dev := &Device{device: reader}
 
@@ -96,9 +106,9 @@ func TestDevice_Listen(t *testing.T) {
 	})
 	t.Run("multiple targets concurrently with AllowMultipleTargets", func(t *testing.T) {
 		is := isPkg.New(t)
-		reader.concurrentTargets = 2
+		reader.setConcurrentTargets(2)
 		defer func() {
-			reader.concurrentTargets = 0
+			reader.setConcurrentTargets(0)
 		}()
 		dev := &Device{
 			device:               reader,
@@ -117,9 +127,9 @@ func TestDevice_Listen(t *testing.T) {
 	})
 	t.Run("multiple targets consecutively", func(t *testing.T) {
 		is := isPkg.New(t)
-		reader.concurrentTargets = 1
+		reader.setConcurrentTargets(1)
 		defer func() {
-			reader.concurrentTargets = 0
+			reader.setConcurrentTargets(0)
 		}()
 		dev := &Device{device: reader}
 		recv := makeChannelAndListen(t, dev)
