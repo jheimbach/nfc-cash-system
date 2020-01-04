@@ -276,26 +276,48 @@ func TestAccountModel_Update(t *testing.T) {
 	tests := []struct {
 		name        string
 		inital      api.Account
+		input       api.Account
 		want        api.Account
 		wantErr     bool
 		expectedErr error
 	}{
 		{
-			name: "update account",
+			name: "update description",
 			inital: api.Account{
 				Id:    1,
-				Name:  "tim",
-				Saldo: 12,
 				Group: mockGroupOne,
 			},
-			want: api.Account{
+			input: api.Account{
 				Id:          1,
-				Name:        "tim",
 				Description: "descr",
-				Saldo:       123,
 				Group: &api.Group{
 					Id: 1,
 				},
+			},
+			want: api.Account{
+				Id:          1,
+				Description: "descr",
+				Group:       mockGroupOne,
+			},
+		},
+		{
+			name: "update name",
+			inital: api.Account{
+				Id:    1,
+				Name:  "tim",
+				Group: mockGroupOne,
+			},
+			input: api.Account{
+				Id:   1,
+				Name: "timothy",
+				Group: &api.Group{
+					Id: 1,
+				},
+			},
+			want: api.Account{
+				Id:    1,
+				Name:  "timothy",
+				Group: mockGroupOne,
 			},
 		},
 		{
@@ -303,21 +325,71 @@ func TestAccountModel_Update(t *testing.T) {
 			inital: api.Account{
 				Id:        1,
 				Name:      "tim",
-				Saldo:     12,
+				Saldo:     123,
 				NfcChipId: "testnfcchip",
-				Group: &api.Group{
-					Id: 1,
-				},
+				Group:     mockGroupOne,
+			},
+			input: api.Account{
+				Id:        1,
+				Name:      "tim",
+				Saldo:     123,
+				NfcChipId: "testnfcchip2",
+				Group:     mockGroupOne,
 			},
 			want: api.Account{
-				Id:          1,
-				Name:        "tim",
-				Description: "descr",
-				Saldo:       123,
-				NfcChipId:   "testnfcchip2",
-				Group: &api.Group{
-					Id: 1,
-				},
+				Id:        1,
+				Name:      "tim",
+				Saldo:     123,
+				NfcChipId: "testnfcchip2",
+				Group:     mockGroupOne,
+			},
+		},
+		{
+			name: "update saldo 0 is ignored",
+			inital: api.Account{
+				Id:        1,
+				Name:      "tim",
+				Saldo:     123,
+				NfcChipId: "testnfcchip",
+				Group:     mockGroupOne,
+			},
+			input: api.Account{
+				Id:        1,
+				Name:      "tim",
+				Saldo:     0,
+				NfcChipId: "testnfcchip",
+				Group:     mockGroupOne,
+			},
+			want: api.Account{
+				Id:        1,
+				Name:      "tim",
+				Saldo:     123,
+				NfcChipId: "testnfcchip",
+				Group:     mockGroupOne,
+			},
+		},
+		{
+			name: "update group",
+			inital: api.Account{
+				Id:        1,
+				Name:      "tim",
+				Saldo:     123,
+				NfcChipId: "testnfcchip",
+				Group:     mockGroupOne,
+			},
+			input: api.Account{
+				Id:        1,
+				Name:      "tim",
+				Saldo:     123,
+				NfcChipId: "testnfcchip",
+				Group:     mockGroupTwo,
+			},
+			want: api.Account{
+				Id:        1,
+				Name:      "tim",
+				Saldo:     123,
+				NfcChipId: "testnfcchip",
+				Group:     mockGroupTwo,
 			},
 		},
 		{
@@ -330,7 +402,7 @@ func TestAccountModel_Update(t *testing.T) {
 					Id: 1,
 				},
 			},
-			want: api.Account{
+			input: api.Account{
 				Id:          1,
 				Name:        "tim",
 				Description: "",
@@ -342,8 +414,27 @@ func TestAccountModel_Update(t *testing.T) {
 			wantErr:     true,
 			expectedErr: models.ErrGroupNotFound,
 		},
+		{
+			name: "update saldo returns error",
+			inital: api.Account{
+				Id:    1,
+				Name:  "tim",
+				Saldo: 12,
+				Group: &api.Group{
+					Id: 1,
+				},
+			},
+			input: api.Account{
+				Id:          1,
+				Name:        "tim",
+				Description: "",
+				Saldo:       120,
+				Group:       mockGroupOne,
+			},
+			wantErr:     true,
+			expectedErr: models.ErrUpdateSaldo,
+		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
@@ -353,10 +444,11 @@ func TestAccountModel_Update(t *testing.T) {
 			insertTestAccount(t, db, tt.inital)
 
 			model := AccountModel{
-				db: db,
+				db:     db,
+				groups: NewGroupModel(db),
 			}
 
-			err := model.Update(context.Background(), &tt.want)
+			got, err := model.Update(context.Background(), &tt.input)
 
 			if tt.wantErr {
 				is.Equal(err, tt.expectedErr) // got not the expected error
@@ -365,19 +457,7 @@ func TestAccountModel_Update(t *testing.T) {
 
 			is.NoErr(err) // got error from read, did not expect it
 
-			var got = api.Account{Group: &api.Group{}}
-			var nullDescription sql.NullString
-			err = db.QueryRow("SELECT id,name,description,saldo,group_id,nfc_chip_uid FROM accounts WHERE id=?", 1).Scan(
-				&got.Id, &got.Name, &nullDescription, &got.Saldo, &got.Group.Id, &got.NfcChipId)
-			is.NoErr(err) // got scan error
-
-			got.Description = decodeNullableString(nullDescription)
-
-			is.Equal(got.Name, tt.want.Name)               // name does not match
-			is.Equal(got.Description, tt.want.Description) // description does not match
-			is.Equal(got.Saldo, tt.want.Saldo)             // saldo does not match
-			is.Equal(got.Group.Id, tt.want.Group.Id)       // groupId does not match
-			is.Equal(got.NfcChipId, tt.want.NfcChipId)     // nfcChipId does not match
+			is.Equal(got, &tt.want) // accounts dont match
 		})
 	}
 }

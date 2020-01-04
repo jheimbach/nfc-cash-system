@@ -595,8 +595,6 @@ func TestAccountserver_E2E_DeleteAccount(t *testing.T) {
 			if tt.accessToken != "" {
 				req.Header.Add("Authorization", "Bearer "+tt.accessToken)
 			}
-			//{1 Laverne Itchy Eye 436 Hv8mnajqzIKO id:7  {} [] 0}
-			//{1 Laverne Itchy Eye 436 Hv8mnajqzIKO id:7 name:"PSS World Medical, Inc." can_overdraw:true  {} [] 0}
 
 			res, err := http.DefaultClient.Do(req)
 			is.NoErr(err) // request failed
