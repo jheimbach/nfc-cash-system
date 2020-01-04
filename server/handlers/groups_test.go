@@ -22,26 +22,27 @@ type groupMockStorage struct {
 	getAllByIds func(ids []int32) (map[int32]*api.Group, error)
 }
 
-func (g *groupMockStorage) Create(ctx context.Context, name, description string, canOverdraw bool) (*api.Group, error) {
+func (g *groupMockStorage) Create(_ context.Context, name, description string, canOverdraw bool) (*api.Group, error) {
 	return g.create(name, description, canOverdraw)
 }
 
-func (g *groupMockStorage) GetAll(ctx context.Context, limit, offset int32) ([]*api.Group, int, error) {
+func (g *groupMockStorage) GetAll(_ context.Context, limit, offset int32) ([]*api.Group, int, error) {
 	return g.getAll(limit, offset)
 }
 
-func (g *groupMockStorage) Read(ctx context.Context, id int32) (*api.Group, error) {
+func (g *groupMockStorage) Read(_ context.Context, id int32) (*api.Group, error) {
 	return g.read(id)
 }
 
-func (g *groupMockStorage) Update(ctx context.Context, group *api.Group) (*api.Group, error) {
+func (g *groupMockStorage) Update(_ context.Context, group *api.Group) (*api.Group, error) {
 	return g.update(group)
 }
 
-func (g *groupMockStorage) Delete(ctx context.Context, id int32) error {
+func (g *groupMockStorage) Delete(_ context.Context, id int32) error {
 	return g.delete(id)
 }
-func (g groupMockStorage) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Group, error) {
+
+func (g groupMockStorage) GetAllByIds(_ context.Context, ids []int32) (map[int32]*api.Group, error) {
 	return g.getAllByIds(ids)
 }
 
@@ -117,6 +118,55 @@ func TestGroupserver_ListGroups(t *testing.T) {
 			}
 
 			got, err := a.ListGroups(context.Background(), tt.input)
+			if tt.wantErr != nil {
+				if err != tt.wantErr {
+					t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("got unexpected err %q", err)
+			}
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("List() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGroupserver_GetGroup(t *testing.T) {
+	var tests = []struct {
+		name      string
+		input     *api.GetGroupRequest
+		want      *api.Group
+		wantErr   error
+		returnErr error
+	}{
+		{
+			name:  "get first groups",
+			input: &api.GetGroupRequest{Id: 1},
+			want:  genGroupModels(1)[0],
+		},
+		{
+			name:      "not found",
+			input:     &api.GetGroupRequest{Id: -45},
+			wantErr:   ErrGroupNotFound,
+			returnErr: sql.ErrNoRows,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &groupserver{
+				storage: &groupMockStorage{
+					read: func(id int32) (group *api.Group, err error) {
+						return tt.want, tt.returnErr
+					},
+				},
+			}
+
+			got, err := a.GetGroup(context.Background(), tt.input)
 			if tt.wantErr != nil {
 				if err != tt.wantErr {
 					t.Errorf("List() error = %v, wantErr %v", err, tt.wantErr)
