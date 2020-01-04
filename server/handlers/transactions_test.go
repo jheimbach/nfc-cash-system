@@ -172,6 +172,14 @@ func TestTransactionServer_ListTransactionsByAccount(t *testing.T) {
 				TotalCount:   3,
 			},
 		},
+		{
+			name: "return error",
+			input: &api.ListTransactionsByAccountRequest{
+				AccountId: -45,
+			},
+			wantErr:   ErrSomethingWentWrong,
+			returnErr: errors.New("test error"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

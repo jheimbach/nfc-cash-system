@@ -11,6 +11,8 @@ import (
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/golang/protobuf/ptypes/empty"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type groupMockStorage struct {
@@ -313,10 +315,11 @@ func TestGroupserver_UpdateGroup(t *testing.T) {
 
 func TestGroupserver_DeleteGroup(t *testing.T) {
 	tests := []struct {
-		name    string
-		request *api.DeleteGroupRequest
-		want    *empty.Empty
-		wantErr error
+		name      string
+		request   *api.DeleteGroupRequest
+		want      *empty.Empty
+		wantErr   error
+		returnErr error
 	}{
 		{
 			name:    "delete group",
@@ -324,10 +327,18 @@ func TestGroupserver_DeleteGroup(t *testing.T) {
 			want:    &empty.Empty{},
 		},
 		{
-			name:    "delete group with error",
-			request: &api.DeleteGroupRequest{Id: 1},
-			want:    &empty.Empty{},
-			wantErr: ErrSomethingWentWrong,
+			name:      "delete non empty group",
+			request:   &api.DeleteGroupRequest{Id: 1},
+			want:      &empty.Empty{},
+			wantErr:   status.Error(codes.Aborted, "could not delete group, because it is not empty"),
+			returnErr: models.ErrNonEmptyDelete,
+		},
+		{
+			name:      "delete group with error",
+			request:   &api.DeleteGroupRequest{Id: 1},
+			want:      &empty.Empty{},
+			returnErr: errors.New("test error"),
+			wantErr:   ErrSomethingWentWrong,
 		},
 	}
 
@@ -336,10 +347,7 @@ func TestGroupserver_DeleteGroup(t *testing.T) {
 			server := groupserver{
 				storage: &groupMockStorage{
 					delete: func(id int32) error {
-						if tt.wantErr != nil {
-							return errors.New("test error")
-						}
-						return nil
+						return tt.returnErr
 					},
 				},
 			}
@@ -347,13 +355,17 @@ func TestGroupserver_DeleteGroup(t *testing.T) {
 			got, err := server.DeleteGroup(context.Background(), tt.request)
 
 			if tt.wantErr != nil {
-				if err != tt.wantErr {
+				if err == nil {
+					t.Fatalf("expected err, got none")
+				}
+				if err.Error() != tt.wantErr.Error() {
 					t.Errorf("got err %v expected %v", err, tt.wantErr)
 				}
-			} else {
-				if err != nil {
-					t.Fatalf("got unexpected err %v", err)
-				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("got unexpected err %v", err)
 			}
 
 			if !reflect.DeepEqual(got, tt.want) {

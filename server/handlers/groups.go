@@ -7,6 +7,8 @@ import (
 	"github.com/JHeimbach/nfc-cash-system/server/models"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type groupserver struct {
@@ -66,6 +68,10 @@ func (g *groupserver) DeleteGroup(ctx context.Context, req *api.DeleteGroupReque
 	err := g.storage.Delete(ctx, req.Id)
 
 	if err != nil {
+		if err == models.ErrNonEmptyDelete {
+			return &empty.Empty{}, status.Error(codes.Aborted, "could not delete group, because it is not empty")
+		}
+
 		return &empty.Empty{}, ErrSomethingWentWrong
 	}
 
