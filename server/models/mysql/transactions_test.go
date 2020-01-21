@@ -14,6 +14,38 @@ import (
 	isPkg "github.com/matryer/is"
 )
 
+type accountMockModel struct {
+	readFunc func(ctx context.Context, id int32) (*api.Account, error)
+}
+
+func (a *accountMockModel) Create(ctx context.Context, name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
+	panic("implement me")
+}
+
+func (a *accountMockModel) GetAll(ctx context.Context, groupId, limit, offset int32) ([]*api.Account, int, error) {
+	panic("implement me")
+}
+
+func (a *accountMockModel) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Account, error) {
+	panic("implement me")
+}
+
+func (a *accountMockModel) Read(ctx context.Context, id int32) (*api.Account, error) {
+	return a.readFunc(ctx, id)
+}
+
+func (a *accountMockModel) Delete(ctx context.Context, id int32) error {
+	panic("implement me")
+}
+
+func (a *accountMockModel) Update(ctx context.Context, m *api.Account) (*api.Account, error) {
+	panic("implement me")
+}
+
+func (a *accountMockModel) UpdateSaldo(ctx context.Context, m *api.Account, newSaldo float64) error {
+	panic("implement me")
+}
+
 func TestTransactionModel_Create(t *testing.T) {
 	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
@@ -120,6 +152,13 @@ func TestTransactionModel_Get(t *testing.T) {
 
 		model := TransactionModel{
 			db: db,
+			accounts: &accountMockModel{
+				readFunc: func(ctx context.Context, id int32) (account *api.Account, err error) {
+					return &api.Account{
+						Id: id,
+					}, nil
+				},
+			},
 		}
 		created, _ := ptypes.TimestampProto(time.Date(2019, 01, 17, 16, 15, 14, 0, time.UTC))
 

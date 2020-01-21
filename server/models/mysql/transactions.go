@@ -57,7 +57,7 @@ func (t *TransactionModel) Create(ctx context.Context, amount float64, accountId
 	}
 
 	// update account saldo
-	err = t.accounts.UpdateSaldo(ctx, account, newSaldo) //in database
+	err = t.accounts.UpdateSaldo(ctx, account, newSaldo) // in database
 	if err != nil {
 		return nil, err
 	}
@@ -96,8 +96,17 @@ func (t *TransactionModel) Read(ctx context.Context, id int32) (*api.Transaction
 		return nil, err
 	}
 
-	createdProto, _ := ptypes.TimestampProto(created)
+	createdProto, err := ptypes.TimestampProto(created)
+	if err != nil {
+		return nil, err
+	}
 	transaction.Created = createdProto
+
+	account, err := t.accounts.Read(ctx, transaction.Account.Id)
+	if err != nil {
+		return nil, err
+	}
+	transaction.Account = account
 
 	return transaction, nil
 }

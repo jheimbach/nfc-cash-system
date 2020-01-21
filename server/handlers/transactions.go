@@ -61,6 +61,9 @@ func (t *transactionServer) ListTransactionsByAccount(ctx context.Context, req *
 func (t *transactionServer) CreateTransaction(ctx context.Context, req *api.CreateTransactionRequest) (*api.Transaction, error) {
 	transaction, err := t.storage.Create(ctx, req.Amount, req.AccountId)
 	if err != nil {
+		if err == models.ErrAccountNotFound {
+			return nil, ErrAccountNotFound
+		}
 		return nil, ErrSomethingWentWrong
 	}
 
@@ -70,11 +73,14 @@ func (t *transactionServer) CreateTransaction(ctx context.Context, req *api.Crea
 func (t *transactionServer) GetTransaction(ctx context.Context, req *api.GetTransactionRequest) (*api.Transaction, error) {
 	transaction, err := t.storage.Read(ctx, req.Id)
 	if err != nil {
+		if err == models.ErrNotFound {
+			return nil, ErrTransactionNotFound
+		}
 		return nil, ErrSomethingWentWrong
 	}
 
 	if transaction.Account.Id != req.AccountId {
-		return nil, ErrAccountNotFound
+		return nil, ErrTransactionNotFound
 	}
 
 	return transaction, nil

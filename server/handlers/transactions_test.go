@@ -250,7 +250,7 @@ func TestTransactionServer_CreateTransaction(t *testing.T) {
 				AccountId: 100,
 			},
 			returnErr: models.ErrAccountNotFound,
-			wantErr:   ErrSomethingWentWrong,
+			wantErr:   ErrAccountNotFound,
 		},
 	}
 
@@ -324,7 +324,7 @@ func TestTransactionServer_GetTransaction(t *testing.T) {
 				AccountId: 1,
 			},
 			want:    genTransactionModels(1, 2)[0],
-			wantErr: ErrAccountNotFound,
+			wantErr: ErrTransactionNotFound,
 		},
 		{
 			name: "storage returns error",

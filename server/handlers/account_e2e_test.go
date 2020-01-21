@@ -613,21 +613,3 @@ func TestAccountserver_E2E_DeleteAccount(t *testing.T) {
 		})
 	}
 }
-
-func checkError(t *testing.T, response *http.Response, code int, errMsg string) {
-	t.Helper()
-
-	if response.StatusCode != code {
-		t.Errorf("got statuscode %d, expected %d", response.StatusCode, code)
-	}
-
-	var jsonErr *api.Status
-	err := json.NewDecoder(response.Body).Decode(&jsonErr)
-	if err != nil {
-		t.Fatalf("could not parse error: %v", err)
-	}
-
-	if jsonErr.Message != errMsg {
-		t.Errorf("got err msg: %q, wanted: %q", jsonErr.Message, errMsg)
-	}
-}
