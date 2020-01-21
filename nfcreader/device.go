@@ -24,7 +24,7 @@ func (d *Device) Close() error {
 	return d.device.Close()
 }
 
-func (d *Device) ListenForCardUids(send chan []byte) {
+func (d *Device) ListenForCardUids(send chan<- []byte) {
 	for {
 		targets, err := d.device.InitiatorListPassiveTargets(d.Modulation)
 		if err != nil {
@@ -53,7 +53,7 @@ func (d *Device) HasError() bool {
 	return d.LastErr != nil
 }
 
-func sendTargetUid(target nfc.Target, send chan []byte) {
+func sendTargetUid(target nfc.Target, send chan<- []byte) {
 	card, ok := target.(*nfc.ISO14443aTarget)
 	if ok {
 		send <- card.UID[:card.UIDLen]
