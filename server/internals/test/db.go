@@ -57,7 +57,7 @@ func GetDb(t *testing.T, dbName, teardownScriptFile string, migrationDir string)
 	teardown = func() {
 		_, err := db.Exec(testDBconn.teardownScript)
 		if err != nil {
-			t.Skipf("got error from teardown: %v", err)
+			t.Fatalf("got error from teardown: %v", err)
 		}
 	}
 
@@ -70,7 +70,7 @@ func GetDb(t *testing.T, dbName, teardownScriptFile string, migrationDir string)
 			_, err := db.Exec(string(setupScript))
 			if err != nil {
 				teardown()
-				t.Skipf("got error initializing script %q: %v", filename, err)
+				t.Fatalf("got error initializing script %q: %v", filename, err)
 			}
 		}
 	}
