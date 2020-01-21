@@ -17,14 +17,14 @@ type userServer struct {
 	tokenGenerator auth.TokenGenerator
 }
 
-func RegisterUserServer(s *grpc.Server, storage models.UserStorager) {
+func RegisterUserServer(s *grpc.Server, storage models.UserStorager, generator auth.TokenGenerator) {
 	api.RegisterUserServiceServer(s, &userServer{
 		storage:        storage,
-		tokenGenerator: auth.NewJwtGenerator(),
+		tokenGenerator: generator,
 	})
 }
 
-func (a *userServer) AuthenticateUser(ctx context.Context, empty *empty.Empty) (*api.AuthenticateResponse, error) {
+func (a *userServer) AuthenticateUser(ctx context.Context, _ *empty.Empty) (*api.AuthenticateResponse, error) {
 	pair, err := auth.UsernameAndPasswortFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -38,13 +38,13 @@ func (a *userServer) AuthenticateUser(ctx context.Context, empty *empty.Empty) (
 
 	// create access token
 	expire := a.tokenGenerator.ExpirationTime(5 * time.Minute)
-	accessToken, err := a.tokenGenerator.CreateToken(user, expire, auth.AccessTokenKey)
+	accessToken, err := a.tokenGenerator.CreateToken(user, expire, auth.AccessToken)
 	if err != nil {
 		return nil, auth.ErrCouldNotAuthorize
 	}
 
 	// create refresh token
-	refreshToken, err := a.createRefreshToken(ctx, user)
+	refreshToken, err := a.createRefreshToken(user)
 	if err != nil {
 		return nil, auth.ErrCouldNotAuthorize
 	}
@@ -58,16 +58,7 @@ func (a *userServer) AuthenticateUser(ctx context.Context, empty *empty.Empty) (
 }
 
 func (a *userServer) LogoutUser(ctx context.Context, e *empty.Empty) (*empty.Empty, error) {
-	user, err := auth.RetrieveUserFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	err = a.storage.DeleteRefreshKey(ctx, user.Id)
-	if err != nil {
-		return nil, ErrCouldNotLogOut
-	}
-
+	// todo: set refreshtoken and accesstoken on a blacklist
 	return &empty.Empty{}, nil
 }
 
@@ -82,17 +73,21 @@ func (a *userServer) RefreshToken(ctx context.Context, e *empty.Empty) (*api.Aut
 		return nil, err
 	}
 
-	refreshK, err := a.storage.GetRefreshKey(ctx, user.Id)
-	if err != nil {
-		return nil, auth.ErrCouldNotAuthorize
-	}
-	_, err = a.tokenGenerator.VerifyToken(rToken, refreshK)
+	_, expires, err := a.tokenGenerator.VerifyToken(rToken, auth.RefreshToken)
 	if err != nil {
 		return nil, auth.ErrCouldNotAuthorize
 	}
 
+	// if refreshToken is about to expire, renew it
+	if expires.After(time.Now().Add(-10 * time.Minute)) {
+		rToken, err = a.createRefreshToken(user)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	expire := a.tokenGenerator.ExpirationTime(5 * time.Minute)
-	newAToken, err := a.tokenGenerator.CreateToken(user, expire, auth.AccessTokenKey)
+	newAToken, err := a.tokenGenerator.CreateToken(user, expire, auth.AccessToken)
 	if err != nil {
 		return nil, auth.ErrCouldNotAuthorize
 	}
@@ -105,28 +100,11 @@ func (a *userServer) RefreshToken(ctx context.Context, e *empty.Empty) (*api.Aut
 	}, nil
 }
 
-func (a *userServer) createRefreshToken(ctx context.Context, user *api.User) (string, error) {
-	// create random key for each user
-	refreshKey := a.tokenGenerator.CreateRandomKey()
+func (a *userServer) createRefreshToken(user *api.User) (string, error) {
 
 	// create jwt token with userId and random key
-	refreshToken, err := a.tokenGenerator.CreateToken(user, a.tokenGenerator.ExpirationTime(7*24*time.Hour), refreshKey)
+	refreshToken, err := a.tokenGenerator.CreateToken(user, a.tokenGenerator.ExpirationTime(time.Hour), auth.RefreshToken)
 	if err != nil {
-		return "", err
-	}
-
-	//save refresh key to database
-	err = a.storage.InsertRefreshKey(ctx, user.Id, refreshKey)
-	if err != nil {
-		if err == models.ErrUserHasRefreshKey {
-			dErr := a.storage.DeleteRefreshKey(ctx, user.Id)
-			if dErr != nil {
-				return "", dErr
-			}
-		}
-		if err == models.ErrRefreshKeyIsInUse || err == models.ErrUserHasRefreshKey {
-			return a.createRefreshToken(ctx, user)
-		}
 		return "", err
 	}
 

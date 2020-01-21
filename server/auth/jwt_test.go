@@ -12,17 +12,9 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
-var generator = NewJwtGenerator()
-
-func TestCreateRandomKey(t *testing.T) {
-	t.Run("create some random keys", func(t *testing.T) {
-		for i := 0; i < 10; i++ {
-			got := generator.CreateRandomKey()
-			if len(got) != 44 {
-				t.Errorf("createRandomKey should've returned 44 char long string, got %d", len(got))
-			}
-		}
-	})
+var mockKeyStorage = map[string][]byte{string(AccessToken): []byte("abcdefghijkl"), string(RefreshToken): []byte("mnopqrstuvwxyz")}
+var generator = JWTAuthenticator{
+	keyStorage: mockKeyStorage,
 }
 
 func TestExpirationTime(t *testing.T) {
@@ -43,7 +35,7 @@ func TestCreateToken(t *testing.T) {
 	type args struct {
 		user *api.User
 		time time.Time
-		key  []byte
+		key  TokenType
 	}
 	tests := []struct {
 		name  string
@@ -59,7 +51,7 @@ func TestCreateToken(t *testing.T) {
 					Created: mockTimeStamp(),
 				},
 				time: time.Now().Add(time.Minute),
-				key:  []byte("teststring"),
+				key:  AccessToken,
 			},
 		},
 	}
@@ -71,7 +63,7 @@ func TestCreateToken(t *testing.T) {
 				t.Fatalf("could not create token: %v", err)
 			}
 			tkn, err := jwt.Parse(got, func(token *jwt.Token) (i interface{}, err error) {
-				return tt.input.key, nil
+				return generator.keyStorage[fmt.Sprintf("%v", token.Header["type"])], nil
 			})
 
 			if err != nil {
@@ -95,7 +87,7 @@ func TestVerifyToken(t *testing.T) {
 	type args struct {
 		user *api.User
 		time time.Time
-		key  []byte
+		key  TokenType
 	}
 	tests := []struct {
 		name    string
@@ -109,7 +101,7 @@ func TestVerifyToken(t *testing.T) {
 			input: args{
 				user: mUser,
 				time: time.Now().Add(time.Minute),
-				key:  []byte("teststring"),
+				key:  AccessToken,
 			},
 			want: mUser,
 		},
@@ -118,7 +110,7 @@ func TestVerifyToken(t *testing.T) {
 			input: args{
 				user: mUser,
 				time: time.Now().Add(-10 * time.Minute),
-				key:  []byte("teststring"),
+				key:  AccessToken,
 			},
 			wantErr: func() error {
 				err := new(jwt.ValidationError)
@@ -130,9 +122,9 @@ func TestVerifyToken(t *testing.T) {
 		{
 			name: "tempered token",
 			input: args{
-				key: []byte("teststring"),
+				key: AccessToken,
 			},
-			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoyLCJuYW1lIjoidGVzdHVzZXIyIiwiZW1haWwiOiJ0ZXN0MkBleGFtcGxlLmNvbSIsImNyZWF0ZWQiOnsic2Vjb25kcyI6MTU0NzgzMTc3NX19LCJleHAiOjMyNTAyNjk5ODg1LCJqdGkiOiI2ZDQ0YWU2ZjczMGIyYmFkMzBiZjcwYzc3NDU3NzZiYiIsInN1YiI6InVzZXJfdGVzdHVzZXIxXzEifQ.SdNDLw32Olxh2LPw0FZXhWaYufEE56jzKEKfiwzDWE8",
+			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsInR5cGUiOiJhY2Nlc3MtdGtuIn0.eyJ1c2VyIjp7ImlkIjoyLCJuYW1lIjoidGVzdHVzZXIyIiwiZW1haWwiOiJ0ZXN0MkBleGFtcGxlLmNvbSIsImNyZWF0ZWQiOnsic2Vjb25kcyI6MTU0NzgzMTc3NX19LCJleHAiOjMyNTAyNjk5ODg1LCJqdGkiOiI2ZDQ0YWU2ZjczMGIyYmFkMzBiZjcwYzc3NDU3NzZiYiIsInN1YiI6InVzZXJfdGVzdHVzZXIxXzEifQ.QKQX6e-DxA641CXH3ehStSVGlDHT5QEdsRwM-EmRV_I",
 			wantErr: func() error {
 				err := new(jwt.ValidationError)
 				err.Inner = fmt.Errorf("signature is invalid")
@@ -153,7 +145,7 @@ func TestVerifyToken(t *testing.T) {
 				}
 			}
 
-			got, err := generator.VerifyToken(token, tt.input.key)
+			got, _, err := generator.VerifyToken(token, tt.input.key)
 			if tt.wantErr != nil {
 				if err, ok := err.(*jwt.ValidationError); ok {
 					want := tt.wantErr.(*jwt.ValidationError)

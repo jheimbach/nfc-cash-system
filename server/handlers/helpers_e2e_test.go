@@ -134,11 +134,12 @@ func newGrpcServer(database *sql.DB, cert, key string) (*grpc.Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	tokenGen, _ := auth.NewJWTAuthenticator("e5pQGs6UOjZxZLjOg0Z5jNQ1JzARut4NZ3JGf7e0", "R04y8DEVfLoGm91oDRjIgDIsH1n1Y8ak0JFloBIm")
 
-	s := grpc.NewServer(grpc.Creds(creds), grpc.UnaryInterceptor(auth.UnaryInterceptor))
+	s := grpc.NewServer(grpc.Creds(creds), grpc.UnaryInterceptor(auth.InitInterceptor(tokenGen)))
 
 	userModel := mysql.NewUserModel(database)
-	RegisterUserServer(s, userModel)
+	RegisterUserServer(s, userModel, tokenGen)
 
 	groupModel := mysql.NewGroupModel(database)
 	RegisterGroupServer(s, groupModel)

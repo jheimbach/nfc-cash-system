@@ -3,8 +3,6 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
@@ -92,53 +90,4 @@ func (u *UserModel) Authenticate(ctx context.Context, email, password string) (*
 	}
 
 	return user, nil
-}
-
-func (u *UserModel) InsertRefreshKey(ctx context.Context, userId int32, key []byte) error {
-	insertStmt := `INSERT INTO users_refreshkeys (user_id, refresh_key) VALUES (?,?)`
-	_, err := u.db.ExecContext(ctx, insertStmt, userId, fmt.Sprintf("%s", key))
-
-	if err != nil {
-		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
-			if mysqlErr.Number == 1062 {
-				if strings.Contains(mysqlErr.Message, "user_id") {
-					return models.ErrUserHasRefreshKey
-				} else {
-					return models.ErrRefreshKeyIsInUse
-				}
-			}
-			if mysqlErr.Number == 1452 {
-				return models.ErrUserNotFound
-			}
-		}
-		return err
-	}
-
-	return nil
-}
-
-func (u *UserModel) DeleteRefreshKey(ctx context.Context, userId int32) error {
-	deleteStmt := `DELETE FROM users_refreshkeys WHERE user_id = ?`
-	_, err := u.db.ExecContext(ctx, deleteStmt, userId)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (u *UserModel) GetRefreshKey(ctx context.Context, userId int32) ([]byte, error) {
-	var key string
-	getStmt := `SELECT refresh_key FROM users_refreshkeys WHERE user_id = ?`
-
-	err := u.db.QueryRowContext(ctx, getStmt, userId).Scan(&key)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, models.ErrNotFound
-		}
-		return nil, err
-	}
-
-	return []byte(key), nil
 }

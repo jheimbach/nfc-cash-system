@@ -60,13 +60,6 @@ type Authenticator interface {
 	Authenticate(ctx context.Context, email, password string) (*api.User, error)
 }
 
-type RefreshKeySaver interface {
-	GetRefreshKey(ctx context.Context, userId int32) ([]byte, error)
-	InsertRefreshKey(ctx context.Context, userId int32, key []byte) error
-	DeleteRefreshKey(ctx context.Context, userId int32) error
-}
-
 type UserStorager interface {
 	Authenticator
-	RefreshKeySaver
 }

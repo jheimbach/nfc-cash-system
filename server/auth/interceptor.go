@@ -10,23 +10,23 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func UnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-	if info.FullMethod == "/api.UserService/AuthenticateUser" {
+func InitInterceptor(gen TokenGenerator) func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		if info.FullMethod == "/api.UserService/AuthenticateUser" {
+			return handler(ctx, req)
+		}
+		token, err := bearerAuthorization(ctx)
+		if err != nil {
+			return nil, err
+		}
+		user, _, err := gen.VerifyToken(token, AccessToken)
+		if err != nil {
+			return nil, ErrCouldNotAuthorize
+		}
+		ctx = context.WithValue(ctx, "user", user)
+
 		return handler(ctx, req)
 	}
-	token, err := bearerAuthorization(ctx)
-	if err != nil {
-		return nil, err
-	}
-	gen := NewJwtGenerator()
-
-	user, err := gen.VerifyToken(token, AccessTokenKey)
-	if err != nil {
-		return nil, ErrCouldNotAuthorize
-	}
-	ctx = context.WithValue(ctx, "user", user)
-
-	return handler(ctx, req)
 }
 
 func bearerAuthorization(ctx context.Context) (string, error) {

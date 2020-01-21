@@ -16,16 +16,20 @@ type Grpc struct {
 	*grpc.Server
 }
 
-func NewGrpcServer(database *sql.DB, cert, certKey string) (*Grpc, error) {
+func NewGrpcServer(database *sql.DB, cert, certKey string, accessTknKey, refreshTknKey string) (*Grpc, error) {
 	creds, err := credentials.NewServerTLSFromFile(cert, certKey)
 	if err != nil {
 		return nil, err
 	}
 
-	s := grpc.NewServer(grpc.Creds(creds), grpc.UnaryInterceptor(auth.UnaryInterceptor))
+	tokenGen, err := auth.NewJWTAuthenticator(accessTknKey, refreshTknKey)
+	if err != nil {
+		return nil, err
+	}
+	s := grpc.NewServer(grpc.Creds(creds), grpc.UnaryInterceptor(auth.InitInterceptor(tokenGen)))
 
 	userModel := mysql.NewUserModel(database)
-	handlers.RegisterUserServer(s, userModel)
+	handlers.RegisterUserServer(s, userModel, tokenGen)
 
 	groupModel := mysql.NewGroupModel(database)
 	handlers.RegisterGroupServer(s, groupModel)

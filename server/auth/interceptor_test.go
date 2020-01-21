@@ -169,7 +169,7 @@ func TestUnaryInterceptor(t *testing.T) {
 	}
 	type gen struct {
 		user *api.User
-		key  []byte
+		key  TokenType
 		exp  time.Time
 	}
 	tests := []struct {
@@ -185,7 +185,7 @@ func TestUnaryInterceptor(t *testing.T) {
 			info: &grpc.UnaryServerInfo{FullMethod: "test/url"},
 			tokenGen: gen{
 				user: mUser,
-				key:  AccessTokenKey,
+				key:  AccessToken,
 				exp:  time.Now().Add(5 * time.Minute),
 			},
 			header: map[string]string{},
@@ -237,9 +237,9 @@ func TestUnaryInterceptor(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			gen := JWTAuthenticator{keyStorage: mockKeyStorage}
 			if _, ok := tt.header["authorization"]; !ok {
 				if tt.tokenGen.user != nil {
-					gen := NewJwtGenerator()
 					token, err := gen.CreateToken(tt.tokenGen.user, tt.tokenGen.exp, tt.tokenGen.key)
 					if err != nil {
 						t.Fatalf("could not generate token: %v", err)
@@ -250,7 +250,7 @@ func TestUnaryInterceptor(t *testing.T) {
 			ctx := context.Background()
 			ctx = metadata.NewIncomingContext(ctx, metadata.New(tt.header))
 
-			_, err := UnaryInterceptor(ctx, new(interface{}), tt.info, mockHandler)
+			_, err := InitInterceptor(gen)(ctx, new(interface{}), tt.info, mockHandler)
 
 			if tt.wantErr != nil {
 				if err != tt.wantErr {

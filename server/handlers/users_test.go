@@ -83,20 +83,20 @@ func (m *mockUserStorage) DeleteRefreshKey(ctx context.Context, userId int32) er
 
 type mockGenerator struct {
 	expTime func(d time.Duration) time.Time
-	create  func(user *api.User, expirationTime time.Time, key []byte) (string, error)
-	verify  func(token string, key []byte) (*api.User, error)
+	create  func(user *api.User, expirationTime time.Time, tokenType auth.TokenType) (string, error)
+	verify  func(token string, tokenType auth.TokenType) (user *api.User, expires time.Time, err error)
 }
 
 func (m *mockGenerator) ExpirationTime(duration time.Duration) time.Time {
 	return m.expTime(duration)
 }
 
-func (m *mockGenerator) CreateToken(user *api.User, expirationTime time.Time, key []byte) (string, error) {
-	return m.create(user, expirationTime, key)
+func (m *mockGenerator) CreateToken(user *api.User, expirationTime time.Time, tokenType auth.TokenType) (string, error) {
+	return m.create(user, expirationTime, tokenType)
 }
 
-func (m *mockGenerator) VerifyToken(token string, key []byte) (*api.User, error) {
-	return m.verify(token, key)
+func (m *mockGenerator) VerifyToken(token string, tokenType auth.TokenType) (user *api.User, expires time.Time, err error) {
+	return m.verify(token, tokenType)
 }
 
 func (m *mockGenerator) CreateRandomKey() []byte {
@@ -209,8 +209,8 @@ func TestUserServer_AuthenticateUser(t *testing.T) {
 					expTime: func(d time.Duration) time.Time {
 						return time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC)
 					},
-					create: func(user *api.User, expirationTime time.Time, key []byte) (s string, err error) {
-						if string(key) != string(auth.AccessTokenKey) {
+					create: func(user *api.User, expirationTime time.Time, tokenType auth.TokenType) (s string, err error) {
+						if tokenType != auth.AccessToken {
 							if tt.returnErr != nil && tt.returnErr.generatorCreateRefresh != nil {
 								return "", tt.returnErr.generatorCreateRefresh
 							}
@@ -243,7 +243,6 @@ func TestUserServer_AuthenticateUser(t *testing.T) {
 
 func TestUserServer_createRefreshToken(t *testing.T) {
 	createErr := errors.New("verifyToken could not create Token")
-	unkownErr := errors.New("storage error")
 
 	type returnErrs struct {
 		createToken error
@@ -267,73 +266,21 @@ func TestUserServer_createRefreshToken(t *testing.T) {
 				createToken: createErr,
 			},
 		},
-		{
-			name:    "insert key returns unkown error",
-			wantErr: unkownErr,
-			errors: &returnErrs{
-				insertKey: unkownErr,
-			},
-		},
-		{
-			name:    "delete key returns error",
-			wantErr: unkownErr,
-			errors: &returnErrs{
-				insertKey: models.ErrUserHasRefreshKey,
-				deleteKey: unkownErr,
-			},
-		},
-		{
-			name: "insert key returns ErrUserHasRefreshKey error",
-			want: "thisIsARefreshTokenForTests",
-			errors: &returnErrs{
-				insertKey: models.ErrUserHasRefreshKey,
-			},
-		},
-		{
-			name: "insert key returns ErrRefreshKeyIsInUse error",
-			want: "thisIsARefreshTokenForTests",
-			errors: &returnErrs{
-				insertKey: models.ErrRefreshKeyIsInUse,
-			},
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			returnedInserErr := false
 			server := &userServer{
 				storage: &mockUserStorage{
 					called: make(map[string]bool),
-					insertKey: func(ctx context.Context, userId int32, key []byte) error {
-						if userId != 1 {
-							t.Errorf("wanted userId 1 got %d", userId)
-						}
-						if string(key) != "randomkey" {
-							t.Errorf("got key %q, wanted %q", key, "randomkey")
-						}
-						if !returnedInserErr && tt.errors != nil && tt.errors.insertKey != nil {
-							returnedInserErr = true
-							return tt.errors.insertKey
-						}
-						return nil
-					},
-					deleteKey: func(ctx context.Context, userId int32) error {
-						if userId != 1 {
-							t.Errorf("wanted userId 1 got %d", userId)
-						}
-						if tt.errors != nil && tt.errors.deleteKey != nil {
-							return tt.errors.deleteKey
-						}
-						return nil
-					},
 				},
 				tokenGenerator: &mockGenerator{
 					expTime: func(d time.Duration) time.Time {
 						return time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC)
 					},
-					create: func(user *api.User, expirationTime time.Time, key []byte) (s string, err error) {
-						if string(key) != "randomkey" {
-							t.Errorf("got random key %q, wanted %q", string(key), "randomkey")
+					create: func(user *api.User, expirationTime time.Time, tokenType auth.TokenType) (s string, err error) {
+						if tokenType != auth.RefreshToken {
+							t.Errorf("got tokentype %q, wanted %q", tokenType, auth.RefreshToken)
 						}
 						if tt.errors != nil && tt.errors.createToken != nil {
 							return "", tt.errors.createToken
@@ -344,7 +291,7 @@ func TestUserServer_createRefreshToken(t *testing.T) {
 				},
 			}
 
-			got, err := server.createRefreshToken(context.Background(), &api.User{
+			got, err := server.createRefreshToken(&api.User{
 				Id:    1,
 				Name:  "test",
 				Email: "test@user.com",
@@ -386,18 +333,6 @@ func TestUserServer_LogoutUser(t *testing.T) {
 		{
 			name: "logout user",
 			user: mockUser,
-		},
-		{
-			name: "could not delete refresh key",
-			user: mockUser,
-			errors: &returnErrs{
-				deleteKey: errors.New("storage delete error"),
-			},
-			wantErr: ErrCouldNotLogOut,
-		},
-		{
-			name:    "without user in context",
-			wantErr: auth.ErrCouldNotAuthorize,
 		},
 	}
 
@@ -473,17 +408,6 @@ func TestUserServer_RefreshToken(t *testing.T) {
 			wantErr: ErrNoRefreshToken,
 		},
 		{
-			name: "requires refresh key in db",
-			header: map[string]string{
-				"x-refresh-token": "thisIsARefreshTokenForTests",
-			},
-			user: mockUser,
-			errors: &returnErrs{
-				getKey: errors.New("could not access refresh key in storage"),
-			},
-			wantErr: auth.ErrCouldNotAuthorize,
-		},
-		{
 			name: "requires valid refresh token",
 			header: map[string]string{
 				"x-refresh-token": "thisIsARefreshTokenForTests",
@@ -510,31 +434,22 @@ func TestUserServer_RefreshToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := userServer{
-				storage: &mockUserStorage{
-					called: make(map[string]bool),
-					getKey: func(ctx context.Context, userId int32) (bytes []byte, err error) {
-						if tt.errors != nil && tt.errors.getKey != nil {
-							return nil, tt.errors.getKey
-						}
-						return []byte("randomkey"), nil
-					},
-				},
 				tokenGenerator: &mockGenerator{
 					expTime: func(d time.Duration) time.Time {
 						return time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC)
 					},
-					verify: func(token string, key []byte) (user *api.User, err error) {
+					verify: func(token string, tokenType auth.TokenType) (user *api.User, expires time.Time, err error) {
 						if tt.errors != nil && tt.errors.verify != nil {
-							return nil, tt.errors.verify
+							return nil, time.Unix(0, 0), tt.errors.verify
 						}
 
 						return &api.User{
 							Id:    1,
 							Name:  "test",
 							Email: "test@user.com",
-						}, nil
+						}, time.Unix(0, 0), nil
 					},
-					create: func(user *api.User, expirationTime time.Time, key []byte) (s string, err error) {
+					create: func(user *api.User, expirationTime time.Time, tokenType auth.TokenType) (s string, err error) {
 						if tt.errors != nil && tt.errors.createToken != nil {
 							return "", tt.errors.createToken
 						}

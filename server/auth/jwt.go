@@ -2,8 +2,6 @@ package auth
 
 import (
 	"crypto/md5"
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"time"
@@ -12,9 +10,22 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-var (
-	AccessTokenKey = []byte("8f70563af940249929969adbc48fe7276354aa924934e28d5350e099ffec4028")
+const (
+	accessTokenKey   = "7QC/y4Dkke2izCGyArkfH074ETD9Hyf6PxIV/D7L2Nw="
+	refreshTokenKey  = "tA2ZFqRCgYBEX4Y9/Q4Au9U0qrbW2oBcqJ8uRPavj9g="
+	refreshTokenName = "refresh-tkn"
 )
+
+type TokenType string
+
+const (
+	AccessToken  TokenType = "access-tkn"
+	RefreshToken TokenType = "refresh-tkn"
+)
+
+func (t TokenType) name() string {
+	return string(t)
+}
 
 type claims struct {
 	User   api.User `json:"user,omitempty"`
@@ -24,25 +35,39 @@ type claims struct {
 
 type TokenGenerator interface {
 	ExpirationTime(duration time.Duration) time.Time
-	CreateToken(user *api.User, expirationTime time.Time, key []byte) (string, error)
-	VerifyToken(token string, key []byte) (*api.User, error)
-	CreateRandomKey() []byte
+	CreateToken(user *api.User, expirationTime time.Time, tokenType TokenType) (string, error)
+	VerifyToken(token string, tokenType TokenType) (user *api.User, expires time.Time, err error)
 }
 
-type jwtGenerator int
-
-func NewJwtGenerator() TokenGenerator {
-	return new(jwtGenerator)
+type JWTAuthenticator struct {
+	keyStorage map[string][]byte
 }
 
-func (*jwtGenerator) ExpirationTime(duration time.Duration) time.Time {
+func NewJWTAuthenticator(accessTknKey, refreshTknKey string) (*JWTAuthenticator, error) {
+	keyStorage := make(map[string][]byte)
+
+	if accessTknKey == "" {
+		return nil, fmt.Errorf("access token key must not be empty")
+	}
+	if refreshTknKey == "" {
+		return nil, fmt.Errorf("refresh token key must not be empty")
+	}
+	keyStorage[string(AccessToken)] = []byte(accessTknKey)
+	keyStorage[string(RefreshToken)] = []byte(refreshTknKey)
+
+	return &JWTAuthenticator{keyStorage: keyStorage}, nil
+}
+
+func (JWTAuthenticator) ExpirationTime(duration time.Duration) time.Time {
 	return time.Now().Add(duration)
 }
 
-func (*jwtGenerator) CreateToken(user *api.User, expirationTime time.Time, key []byte) (string, error) {
+func (j JWTAuthenticator) CreateToken(user *api.User, expirationTime time.Time, tokenType TokenType) (string, error) {
+	tokenName := tokenType.name()
 	idHash := md5.New()
 	io.WriteString(idHash, user.Name)
-	io.WriteString(idHash, string(key))
+	io.WriteString(idHash, user.Email)
+	io.WriteString(idHash, tokenName)
 
 	claims := &claims{
 		User: *user,
@@ -54,24 +79,26 @@ func (*jwtGenerator) CreateToken(user *api.User, expirationTime time.Time, key [
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(key)
+	token.Header["type"] = tokenName
+
+	return token.SignedString(j.keyStorage[tokenName])
 }
 
-func (*jwtGenerator) VerifyToken(token string, key []byte) (*api.User, error) {
+func (j JWTAuthenticator) VerifyToken(token string, tokenType TokenType) (user *api.User, expires time.Time, err error) {
 	claims := &claims{}
-	_, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (i interface{}, err error) {
+	_, e := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (i interface{}, err error) {
+		headerType := token.Header["type"]
+		tokenName := tokenType.name()
+		if headerType != tokenName {
+			return nil, fmt.Errorf("token is not from type %s", tokenType.name())
+		}
+		key := j.keyStorage[tokenName]
 		return key, nil
 	})
-	if err != nil {
-		return nil, err
+
+	if e != nil {
+		return nil, time.Unix(0, 0), e
 	}
 
-	return &claims.User, nil
-}
-
-func (*jwtGenerator) CreateRandomKey() []byte {
-	key := make([]byte, 32)
-	rand.Read(key)
-
-	return []byte(base64.StdEncoding.EncodeToString(key))
+	return &claims.User, time.Unix(claims.ExpiresAt, 0), nil
 }
