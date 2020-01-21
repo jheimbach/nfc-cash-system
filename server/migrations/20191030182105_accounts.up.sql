@@ -1,9 +1,9 @@
 CREATE TABLE `accounts`
 (
-    `id`          integer PRIMARY KEY NOT NULL AUTO_INCREMENT,
-    `name`        varchar(255)        NOT NULL,
+    `id`          INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    `name`        VARCHAR(255)        NOT NULL,
     `description` TEXT,
-    `saldo`       FLOAT               NOT NULL DEFAULT 0,
+    `saldo`       DECIMAL(15,2)               NOT NULL DEFAULT 0,
     `group_id`    INTEGER,
     # according to ISO 14443-3A for nfc tags, uids are 4-10 bytes long (hex 2 chars per byte are 20 max).
     # source: https://www.nxp.com/docs/en/application-note/AN10927.pdf
