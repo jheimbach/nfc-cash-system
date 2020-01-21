@@ -55,6 +55,9 @@ func DowngradeDatabase(db *sql.DB, databaseName, migrationDir string) error {
 func forcing(m *migrate.Migrate) error {
 	version, isDirty, err := m.Version()
 	if err != nil {
+		if err == migrate.ErrNilVersion {
+			return nil
+		}
 		return err
 	}
 
