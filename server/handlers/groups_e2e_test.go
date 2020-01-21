@@ -108,8 +108,15 @@ func TestGroupserver_E2E_ListGroups(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.want.statusCode != http.StatusOK {
-				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				err = checkError(res, tt.want.statusCode, tt.want.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
+			}
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			var groups api.ListGroupsResponse
@@ -222,8 +229,15 @@ func TestGroupserver_E2E_CreateGroup(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.want.statusCode != http.StatusOK {
-				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				err = checkError(res, tt.want.statusCode, tt.want.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
+			}
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			var group api.Group
@@ -299,8 +313,15 @@ func TestGroupserver_E2E_GetGroup(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.want.statusCode != http.StatusOK {
-				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				err = checkError(res, tt.want.statusCode, tt.want.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
+			}
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			var group api.Group
@@ -414,8 +435,15 @@ func TestGroupserver_E2E_UpdateGroup(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.want.statusCode != http.StatusOK {
-				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				err = checkError(res, tt.want.statusCode, tt.want.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
+			}
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			var group api.Group
@@ -489,11 +517,15 @@ func TestGroupserver_E2E_DeleteGroup(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.statusCode != http.StatusOK {
-				checkError(t, res, tt.statusCode, tt.errMsg)
+				err = checkError(res, tt.statusCode, tt.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
 			}
-			if res.StatusCode != http.StatusOK {
-				t.Errorf("got statuscode %d, expected 200", res.StatusCode)
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			b, err := ioutil.ReadAll(res.Body)

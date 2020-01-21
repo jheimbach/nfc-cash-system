@@ -144,8 +144,15 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.want.statusCode != http.StatusOK {
-				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				err = checkError(res, tt.want.statusCode, tt.want.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
+			}
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			var accounts api.ListAccountsResponse
@@ -239,8 +246,15 @@ func TestAccountserver_E2E_GetAccount(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.want.statusCode != http.StatusOK {
-				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				err = checkError(res, tt.want.statusCode, tt.want.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
+			}
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			var account api.Account
@@ -354,8 +368,15 @@ func TestAccountserver_E2E_CreateAccount(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.want.statusCode != http.StatusOK {
-				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				err = checkError(res, tt.want.statusCode, tt.want.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
+			}
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			var account api.Account
@@ -539,8 +560,15 @@ func TestAccountserver_E2E_UpdateAccount(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.want.statusCode != http.StatusOK {
-				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				err = checkError(res, tt.want.statusCode, tt.want.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
+			}
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			var account api.Account
@@ -601,8 +629,15 @@ func TestAccountserver_E2E_DeleteAccount(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.statusCode != http.StatusOK {
-				checkError(t, res, tt.statusCode, tt.errMsg)
+				err = checkError(res, tt.statusCode, tt.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
+			}
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 			b, err := ioutil.ReadAll(res.Body)
 			is.NoErr(err) // could not read body

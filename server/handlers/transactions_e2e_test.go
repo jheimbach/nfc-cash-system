@@ -181,8 +181,15 @@ func TestTransactionServer_E2E_ListTransactions(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.want.statusCode != http.StatusOK {
-				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				err = checkError(res, tt.want.statusCode, tt.want.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
+			}
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			var transactionsResponse api.ListTransactionsResponse
@@ -372,8 +379,15 @@ func TestTransactionServer_E2E_ListTransactionsByAccount(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.want.statusCode != http.StatusOK {
-				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				err = checkError(res, tt.want.statusCode, tt.want.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
+			}
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			var transactionsResponse api.ListTransactionsResponse
@@ -492,8 +506,15 @@ func TestTransactionServer_E2E_GetTransaction(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.want.statusCode != http.StatusOK {
-				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				err = checkError(res, tt.want.statusCode, tt.want.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
+			}
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			var transaction api.Transaction
@@ -600,8 +621,15 @@ func TestTransactionServer_E2E_CreateTransaction(t *testing.T) {
 			defer res.Body.Close()
 
 			if tt.want.statusCode != http.StatusOK {
-				checkError(t, res, tt.want.statusCode, tt.want.errMsg)
+				err = checkError(res, tt.want.statusCode, tt.want.errMsg)
+				if err != nil {
+					t.Error(err)
+				}
 				return
+			}
+			err = checkUnwantedErr(res)
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			var account api.Transaction

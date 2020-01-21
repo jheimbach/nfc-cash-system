@@ -173,20 +173,39 @@ func RestUrlWithPath(path string) string {
 	return fmt.Sprintf("http://%s/%s", RestEndPoint, path)
 }
 
-func checkError(t *testing.T, response *http.Response, code int, errMsg string) {
-	t.Helper()
-
+func checkError(response *http.Response, code int, errMsg string) error {
 	if response.StatusCode != code {
-		t.Errorf("got statuscode %d, expected %d", response.StatusCode, code)
+		return fmt.Errorf("got statuscode %d, expected %d", response.StatusCode, code)
 	}
 
+	status, err := parseErrorMsg(response)
+	if err != nil {
+		return err
+	}
+
+	if status.Message != errMsg {
+		return fmt.Errorf("got err msg: %q, wanted: %q", status.Message, errMsg)
+	}
+
+	return nil
+}
+
+func parseErrorMsg(response *http.Response) (*api.Status, error) {
 	var jsonErr *api.Status
 	err := json.NewDecoder(response.Body).Decode(&jsonErr)
 	if err != nil {
-		t.Fatalf("could not parse error: %v", err)
+		return nil, fmt.Errorf("could not parse status: %w", err)
 	}
+	return jsonErr, nil
+}
 
-	if jsonErr.Message != errMsg {
-		t.Errorf("got err msg: %q, wanted: %q", jsonErr.Message, errMsg)
+func checkUnwantedErr(response *http.Response) error {
+	if response.StatusCode != http.StatusOK {
+		status, err := parseErrorMsg(response)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("unexpected response error: %v", status)
 	}
+	return nil
 }
