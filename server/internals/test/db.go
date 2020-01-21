@@ -3,6 +3,7 @@ package test
 import (
 	"database/sql"
 	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/JHeimbach/nfc-cash-system/server/internals/database"
@@ -21,7 +22,12 @@ func (tdb testDb) initDb(t *testing.T) *sql.DB {
 		return tdb.db
 	}
 
-	db, err := database.OpenDatabase("${TEST_DB_NAME}:${TEST_DB_NAME}@tcp(${TEST_DB_NAME}-test.db)/${TEST_DB_NAME}?parseTime=true&multiStatements=true")
+	dsn := "${TEST_DB_NAME}:${TEST_DB_NAME}@tcp(${TEST_DB_NAME}-test.db)/${TEST_DB_NAME}?parseTime=true&multiStatements=true"
+	if os.Getenv("TEST_DB_DSN") != "" {
+		dsn = os.Getenv("TEST_DB_DSN")
+	}
+
+	db, err := database.OpenDatabase(dsn)
 	if err != nil {
 		t.Skipf("could not connect to database, skipping test, err: %v", err)
 	}
