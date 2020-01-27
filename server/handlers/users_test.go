@@ -10,6 +10,7 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/auth"
+	"github.com/JHeimbach/nfc-cash-system/server/internals/test/mock"
 	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/metadata"
@@ -47,38 +48,6 @@ func TestRefreshTokenFromHeader(t *testing.T) {
 		}
 
 	})
-}
-
-type mockUserStorage struct {
-	called       map[string]bool
-	authenticate func(ctx context.Context, email, password string) (*api.User, error)
-	getKey       func(ctx context.Context, userId int32) ([]byte, error)
-	insertKey    func(ctx context.Context, userId int32, key []byte) error
-	deleteKey    func(ctx context.Context, userId int32) error
-}
-
-func (m *mockUserStorage) Authenticate(ctx context.Context, email, password string) (*api.User, error) {
-	m.called["auth"] = true
-	return m.authenticate(ctx, email, password)
-}
-
-func (m *mockUserStorage) GetRefreshKey(ctx context.Context, userId int32) ([]byte, error) {
-	m.called["get"] = true
-	return m.getKey(ctx, userId)
-}
-
-func (m *mockUserStorage) InsertRefreshKey(ctx context.Context, userId int32, key []byte) error {
-	if m.called["delete"] {
-		return nil
-	}
-	m.called["insert"] = true
-	return m.insertKey(ctx, userId, key)
-}
-
-func (m *mockUserStorage) DeleteRefreshKey(ctx context.Context, userId int32) error {
-
-	m.called["delete"] = true
-	return m.deleteKey(ctx, userId)
 }
 
 type mockGenerator struct {
@@ -190,19 +159,13 @@ func TestUserServer_AuthenticateUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := &userServer{
-				storage: &mockUserStorage{
-					called: make(map[string]bool),
-					authenticate: func(ctx context.Context, email, password string) (user *api.User, err error) {
+				storage: &mock.UserRepository{
+					Called: make(map[string]bool),
+					AuthenticateFunc: func(email, password string) (user *api.User, err error) {
 						if tt.returnErr != nil && tt.returnErr.storageAuth != nil {
 							return nil, tt.returnErr.storageAuth
 						}
 						return tt.storageReturnUser, nil
-					},
-					insertKey: func(ctx context.Context, userId int32, key []byte) error {
-						if testUser.Id != userId {
-							t.Errorf("user id does not match %d != %d", testUser.Id, userId)
-						}
-						return nil
 					},
 				},
 				tokenGenerator: &mockGenerator{
@@ -271,8 +234,8 @@ func TestUserServer_createRefreshToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := &userServer{
-				storage: &mockUserStorage{
-					called: make(map[string]bool),
+				storage: &mock.UserRepository{
+					Called: make(map[string]bool),
 				},
 				tokenGenerator: &mockGenerator{
 					expTime: func(d time.Duration) time.Time {
@@ -339,14 +302,8 @@ func TestUserServer_LogoutUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := &userServer{
-				storage: &mockUserStorage{
-					called: make(map[string]bool),
-					deleteKey: func(ctx context.Context, userId int32) error {
-						if tt.errors != nil && tt.errors.deleteKey != nil {
-							return tt.errors.deleteKey
-						}
-						return nil
-					},
+				storage: &mock.UserRepository{
+					Called: make(map[string]bool),
 				},
 			}
 

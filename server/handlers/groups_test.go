@@ -9,44 +9,12 @@ import (
 	"testing"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
+	"github.com/JHeimbach/nfc-cash-system/server/internals/test/mock"
 	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
-
-type groupMockStorage struct {
-	create      func(name, description string, canOverdraw bool) (*api.Group, error)
-	getAll      func(limit, offset int32) ([]*api.Group, int, error)
-	read        func(id int32) (*api.Group, error)
-	update      func(group *api.Group) (*api.Group, error)
-	delete      func(id int32) error
-	getAllByIds func(ids []int32) (map[int32]*api.Group, error)
-}
-
-func (g *groupMockStorage) Create(_ context.Context, name, description string, canOverdraw bool) (*api.Group, error) {
-	return g.create(name, description, canOverdraw)
-}
-
-func (g *groupMockStorage) GetAll(_ context.Context, limit, offset int32) ([]*api.Group, int, error) {
-	return g.getAll(limit, offset)
-}
-
-func (g *groupMockStorage) Read(_ context.Context, id int32) (*api.Group, error) {
-	return g.read(id)
-}
-
-func (g *groupMockStorage) Update(_ context.Context, group *api.Group) (*api.Group, error) {
-	return g.update(group)
-}
-
-func (g *groupMockStorage) Delete(_ context.Context, id int32) error {
-	return g.delete(id)
-}
-
-func (g groupMockStorage) GetAllByIds(_ context.Context, ids []int32) (map[int32]*api.Group, error) {
-	return g.getAllByIds(ids)
-}
 
 func TestGroupserver_ListGroups(t *testing.T) {
 	var tests = []struct {
@@ -99,8 +67,8 @@ func TestGroupserver_ListGroups(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &groupserver{
-				storage: &groupMockStorage{
-					getAll: func(limit, offset int32) ([]*api.Group, int, error) {
+				storage: &mock.GroupRepository{
+					GetAllFunc: func(limit, offset int32) ([]*api.Group, int, error) {
 						if tt.returnErr != nil {
 							return nil, 0, tt.returnErr
 						}
@@ -161,8 +129,8 @@ func TestGroupserver_GetGroup(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &groupserver{
-				storage: &groupMockStorage{
-					read: func(id int32) (group *api.Group, err error) {
+				storage: &mock.GroupRepository{
+					ReadFunc: func(id int32) (group *api.Group, err error) {
 						return tt.want, tt.returnErr
 					},
 				},
@@ -222,8 +190,8 @@ func TestGroupserver_CreateGroup(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := groupserver{
-				storage: &groupMockStorage{
-					create: func(name, description string, canOverdraw bool) (*api.Group, error) {
+				storage: &mock.GroupRepository{
+					CreateFunc: func(name, description string, canOverdraw bool) (*api.Group, error) {
 						if tt.wantErr != nil {
 							return nil, tt.wantErr
 						}
@@ -284,8 +252,8 @@ func TestGroupserver_UpdateGroup(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := groupserver{
-				storage: &groupMockStorage{
-					update: func(group *api.Group) (*api.Group, error) {
+				storage: &mock.GroupRepository{
+					UpdateFunc: func(group *api.Group) (*api.Group, error) {
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
 						}
@@ -345,8 +313,8 @@ func TestGroupserver_DeleteGroup(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := groupserver{
-				storage: &groupMockStorage{
-					delete: func(id int32) error {
+				storage: &mock.GroupRepository{
+					DeleteFunc: func(id int32) error {
 						return tt.returnErr
 					},
 				},

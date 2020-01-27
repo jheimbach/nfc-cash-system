@@ -8,33 +8,11 @@ import (
 	"time"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
+	"github.com/JHeimbach/nfc-cash-system/server/internals/test/mock"
 	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 )
-
-type transactionMockStorage struct {
-	read               func(id int32) (*api.Transaction, error)
-	create             func(amount float64, accountId int32) (*api.Transaction, error)
-	getAll             func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error)
-	deleteAllByAccount func(accountId int32) error
-}
-
-func (t transactionMockStorage) Read(_ context.Context, id int32) (*api.Transaction, error) {
-	return t.read(id)
-}
-
-func (t transactionMockStorage) Create(_ context.Context, amount float64, accountId int32) (*api.Transaction, error) {
-	return t.create(amount, accountId)
-}
-
-func (t transactionMockStorage) GetAll(_ context.Context, accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
-	return t.getAll(accountId, order, limit, offset)
-}
-
-func (t transactionMockStorage) DeleteAllByAccount(_ context.Context, accountId int32) error {
-	return t.deleteAllByAccount(accountId)
-}
 
 func TestTransactionServer_ListTransactions(t *testing.T) {
 	tests := []struct {
@@ -87,8 +65,8 @@ func TestTransactionServer_ListTransactions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := transactionServer{
-				storage: &transactionMockStorage{
-					getAll: func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
+				storage: &mock.TransactionRepository{
+					GetAllFunc: func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
 						if tt.returnErr != nil {
 							return nil, 0, tt.returnErr
 						}
@@ -184,8 +162,8 @@ func TestTransactionServer_ListTransactionsByAccount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := &transactionServer{
-				storage: transactionMockStorage{
-					getAll: func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
+				storage: &mock.TransactionRepository{
+					GetAllFunc: func(accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
 						if accountId != tt.input.AccountId {
 							t.Fatalf("got accountid %d, expected %d", accountId, tt.input.AccountId)
 						}
@@ -257,8 +235,8 @@ func TestTransactionServer_CreateTransaction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := transactionServer{
-				storage: transactionMockStorage{
-					create: func(amount float64, accountId int32) (*api.Transaction, error) {
+				storage: &mock.TransactionRepository{
+					CreateFunc: func(amount float64, accountId int32) (*api.Transaction, error) {
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
 						}
@@ -340,8 +318,8 @@ func TestTransactionServer_GetTransaction(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := transactionServer{
-				storage: transactionMockStorage{
-					read: func(id int32) (*api.Transaction, error) {
+				storage: &mock.TransactionRepository{
+					ReadFunc: func(id int32) (*api.Transaction, error) {
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
 						}

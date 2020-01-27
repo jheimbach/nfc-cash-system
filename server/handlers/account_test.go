@@ -9,50 +9,13 @@ import (
 	"testing"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
+	"github.com/JHeimbach/nfc-cash-system/server/internals/test/mock"
 	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/golang/protobuf/ptypes/empty"
 	isPkg "github.com/matryer/is"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
-
-type accountMockStorager struct {
-	create      func(name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error)
-	getAll      func(groupId, limit, offset int32) ([]*api.Account, int, error)
-	getAllByIds func(ids []int32) (map[int32]*api.Account, error)
-	read        func(id int32) (*api.Account, error)
-	delete      func(id int32) error
-	update      func(m *api.Account) (*api.Account, error)
-	updateSaldo func(m *api.Account, newSaldo float64) error
-}
-
-func (a accountMockStorager) Create(_ context.Context, name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
-	return a.create(name, description, startSaldo, groupId, nfcChipId)
-}
-
-func (a accountMockStorager) GetAll(_ context.Context, groupId, limit, offset int32) ([]*api.Account, int, error) {
-	return a.getAll(groupId, limit, offset)
-}
-
-func (a accountMockStorager) GetAllByIds(_ context.Context, ids []int32) (map[int32]*api.Account, error) {
-	return a.getAllByIds(ids)
-}
-
-func (a accountMockStorager) Read(_ context.Context, id int32) (*api.Account, error) {
-	return a.read(id)
-}
-
-func (a accountMockStorager) Delete(_ context.Context, id int32) error {
-	return a.delete(id)
-}
-
-func (a accountMockStorager) Update(ctx context.Context, m *api.Account) (*api.Account, error) {
-	return a.update(m)
-}
-
-func (a accountMockStorager) UpdateSaldo(ctx context.Context, m *api.Account, newSaldo float64) error {
-	return a.updateSaldo(m, newSaldo)
-}
 
 func TestAccountserver_ListAccounts(t *testing.T) {
 	tests := []struct {
@@ -135,7 +98,7 @@ func TestAccountserver_ListAccounts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := &accountserver{
-				storage: accountMockStorager{getAll: func(groupId, limit, offset int32) ([]*api.Account, int, error) {
+				storage: &mock.AccountRepository{GetAllFunc: func(groupId, limit, offset int32) ([]*api.Account, int, error) {
 					if tt.wantErr != nil {
 						return nil, 0, sql.ErrNoRows
 					}
@@ -204,8 +167,8 @@ func TestAccountserver_GetAccount(t *testing.T) {
 		},
 	}
 
-	server := accountserver{storage: accountMockStorager{
-		read: func(id int32) (account *api.Account, err error) {
+	server := accountserver{storage: &mock.AccountRepository{
+		ReadFunc: func(id int32) (account *api.Account, err error) {
 			if acc, ok := db[id]; ok {
 				return acc, nil
 			}
@@ -301,8 +264,8 @@ func TestAccountserver_CreateAccount(t *testing.T) {
 			is := is.New(t)
 
 			server := accountserver{
-				storage: accountMockStorager{
-					create: func(name, description string, startSaldo float64, groupId int32, nfcChipId string) (account *api.Account, err error) {
+				storage: &mock.AccountRepository{
+					CreateFunc: func(name, description string, startSaldo float64, groupId int32, nfcChipId string) (account *api.Account, err error) {
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
 						}
@@ -399,8 +362,8 @@ func TestAccountserver_UpdateAccount(t *testing.T) {
 			is := is.New(t)
 
 			server := accountserver{
-				storage: accountMockStorager{
-					update: func(m *api.Account) (*api.Account, error) {
+				storage: &mock.AccountRepository{
+					UpdateFunc: func(m *api.Account) (*api.Account, error) {
 						if tt.returnErr != nil {
 							return nil, tt.returnErr
 						}
@@ -462,8 +425,8 @@ func TestAccountserver_DeleteAccount(t *testing.T) {
 			is := is.New(t)
 
 			server := &accountserver{
-				storage: accountMockStorager{
-					delete: func(id int32) error {
+				storage: &mock.AccountRepository{
+					DeleteFunc: func(id int32) error {
 						if tt.returnErr != nil {
 							return tt.returnErr
 						}
@@ -471,8 +434,8 @@ func TestAccountserver_DeleteAccount(t *testing.T) {
 						return nil
 					},
 				},
-				tStorage: &transactionMockStorage{
-					deleteAllByAccount: func(accountId int32) error {
+				tStorage: &mock.TransactionRepository{
+					DeleteAllByAccountFunc: func(accountId int32) error {
 						return tt.tReturnErr
 					},
 				},
