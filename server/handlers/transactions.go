@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"google.golang.org/grpc"
 )
 
 type transactionServer struct {
-	storage models.TransactionStorager
+	storage repositories.TransactionStorager
 }
 
-func RegisterTransactionServer(server *grpc.Server, storage models.TransactionStorager) {
+func RegisterTransactionServer(server *grpc.Server, storage repositories.TransactionStorager) {
 	api.RegisterTransactionsServiceServer(server, &transactionServer{storage: storage})
 }
 
@@ -61,7 +61,7 @@ func (t *transactionServer) ListTransactionsByAccount(ctx context.Context, req *
 func (t *transactionServer) CreateTransaction(ctx context.Context, req *api.CreateTransactionRequest) (*api.Transaction, error) {
 	transaction, err := t.storage.Create(ctx, req.Amount, req.AccountId)
 	if err != nil {
-		if err == models.ErrAccountNotFound {
+		if err == repositories.ErrAccountNotFound {
 			return nil, ErrAccountNotFound
 		}
 		return nil, ErrSomethingWentWrong
@@ -73,7 +73,7 @@ func (t *transactionServer) CreateTransaction(ctx context.Context, req *api.Crea
 func (t *transactionServer) GetTransaction(ctx context.Context, req *api.GetTransactionRequest) (*api.Transaction, error) {
 	transaction, err := t.storage.Read(ctx, req.Id)
 	if err != nil {
-		if err == models.ErrNotFound {
+		if err == repositories.ErrNotFound {
 			return nil, ErrTransactionNotFound
 		}
 		return nil, ErrSomethingWentWrong

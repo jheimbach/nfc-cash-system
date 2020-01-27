@@ -7,21 +7,21 @@ import (
 	"strings"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/go-sql-driver/mysql"
 )
 
-// GroupModel provides API for the account_groups table
-type GroupModel struct {
+// GroupRepository provides API for the account_groups table
+type GroupRepository struct {
 	db *sql.DB
 }
 
-func NewGroupModel(db *sql.DB) *GroupModel {
-	return &GroupModel{db: db}
+func NewGroupRepository(db *sql.DB) *GroupRepository {
+	return &GroupRepository{db: db}
 }
 
 // Creates inserts new group with given fields
-func (g *GroupModel) Create(ctx context.Context, name, description string, canOverdraw bool) (*api.Group, error) {
+func (g *GroupRepository) Create(ctx context.Context, name, description string, canOverdraw bool) (*api.Group, error) {
 	nullDescription := createNullableString(description)
 
 	createStmt := "INSERT INTO `account_groups` (name, description, can_overdraw) VALUES (?,?,?)"
@@ -46,7 +46,7 @@ func (g *GroupModel) Create(ctx context.Context, name, description string, canOv
 }
 
 // Read returns models.Group struct for given id, will return models.ErrNotFound if no group is found
-func (g *GroupModel) Read(ctx context.Context, id int32) (*api.Group, error) {
+func (g *GroupRepository) Read(ctx context.Context, id int32) (*api.Group, error) {
 	readStmt := "SELECT id, name, description, can_overdraw FROM `account_groups` WHERE id = ?"
 
 	var group api.Group
@@ -56,7 +56,7 @@ func (g *GroupModel) Read(ctx context.Context, id int32) (*api.Group, error) {
 	err := row.Scan(&group.Id, &group.Name, &nullDesc, &group.CanOverdraw)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, models.ErrNotFound
+			return nil, repositories.ErrNotFound
 		}
 		return nil, err
 	}
@@ -68,9 +68,9 @@ func (g *GroupModel) Read(ctx context.Context, id int32) (*api.Group, error) {
 // Update saves given (changed) group to the database
 // will return models.ErrNotFound if group is not found
 // NOTE: every field will be overwritten with given value
-func (g *GroupModel) Update(ctx context.Context, group *api.Group) (*api.Group, error) {
+func (g *GroupRepository) Update(ctx context.Context, group *api.Group) (*api.Group, error) {
 	if group.Id == 0 {
-		return nil, models.ErrModelNotSaved
+		return nil, repositories.ErrModelNotSaved
 	}
 
 	_, err := g.db.ExecContext(ctx,
@@ -90,13 +90,13 @@ func (g *GroupModel) Update(ctx context.Context, group *api.Group) (*api.Group, 
 
 // Delete removes group with given id from the database
 // returns models.ErrNonEmptyDelete if accounts are associated with group
-func (g *GroupModel) Delete(ctx context.Context, id int32) error {
+func (g *GroupRepository) Delete(ctx context.Context, id int32) error {
 	_, err := g.db.ExecContext(ctx, "DELETE FROM `account_groups` WHERE id=?", id)
 
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok {
 			if err.Number == 1451 {
-				return models.ErrNonEmptyDelete
+				return repositories.ErrNonEmptyDelete
 			}
 		}
 
@@ -106,7 +106,7 @@ func (g *GroupModel) Delete(ctx context.Context, id int32) error {
 	return nil
 }
 
-func (g *GroupModel) GetAll(ctx context.Context, limit, offset int32) ([]*api.Group, int, error) {
+func (g *GroupRepository) GetAll(ctx context.Context, limit, offset int32) ([]*api.Group, int, error) {
 	stmt := "SELECT id, name, description, can_overdraw FROM account_groups"
 
 	var args []interface{}
@@ -141,7 +141,7 @@ func (g *GroupModel) GetAll(ctx context.Context, limit, offset int32) ([]*api.Gr
 	return groups, totalCount, nil
 }
 
-func (g *GroupModel) countAll(ctx context.Context) (int, error) {
+func (g *GroupRepository) countAll(ctx context.Context) (int, error) {
 	stmt := `SELECT COUNT(id) FROM account_groups`
 
 	var totalCount int
@@ -153,9 +153,9 @@ func (g *GroupModel) countAll(ctx context.Context) (int, error) {
 	return totalCount, nil
 }
 
-func (g *GroupModel) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Group, error) {
+func (g *GroupRepository) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Group, error) {
 	if len(ids) == 0 {
-		return nil, models.ErrNotFound //todo maybe own error?
+		return nil, repositories.ErrNotFound //todo maybe own error?
 	}
 
 	args := make([]interface{}, len(ids))
@@ -201,7 +201,7 @@ func scanGroups(rows *sql.Rows) ([]*api.Group, error) {
 
 		if err != nil {
 			if err == sql.ErrNoRows {
-				return nil, models.ErrNotFound
+				return nil, repositories.ErrNotFound
 			}
 			return nil, err
 		}

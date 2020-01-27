@@ -1,4 +1,4 @@
-package models
+package repositories
 
 import (
 	"context"
@@ -17,8 +17,6 @@ var (
 	ErrGroupNotFound      = errors.New("group for given id does not exist")
 	ErrAccountNotFound    = errors.New("account for given id does not exist")
 	ErrUserNotFound       = errors.New("user for given id does not exist")
-	ErrUserHasRefreshKey  = errors.New("user has a refresh key associated with him, remove the old key first")
-	ErrRefreshKeyIsInUse  = errors.New("given refresh key is associated with different user, please use a different one")
 	ErrUpdateSaldo        = errors.New("cannot update saldo with update, use UpdateSaldo instead")
 )
 

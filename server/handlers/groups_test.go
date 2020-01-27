@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -271,7 +271,7 @@ func TestGroupserver_UpdateGroup(t *testing.T) {
 		},
 		{
 			name:      "update group with id 0 returns error",
-			returnErr: models.ErrModelNotSaved,
+			returnErr: repositories.ErrModelNotSaved,
 			wantErr:   ErrSomethingWentWrong,
 		},
 		{
@@ -331,7 +331,7 @@ func TestGroupserver_DeleteGroup(t *testing.T) {
 			request:   &api.DeleteGroupRequest{Id: 1},
 			want:      &empty.Empty{},
 			wantErr:   status.Error(codes.Aborted, "could not delete group, because it is not empty"),
-			returnErr: models.ErrNonEmptyDelete,
+			returnErr: repositories.ErrNonEmptyDelete,
 		},
 		{
 			name:      "delete group with error",

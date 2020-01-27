@@ -8,19 +8,19 @@ import (
 	"time"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/go-sql-driver/mysql"
 	"github.com/golang/protobuf/ptypes"
 )
 
-// TransactionModel provides API for the transactions table
-type TransactionModel struct {
+// TransactionRepository provides API for the transactions table
+type TransactionRepository struct {
 	db       *sql.DB
-	accounts models.AccountStorager
+	accounts repositories.AccountStorager
 }
 
-func NewTransactionModel(db *sql.DB, accounts models.AccountStorager) *TransactionModel {
-	return &TransactionModel{
+func NewTransactionRepository(db *sql.DB, accounts repositories.AccountStorager) *TransactionRepository {
+	return &TransactionRepository{
 		db:       db,
 		accounts: accounts,
 	}
@@ -29,11 +29,11 @@ func NewTransactionModel(db *sql.DB, accounts models.AccountStorager) *Transacti
 // Create inserts new Transaction to database
 // with account.saldo and amount, the fields OldSaldo and NewSaldo are calculated
 // It will return models.ErrAccountNotFound if account with accountId is not found
-func (t *TransactionModel) Create(ctx context.Context, amount float64, accountId int32) (*api.Transaction, error) {
+func (t *TransactionRepository) Create(ctx context.Context, amount float64, accountId int32) (*api.Transaction, error) {
 	// load account
 	account, err := t.accounts.Read(ctx, accountId)
 	if err != nil {
-		return nil, models.ErrAccountNotFound
+		return nil, repositories.ErrAccountNotFound
 	}
 
 	// calculate saldos
@@ -51,7 +51,7 @@ func (t *TransactionModel) Create(ctx context.Context, amount float64, accountId
 		// theoretically this error should not be true, we recieve the account in the beginning from accountmodel.
 		// but someone could create a transactions and someone else deletes the account
 		if err, ok := err.(*mysql.MySQLError); ok && err.Number == 1452 {
-			return nil, models.ErrAccountNotFound
+			return nil, repositories.ErrAccountNotFound
 		}
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (t *TransactionModel) Create(ctx context.Context, amount float64, accountId
 }
 
 // Read returns Transaction with given id, returns models.ErrNotFound if transaction with id does not exist
-func (t *TransactionModel) Read(ctx context.Context, id int32) (*api.Transaction, error) {
+func (t *TransactionRepository) Read(ctx context.Context, id int32) (*api.Transaction, error) {
 	getSmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions WHERE id=?`
 
 	transaction := &api.Transaction{Account: &api.Account{}}
@@ -91,7 +91,7 @@ func (t *TransactionModel) Read(ctx context.Context, id int32) (*api.Transaction
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, models.ErrNotFound
+			return nil, repositories.ErrNotFound
 		}
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (t *TransactionModel) Read(ctx context.Context, id int32) (*api.Transaction
 
 // GetAll returns all transactions ordered by create date with parameter `order` can be changed (default DESC)
 // CAUTION: due to the nature of Transactions, this could be a lot
-func (t *TransactionModel) GetAll(ctx context.Context, accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
+func (t *TransactionRepository) GetAll(ctx context.Context, accountId int32, order string, limit, offset int32) ([]*api.Transaction, int, error) {
 	selectStmt := `SELECT id, new_saldo, old_saldo, amount, account_id, created FROM transactions`
 
 	var args []interface{}
@@ -152,7 +152,7 @@ func (t *TransactionModel) GetAll(ctx context.Context, accountId int32, order st
 }
 
 // DeleteAllByAccount deletes all transactions for given account id
-func (t *TransactionModel) DeleteAllByAccount(ctx context.Context, accountId int32) error {
+func (t *TransactionRepository) DeleteAllByAccount(ctx context.Context, accountId int32) error {
 	delStmt := "DELETE FROM transactions WHERE account_id=?"
 	_, err := t.db.ExecContext(ctx, delStmt, accountId)
 
@@ -173,7 +173,7 @@ func orderByClause(order string, selectStmt string) string {
 }
 
 // countAll counts the account rows in the database and returns a total count
-func (t *TransactionModel) countAll(ctx context.Context, accountId int32) (int, error) {
+func (t *TransactionRepository) countAll(ctx context.Context, accountId int32) (int, error) {
 	countStmt := `SELECT COUNT(id) FROM transactions`
 	var countArgs []interface{}
 
@@ -193,7 +193,7 @@ func (t *TransactionModel) countAll(ctx context.Context, accountId int32) (int, 
 }
 
 // loadTransactions will Transactions for given query
-func (t *TransactionModel) loadTransactions(ctx context.Context, rows *sql.Rows) ([]*api.Transaction, error) {
+func (t *TransactionRepository) loadTransactions(ctx context.Context, rows *sql.Rows) ([]*api.Transaction, error) {
 
 	var transactions []*api.Transaction
 	var accountIdsLookup = make(map[int32]bool)

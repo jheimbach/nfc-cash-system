@@ -8,7 +8,7 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	isPkg "github.com/matryer/is"
@@ -87,7 +87,7 @@ func TestTransactionModel_Create(t *testing.T) {
 				AccountId: 100,
 			},
 			wantErr:     true,
-			expectedErr: models.ErrAccountNotFound,
+			expectedErr: repositories.ErrAccountNotFound,
 		},
 	}
 
@@ -188,8 +188,8 @@ func TestTransactionModel_Get(t *testing.T) {
 		transaction, err := model.Read(context.Background(), 100)
 		is.Equal(transaction, nil)
 
-		if err != models.ErrNotFound {
-			t.Errorf("got err %v, expected %v", err, models.ErrNotFound)
+		if err != repositories.ErrNotFound {
+			t.Errorf("got err %v, expected %v", err, repositories.ErrNotFound)
 		}
 	})
 

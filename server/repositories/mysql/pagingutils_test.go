@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"database/sql"
 	"testing"
 
 	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
@@ -10,11 +9,7 @@ import (
 func Test_countAllIds(t *testing.T) {
 	test.IsIntegrationTest(t)
 
-	db, teardown := dbInitializedForAccountLists(t)
-	defer teardown()
-
 	type args struct {
-		db    *sql.DB
 		query string
 		args  []interface{}
 	}
@@ -25,7 +20,6 @@ func Test_countAllIds(t *testing.T) {
 	}{
 		{
 			args: args{
-				db:    db,
 				query: "SELECT COUNT(id) FROM accounts ORDER BY id",
 				args:  []interface{}{},
 			},
@@ -33,7 +27,6 @@ func Test_countAllIds(t *testing.T) {
 		},
 		{
 			args: args{
-				db:    db,
 				query: "SELECT COUNT(id) FROM accounts WHERE group_id=?",
 				args:  []interface{}{1},
 			},
@@ -41,7 +34,7 @@ func Test_countAllIds(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		got, err := countAllIds(tt.args.db, tt.args.query, tt.args.args...)
+		got, err := countAllIds(_conn, tt.args.query, tt.args.args...)
 		if (err != nil) != tt.wantErr {
 			t.Errorf("countAllIds() error = %v, wantErr %v", err, tt.wantErr)
 			return

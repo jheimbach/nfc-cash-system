@@ -6,24 +6,24 @@ import (
 	"time"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/go-sql-driver/mysql"
 	"github.com/golang/protobuf/ptypes"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// UserModel handles the users from the database
-type UserModel struct {
+// UserRepository handles the users from the database
+type UserRepository struct {
 	db *sql.DB
 }
 
-func NewUserModel(db *sql.DB) *UserModel {
-	return &UserModel{db: db}
+func NewUserModel(db *sql.DB) *UserRepository {
+	return &UserRepository{db: db}
 }
 
 // Create creates a new userId in the database.
 // if a userId with the same email already exists, Create will return a models.ErrDuplicateEmail
-func (u *UserModel) Create(ctx context.Context, name, email, password string) error {
+func (u *UserRepository) Create(ctx context.Context, name, email, password string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func (u *UserModel) Create(ctx context.Context, name, email, password string) er
 	if err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			if mysqlErr.Number == 1062 {
-				return models.ErrDuplicateEmail
+				return repositories.ErrDuplicateEmail
 			}
 		}
 	}
@@ -43,7 +43,7 @@ func (u *UserModel) Create(ctx context.Context, name, email, password string) er
 }
 
 // Get returns a models.User from given id, if id does not exists Get will return a models.ErrNotFound
-func (u *UserModel) Get(ctx context.Context, id int) (*api.User, error) {
+func (u *UserRepository) Get(ctx context.Context, id int) (*api.User, error) {
 	m := &api.User{}
 	var t time.Time
 	getSql := `SELECT id,name,email,created FROM users WHERE id = ?`
@@ -51,7 +51,7 @@ func (u *UserModel) Get(ctx context.Context, id int) (*api.User, error) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, models.ErrNotFound
+			return nil, repositories.ErrNotFound
 		}
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (u *UserModel) Get(ctx context.Context, id int) (*api.User, error) {
 
 // Authenticate returns the id for a userId if it exists with given email and password
 // if email does not exists or the password is wrong Authenticate will return a models.ErrInvalidCredentials
-func (u *UserModel) Authenticate(ctx context.Context, email, password string) (*api.User, error) {
+func (u *UserRepository) Authenticate(ctx context.Context, email, password string) (*api.User, error) {
 	var user = &api.User{}
 	var hashedPassword []byte
 	var created time.Time
@@ -74,7 +74,7 @@ func (u *UserModel) Authenticate(ctx context.Context, email, password string) (*
 	err := row.Scan(&user.Id, &user.Name, &user.Email, &hashedPassword, &created)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, models.ErrInvalidCredentials
+			return nil, repositories.ErrInvalidCredentials
 		}
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (u *UserModel) Authenticate(ctx context.Context, email, password string) (*
 	err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(password))
 	if err != nil {
 		if err == bcrypt.ErrMismatchedHashAndPassword {
-			return nil, models.ErrInvalidCredentials
+			return nil, repositories.ErrInvalidCredentials
 		}
 		return nil, err
 	}

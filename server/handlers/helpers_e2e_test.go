@@ -18,7 +18,7 @@ import (
 	"github.com/JHeimbach/nfc-cash-system/server/auth"
 	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
 	"github.com/JHeimbach/nfc-cash-system/server/internals/test/mock"
-	"github.com/JHeimbach/nfc-cash-system/server/models/mysql"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories/mysql"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -141,13 +141,13 @@ func newGrpcServer(database *sql.DB, cert, key string) (*grpc.Server, error) {
 	userModel := mysql.NewUserModel(database)
 	RegisterUserServer(s, userModel, tokenGen)
 
-	groupModel := mysql.NewGroupModel(database)
-	RegisterGroupServer(s, groupModel)
+	groupRepository := mysql.NewGroupRepository(database)
+	RegisterGroupServer(s, groupRepository)
 
-	accountModel := mysql.NewAccountModel(database, groupModel)
-	transactionModel := mysql.NewTransactionModel(database, accountModel)
-	RegisterAccountServer(s, accountModel, transactionModel)
-	RegisterTransactionServer(s, transactionModel)
+	accountRepository := mysql.NewAccountRepository(database, groupRepository)
+	transactionRepository := mysql.NewTransactionRepository(database, accountRepository)
+	RegisterAccountServer(s, accountRepository, transactionRepository)
+	RegisterTransactionServer(s, transactionRepository)
 
 	return s, nil
 }

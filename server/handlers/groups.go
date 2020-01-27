@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -12,10 +12,10 @@ import (
 )
 
 type groupserver struct {
-	storage models.GroupStorager
+	storage repositories.GroupStorager
 }
 
-func RegisterGroupServer(s *grpc.Server, storage models.GroupStorager) {
+func RegisterGroupServer(s *grpc.Server, storage repositories.GroupStorager) {
 	api.RegisterGroupsServiceServer(s, &groupserver{storage: storage})
 }
 
@@ -68,7 +68,7 @@ func (g *groupserver) DeleteGroup(ctx context.Context, req *api.DeleteGroupReque
 	err := g.storage.Delete(ctx, req.Id)
 
 	if err != nil {
-		if err == models.ErrNonEmptyDelete {
+		if err == repositories.ErrNonEmptyDelete {
 			return &empty.Empty{}, status.Error(codes.Aborted, "could not delete group, because it is not empty")
 		}
 

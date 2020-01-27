@@ -7,20 +7,20 @@ import (
 	"strings"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/go-sql-driver/mysql"
 )
 
 const accountFields = "id, name, description, saldo, group_id, nfc_chip_uid"
 
-// AccountModel provides API for the accounts table
-type AccountModel struct {
+// AccountRepository provides API for the accounts table
+type AccountRepository struct {
 	db     *sql.DB
-	groups models.GroupStorager
+	groups repositories.GroupStorager
 }
 
-func NewAccountModel(db *sql.DB, model models.GroupStorager) *AccountModel {
-	return &AccountModel{
+func NewAccountRepository(db *sql.DB, model repositories.GroupStorager) *AccountRepository {
+	return &AccountRepository{
 		db:     db,
 		groups: model,
 	}
@@ -28,13 +28,13 @@ func NewAccountModel(db *sql.DB, model models.GroupStorager) *AccountModel {
 
 // Create inserts new account it returns error models.ErrGroupNotFound if the groupId is not associated with a group
 // it returns models.ErrDuplicateNfcChipId if the provided nfcchipid is already in the database present
-func (a *AccountModel) Create(ctx context.Context, name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
+func (a *AccountRepository) Create(ctx context.Context, name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
 	nullDescription := createNullableString(description)
 
 	group, err := a.groups.Read(ctx, groupId)
 	if err != nil {
-		if err == models.ErrNotFound {
-			return nil, models.ErrGroupNotFound
+		if err == repositories.ErrNotFound {
+			return nil, repositories.ErrGroupNotFound
 		}
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (a *AccountModel) Create(ctx context.Context, name, description string, sta
 	if err != nil {
 		if err, ok := err.(*mysql.MySQLError); ok {
 			if err.Number == 1062 {
-				return nil, models.ErrDuplicateNfcChipId
+				return nil, repositories.ErrDuplicateNfcChipId
 			}
 		}
 		return nil, err
@@ -66,7 +66,7 @@ func (a *AccountModel) Create(ctx context.Context, name, description string, sta
 }
 
 // Read returns account struct for given id
-func (a *AccountModel) Read(ctx context.Context, id int32) (*api.Account, error) {
+func (a *AccountRepository) Read(ctx context.Context, id int32) (*api.Account, error) {
 	readStmt := `SELECT ` + accountFields + ` FROM accounts WHERE id=?`
 
 	m := &api.Account{}
@@ -76,7 +76,7 @@ func (a *AccountModel) Read(ctx context.Context, id int32) (*api.Account, error)
 	err := row.Scan(&m.Id, &m.Name, &nullDesc, &m.Saldo, &groupId, &m.NfcChipId)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, models.ErrNotFound
+			return nil, repositories.ErrNotFound
 		}
 		return nil, err
 	}
@@ -92,19 +92,19 @@ func (a *AccountModel) Read(ctx context.Context, id int32) (*api.Account, error)
 }
 
 // Update saves the (changed) model in the database will return models.ErrGroupNotFound if group id is not associated with a group
-func (a *AccountModel) Update(ctx context.Context, m *api.Account) (*api.Account, error) {
+func (a *AccountRepository) Update(ctx context.Context, m *api.Account) (*api.Account, error) {
 	acc, err := a.Read(ctx, m.Id)
 	if err != nil {
 		return nil, err
 	}
 
 	if m.Saldo != 0 && m.Saldo != acc.Saldo {
-		return nil, models.ErrUpdateSaldo
+		return nil, repositories.ErrUpdateSaldo
 	}
 
 	g, err := a.groups.Read(ctx, m.Group.Id)
 	if err != nil {
-		return nil, models.ErrGroupNotFound
+		return nil, repositories.ErrGroupNotFound
 	}
 
 	updateStmt := `UPDATE accounts SET name=?, description=?, group_id=?, nfc_chip_uid=? WHERE id=?`
@@ -124,7 +124,7 @@ func (a *AccountModel) Update(ctx context.Context, m *api.Account) (*api.Account
 }
 
 // Delete deletes a account
-func (a *AccountModel) Delete(ctx context.Context, id int32) error {
+func (a *AccountRepository) Delete(ctx context.Context, id int32) error {
 
 	deleteStmt := `DELETE FROM accounts WHERE id=?`
 
@@ -134,14 +134,14 @@ func (a *AccountModel) Delete(ctx context.Context, id int32) error {
 }
 
 // UpdateSaldo provides update method for the saldo field
-func (a *AccountModel) UpdateSaldo(ctx context.Context, m *api.Account, newSaldo float64) error {
+func (a *AccountRepository) UpdateSaldo(ctx context.Context, m *api.Account, newSaldo float64) error {
 	_, err := a.db.ExecContext(ctx, `UPDATE accounts SET saldo=? WHERE id=?`, newSaldo, m.Id)
 
 	return err
 }
 
 // GetAll returns slice with all accounts in the database
-func (a *AccountModel) GetAll(ctx context.Context, groupId int32, limit int32, offset int32) ([]*api.Account, int, error) {
+func (a *AccountRepository) GetAll(ctx context.Context, groupId int32, limit int32, offset int32) ([]*api.Account, int, error) {
 	// default select statement
 	stmt := `SELECT ` + accountFields + ` FROM accounts`
 
@@ -197,7 +197,7 @@ func (a *AccountModel) GetAll(ctx context.Context, groupId int32, limit int32, o
 }
 
 // countAll counts the account rows in the database and returns a total count
-func (a *AccountModel) countAll(ctx context.Context, groupId int32) (int, error) {
+func (a *AccountRepository) countAll(ctx context.Context, groupId int32) (int, error) {
 	countStmt := `SELECT COUNT(id) FROM accounts`
 	var countArgs []interface{}
 
@@ -217,7 +217,7 @@ func (a *AccountModel) countAll(ctx context.Context, groupId int32) (int, error)
 }
 
 // GetAllByIds returns map of accounts, is used by to complete objects that are dependent on accounts
-func (a *AccountModel) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Account, error) {
+func (a *AccountRepository) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Account, error) {
 	m := make(map[int32]*api.Account, len(ids))
 
 	args := make([]interface{}, len(ids))
@@ -245,7 +245,7 @@ func (a *AccountModel) GetAllByIds(ctx context.Context, ids []int32) (map[int32]
 }
 
 // scanRowsToAccounts returns slice of Accounts from given sql.Rows
-func (a *AccountModel) scanRowsToAccounts(ctx context.Context, rows *sql.Rows) ([]*api.Account, error) {
+func (a *AccountRepository) scanRowsToAccounts(ctx context.Context, rows *sql.Rows) ([]*api.Account, error) {
 	var accounts []*api.Account
 	var groupIds []int32
 

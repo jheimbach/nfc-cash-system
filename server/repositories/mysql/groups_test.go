@@ -7,7 +7,7 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	isPkg "github.com/matryer/is"
 )
 
@@ -130,7 +130,7 @@ func TestGroupModel_Read(t *testing.T) {
 			},
 			insertGroup: false,
 			wantErr:     true,
-			expectedErr: models.ErrNotFound,
+			expectedErr: repositories.ErrNotFound,
 		},
 		{
 			name: "load group with Canoverdraw",
@@ -239,7 +239,7 @@ func TestGroupModel_Update(t *testing.T) {
 			want:        &api.Group{},
 			skipInsert:  true,
 			wantErr:     true,
-			expectedErr: models.ErrModelNotSaved,
+			expectedErr: repositories.ErrModelNotSaved,
 		},
 		{
 			name: "group without id will not be updated",
@@ -248,7 +248,7 @@ func TestGroupModel_Update(t *testing.T) {
 				Description: "test description",
 			},
 			wantErr:     true,
-			expectedErr: models.ErrModelNotSaved,
+			expectedErr: repositories.ErrModelNotSaved,
 		},
 	}
 	for _, tt := range tests {
@@ -337,8 +337,8 @@ func TestGroupModel_Delete(t *testing.T) {
 		if err == nil {
 			t.Errorf("expected error, got none")
 		}
-		if err != models.ErrNonEmptyDelete {
-			t.Errorf("got %v, wanted %v", err, models.ErrNonEmptyDelete)
+		if err != repositories.ErrNonEmptyDelete {
+			t.Errorf("got %v, wanted %v", err, repositories.ErrNonEmptyDelete)
 		}
 	})
 }

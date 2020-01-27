@@ -9,7 +9,7 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/go-cmp/cmp"
@@ -64,8 +64,8 @@ func TestUserModel_Create(t *testing.T) {
 		if err == nil {
 			t.Fatalf("got no error, expected one")
 		}
-		if !errors.Is(err, models.ErrDuplicateEmail) {
-			t.Errorf("got error %v, expected %v", err, models.ErrDuplicateEmail)
+		if !errors.Is(err, repositories.ErrDuplicateEmail) {
+			t.Errorf("got error %v, expected %v", err, repositories.ErrDuplicateEmail)
 		}
 	})
 }
@@ -122,8 +122,8 @@ func TestUserModel_Get(t *testing.T) {
 			t.Errorf("got userId struct, did not expect one %v", got)
 		}
 
-		if err != models.ErrNotFound {
-			t.Errorf("wrong error got %v but wanted %v", err, models.ErrNotFound)
+		if err != repositories.ErrNotFound {
+			t.Errorf("wrong error got %v but wanted %v", err, repositories.ErrNotFound)
 		}
 	})
 }
@@ -183,13 +183,13 @@ func TestUserModel_Authenticate(t *testing.T) {
 			email:    "test1@example.org",
 			password: "password123",
 			want:     nil,
-			wantErr:  models.ErrInvalidCredentials,
+			wantErr:  repositories.ErrInvalidCredentials,
 		},
 		{
 			email:    "test@example.org",
 			password: "password",
 			want:     nil,
-			wantErr:  models.ErrInvalidCredentials,
+			wantErr:  repositories.ErrInvalidCredentials,
 		},
 	}
 	for _, tt := range tests {

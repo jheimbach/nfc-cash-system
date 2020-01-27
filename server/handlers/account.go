@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -12,11 +12,11 @@ import (
 )
 
 type accountserver struct {
-	storage  models.AccountStorager
-	tStorage models.TransactionStorager // only used to delete accounts
+	storage  repositories.AccountStorager
+	tStorage repositories.TransactionStorager // only used to delete accounts
 }
 
-func RegisterAccountServer(s *grpc.Server, storage models.AccountStorager, tStorage models.TransactionStorager) {
+func RegisterAccountServer(s *grpc.Server, storage repositories.AccountStorager, tStorage repositories.TransactionStorager) {
 	api.RegisterAccountServiceServer(s, &accountserver{storage: storage, tStorage: tStorage})
 }
 
@@ -43,10 +43,10 @@ func (a *accountserver) ListAccounts(ctx context.Context, req *api.ListAccountsR
 func (a *accountserver) CreateAccount(ctx context.Context, req *api.CreateAccountRequest) (*api.Account, error) {
 	account, err := a.storage.Create(ctx, req.Name, req.Description, req.Saldo, req.GroupId, req.NfcChipId)
 	if err != nil {
-		if err == models.ErrDuplicateNfcChipId {
+		if err == repositories.ErrDuplicateNfcChipId {
 			return nil, status.Error(codes.AlreadyExists, "nfc chip is already in use")
 		}
-		if err == models.ErrGroupNotFound {
+		if err == repositories.ErrGroupNotFound {
 			return nil, ErrGroupNotFound
 		}
 		return nil, ErrCouldNotCreateAccount
@@ -69,10 +69,10 @@ func (a *accountserver) UpdateAccount(ctx context.Context, req *api.Account) (*a
 	acc, err := a.storage.Update(ctx, req)
 
 	if err != nil {
-		if err == models.ErrUpdateSaldo {
+		if err == repositories.ErrUpdateSaldo {
 			return nil, status.Error(codes.PermissionDenied, "can not update account saldo trough update")
 		}
-		if err == models.ErrGroupNotFound {
+		if err == repositories.ErrGroupNotFound {
 			return nil, ErrGroupNotFound
 		}
 		return nil, ErrSomethingWentWrong

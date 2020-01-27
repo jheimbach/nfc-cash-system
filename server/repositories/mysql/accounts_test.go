@@ -8,7 +8,8 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/internals/test/mock"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	isPkg "github.com/matryer/is"
 )
 

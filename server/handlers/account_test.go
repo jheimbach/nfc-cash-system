@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/golang/protobuf/ptypes/empty"
 	isPkg "github.com/matryer/is"
 	"google.golang.org/grpc/codes"
@@ -209,7 +209,7 @@ func TestAccountserver_GetAccount(t *testing.T) {
 			if acc, ok := db[id]; ok {
 				return acc, nil
 			}
-			return nil, models.ErrNotFound
+			return nil, repositories.ErrNotFound
 		},
 	}}
 
@@ -267,7 +267,7 @@ func TestAccountserver_CreateAccount(t *testing.T) {
 				NfcChipId:   "nfcchip",
 				GroupId:     1,
 			},
-			returnErr: models.ErrDuplicateNfcChipId,
+			returnErr: repositories.ErrDuplicateNfcChipId,
 			wantErr:   status.Error(codes.AlreadyExists, "nfc chip is already in use"),
 		},
 		{
@@ -279,7 +279,7 @@ func TestAccountserver_CreateAccount(t *testing.T) {
 				NfcChipId:   "nfcchip",
 				GroupId:     100,
 			},
-			returnErr: models.ErrGroupNotFound,
+			returnErr: repositories.ErrGroupNotFound,
 			wantErr:   ErrGroupNotFound,
 		},
 		{
@@ -359,7 +359,7 @@ func TestAccountserver_UpdateAccount(t *testing.T) {
 					Id: 1,
 				},
 			},
-			returnErr: models.ErrGroupNotFound,
+			returnErr: repositories.ErrGroupNotFound,
 			wantErr:   ErrGroupNotFound,
 		},
 		{
@@ -389,7 +389,7 @@ func TestAccountserver_UpdateAccount(t *testing.T) {
 					Id: 1,
 				},
 			},
-			returnErr: models.ErrUpdateSaldo,
+			returnErr: repositories.ErrUpdateSaldo,
 			wantErr:   status.Error(codes.PermissionDenied, "can not update account saldo trough update"),
 		},
 	}

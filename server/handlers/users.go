@@ -6,18 +6,18 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/auth"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 )
 
 type userServer struct {
-	storage        models.UserStorager
+	storage        repositories.UserStorager
 	tokenGenerator auth.TokenGenerator
 }
 
-func RegisterUserServer(s *grpc.Server, storage models.UserStorager, generator auth.TokenGenerator) {
+func RegisterUserServer(s *grpc.Server, storage repositories.UserStorager, generator auth.TokenGenerator) {
 	api.RegisterUserServiceServer(s, &userServer{
 		storage:        storage,
 		tokenGenerator: generator,

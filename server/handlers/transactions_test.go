@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
-	"github.com/JHeimbach/nfc-cash-system/server/models"
+	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 )
@@ -249,7 +249,7 @@ func TestTransactionServer_CreateTransaction(t *testing.T) {
 				Amount:    -5,
 				AccountId: 100,
 			},
-			returnErr: models.ErrAccountNotFound,
+			returnErr: repositories.ErrAccountNotFound,
 			wantErr:   ErrAccountNotFound,
 		},
 	}
