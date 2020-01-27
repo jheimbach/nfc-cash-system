@@ -12,11 +12,7 @@ import (
 )
 
 func TestGroupModel_Create(t *testing.T) {
-	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
-
-	db, dbSetup, dbTeardown := getTestDb(t)
-	defer db.Close()
 
 	type args struct {
 		name, description string
@@ -68,20 +64,15 @@ func TestGroupModel_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			dbSetup()
-			defer dbTeardown()
+			defer teardownDB(_conn)()
 
-			model := GroupModel{
-				db: db,
-			}
-
-			got, err := model.Create(context.Background(), tt.args.name, tt.args.description, tt.args.canOverdraw)
+			got, err := _groupModel.Create(context.Background(), tt.args.name, tt.args.description, tt.args.canOverdraw)
 			is.NoErr(err)
 			is.Equal(got, &tt.want) // does not return expected group
 
 			var dbGroup api.Group
 			var nullDesc sql.NullString
-			row := db.QueryRow("SELECT id, name, description,can_overdraw FROM `account_groups` WHERE id = ?", tt.want.Id)
+			row := _conn.QueryRow("SELECT id, name, description,can_overdraw FROM `account_groups` WHERE id = ?", tt.want.Id)
 			err = row.Scan(&dbGroup.Id, &dbGroup.Name, &nullDesc, &dbGroup.CanOverdraw)
 			is.NoErr(err)
 
@@ -95,9 +86,6 @@ func TestGroupModel_Create(t *testing.T) {
 func TestGroupModel_Read(t *testing.T) {
 	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
-
-	db, dbSetup, dbTeardown := getTestDb(t)
-	defer db.Close()
 
 	tests := []struct {
 		name        string
@@ -144,20 +132,15 @@ func TestGroupModel_Read(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dbSetup()
-			defer dbTeardown()
-
-			model := GroupModel{
-				db: db,
-			}
+			defer teardownDB(_conn)()
 
 			is := is.New(t)
 			if tt.insertGroup {
-				_, err := db.Exec("INSERT INTO `account_groups` (id, name, description, can_overdraw) VALUES (?,?,?,?)", tt.want.Id, tt.want.Name, createNullableString(tt.want.Description), tt.want.CanOverdraw)
-				is.NoErr(err)
+				err := insertMockGroup(t, tt.want)
+				is.NoErr(err) //could not insert test group
 			}
 
-			got, err := model.Read(context.Background(), tt.want.Id)
+			got, err := _groupModel.Read(context.Background(), tt.want.Id)
 
 			if tt.wantErr {
 				if err != tt.expectedErr {
@@ -174,9 +157,6 @@ func TestGroupModel_Read(t *testing.T) {
 
 func TestGroupModel_Update(t *testing.T) {
 	test.IsIntegrationTest(t)
-
-	db, dbSetup, dbTeardown := getTestDb(t)
-	defer db.Close()
 
 	tests := []struct {
 		name        string
@@ -253,20 +233,15 @@ func TestGroupModel_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dbSetup()
-			defer dbTeardown()
-
-			model := GroupModel{
-				db: db,
-			}
+			defer teardownDB(_conn)()
 
 			is := isPkg.New(t)
 			if !tt.skipInsert {
-				_, err := db.Exec("INSERT INTO `account_groups` (name, description,can_overdraw) VALUES (?,?,?)", tt.insert.Name, createNullableString(tt.insert.Description), tt.insert.CanOverdraw)
-				is.NoErr(err)
+				err := insertMockGroup(t, tt.want)
+				is.NoErr(err) //could not insert test group
 			}
 
-			got, err := model.Update(context.Background(), tt.want)
+			got, err := _groupModel.Update(context.Background(), tt.want)
 
 			if tt.wantErr {
 				if err != tt.expectedErr {
@@ -286,76 +261,76 @@ func TestGroupModel_Update(t *testing.T) {
 func TestGroupModel_Delete(t *testing.T) {
 	test.IsIntegrationTest(t)
 
-	db, dbSetup, dbTeardown := getTestDb(t)
-	defer db.Close()
+	tests := []struct {
+		name     string
+		group    api.Group
+		accounts []api.Account
+		wantErr  error
+	}{
+		{
+			name: "empty group delete",
+			group: api.Group{
+				Id:   1,
+				Name: "test",
+			},
+		},
+		{
+			name: "trying to delete nonempty group, return err",
+			group: api.Group{
+				Id:   1,
+				Name: "test",
+			},
+			accounts: []api.Account{
+				{
+					Name:      "test",
+					NfcChipId: "testchipid",
+					Group:     &api.Group{Id: 1},
+				},
+			},
+			wantErr: repositories.ErrNonEmptyDelete,
+		},
+	}
 
-	t.Run("empty group delete", func(t *testing.T) {
-		is := isPkg.New(t)
-		dbSetup()
-		defer dbTeardown()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer teardownDB(_conn)()
+			is := isPkg.New(t)
 
-		model := GroupModel{
-			db: db,
-		}
-		res, err := db.Exec("INSERT INTO `account_groups` (name) VALUES (?)", "test")
-		is.NoErr(err)
+			err := insertMockGroup(t, &tt.group)
+			is.NoErr(err) // could not create test group
 
-		groupId, err := res.LastInsertId()
-		is.NoErr(err)
+			if tt.accounts != nil {
+				for _, account := range tt.accounts {
+					err := insertTestAccount(t, account)
+					is.NoErr(err) // could not create test account
+				}
+			}
 
-		err = model.Delete(context.Background(), int32(groupId))
-		is.NoErr(err)
+			err = _groupModel.Delete(context.Background(), tt.group.Id)
+			if tt.wantErr != nil {
+				if tt.wantErr != err {
+					t.Errorf("got err %q, expected %q", err, tt.wantErr)
+				}
+				return
+			}
 
-		var groupName string
-		err = db.QueryRow("SELECT name from `account_groups` WHERE id=?", int(groupId)).Scan(&groupName)
-		if err == nil {
-			t.Errorf("wanted err, got none")
-		}
-		if err != sql.ErrNoRows {
-			t.Errorf("got %v but wanted %v err", sql.ErrNoRows, err)
-		}
-	})
+			is.NoErr(err) // could not delete group
 
-	t.Run("trying to delete nonempty group, return err", func(t *testing.T) {
-		is := isPkg.New(t)
-		dbSetup()
-		defer dbTeardown()
-
-		model := GroupModel{
-			db: db,
-		}
-		res, err := db.Exec("INSERT INTO `account_groups` (name) VALUES (?)", "test")
-		is.NoErr(err)
-
-		groupId, err := res.LastInsertId()
-		is.NoErr(err)
-
-		_, err = db.Exec("INSERT INTO `accounts` (name, group_id, nfc_chip_uid) VALUES (?,?,?)", "test", int(groupId), "testchipid")
-		is.NoErr(err)
-
-		err = model.Delete(context.Background(), int32(groupId))
-		if err == nil {
-			t.Errorf("expected error, got none")
-		}
-		if err != repositories.ErrNonEmptyDelete {
-			t.Errorf("got %v, wanted %v", err, repositories.ErrNonEmptyDelete)
-		}
-	})
+			// check if group exists
+			var groupCount int
+			err = _conn.QueryRow("SELECT COUNT(*) from `account_groups` WHERE id=?", int(tt.group.Id)).Scan(&groupCount)
+			is.Equal(groupCount, 0) // group still exists
+		})
+	}
 }
 
 func TestGroupModel_GetAll(t *testing.T) {
 	test.IsIntegrationTest(t)
 
 	is := isPkg.New(t)
-	db, dbTeardown := dbInitializedForGroupList(t)
-	defer func() {
-		dbTeardown()
-		db.Close()
-	}()
 
-	model := GroupModel{
-		db: db,
-	}
+	teardown := initDBForGroupList(t)
+	defer teardown()
 
 	type args struct {
 		limit, offset int32
@@ -373,7 +348,7 @@ func TestGroupModel_GetAll(t *testing.T) {
 				limit:  0,
 				offset: 0,
 			},
-			want:      groupList(0, 0),
+			want:      wantGroupList(0, 0),
 			wantCount: 10,
 		},
 		{
@@ -382,7 +357,7 @@ func TestGroupModel_GetAll(t *testing.T) {
 				limit:  5,
 				offset: 0,
 			},
-			want:      groupList(5, 0),
+			want:      wantGroupList(5, 0),
 			wantCount: 10,
 		},
 		{
@@ -391,7 +366,7 @@ func TestGroupModel_GetAll(t *testing.T) {
 				limit:  5,
 				offset: 5,
 			},
-			want:      groupList(5, 5),
+			want:      wantGroupList(5, 5),
 			wantCount: 10,
 		},
 	}
@@ -399,7 +374,7 @@ func TestGroupModel_GetAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			got, count, err := model.GetAll(context.Background(), tt.input.limit, tt.input.offset)
+			got, count, err := _groupModel.GetAll(context.Background(), tt.input.limit, tt.input.offset)
 			is.NoErr(err)
 
 			is.Equal(got, tt.want)
@@ -412,11 +387,8 @@ func TestGroupModel_GetAllByIds(t *testing.T) {
 	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
 
-	db, dbTeardown := dbInitializedForGroupList(t)
-	defer func() {
-		dbTeardown()
-		db.Close()
-	}()
+	teardown := initDBForGroupList(t)
+	defer teardown()
 
 	tests := []struct {
 		name    string
@@ -444,11 +416,8 @@ func TestGroupModel_GetAllByIds(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			model := GroupModel{
-				db: db,
-			}
 
-			got, err := model.GetAllByIds(context.Background(), tt.input)
+			got, err := _groupModel.GetAllByIds(context.Background(), tt.input)
 			if tt.wantErr != nil {
 				is.Equal(err, tt.wantErr)
 				return
@@ -461,14 +430,30 @@ func TestGroupModel_GetAllByIds(t *testing.T) {
 	}
 }
 
-func dbInitializedForGroupList(t *testing.T) (*sql.DB, func()) {
-	db, setup, teardown := getTestDb(t)
-	setup(dataFor("group_list"))
+func initDBForGroupList(t *testing.T) func() error {
+	t.Helper()
 
-	return db, teardown
+	err := setupDB(_conn, dataFor("group_list"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return teardownDB(_conn)
 }
 
-func groupList(limit, offset int32) []*api.Group {
+func insertMockGroup(t *testing.T, group *api.Group) error {
+	t.Helper()
+
+	_, err := _conn.Exec(
+		"INSERT INTO `account_groups` (id, name, description, can_overdraw) VALUES (?,?,?,?)",
+		group.Id, group.Name,
+		createNullableString(group.Description),
+		group.CanOverdraw,
+	)
+	return err
+}
+
+func wantGroupList(limit, offset int32) []*api.Group {
 	groups := []*api.Group{
 		{
 			Id:   1,

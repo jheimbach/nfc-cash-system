@@ -8,49 +8,56 @@ import (
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
 	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
+	"github.com/JHeimbach/nfc-cash-system/server/internals/test/mock"
 	"github.com/JHeimbach/nfc-cash-system/server/repositories"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	isPkg "github.com/matryer/is"
 )
 
-type accountMockModel struct {
-	readFunc func(ctx context.Context, id int32) (*api.Account, error)
-}
+var (
+	accountOne = &api.Account{
+		Id:        1,
+		Name:      "testaccount",
+		Saldo:     12,
+		NfcChipId: "testchipid",
+		Group: &api.Group{
+			Id:   1,
+			Name: "testgroup1",
+		},
+	}
+	accountTwo = &api.Account{
+		Id:        2,
+		Name:      "testaccount1",
+		Saldo:     120,
+		NfcChipId: "testchipid2",
+		Group: &api.Group{
+			Id:   1,
+			Name: "testgroup1",
+		},
+	}
+	accountMap = map[int32]*api.Account{
+		1: accountOne,
+		2: accountTwo,
+	}
+)
+var accountMock = &mock.AccountRepository{
+	ReadFunc: func(i int32) (account *api.Account, err error) {
+		return accountOne, nil
+	},
 
-func (a *accountMockModel) Create(ctx context.Context, name, description string, startSaldo float64, groupId int32, nfcChipId string) (*api.Account, error) {
-	panic("implement me")
-}
-
-func (a *accountMockModel) GetAll(ctx context.Context, groupId, limit, offset int32) ([]*api.Account, int, error) {
-	panic("implement me")
-}
-
-func (a *accountMockModel) GetAllByIds(ctx context.Context, ids []int32) (map[int32]*api.Account, error) {
-	panic("implement me")
-}
-
-func (a *accountMockModel) Read(ctx context.Context, id int32) (*api.Account, error) {
-	return a.readFunc(ctx, id)
-}
-
-func (a *accountMockModel) Delete(ctx context.Context, id int32) error {
-	panic("implement me")
-}
-
-func (a *accountMockModel) Update(ctx context.Context, m *api.Account) (*api.Account, error) {
-	panic("implement me")
-}
-
-func (a *accountMockModel) UpdateSaldo(ctx context.Context, m *api.Account, newSaldo float64) error {
-	panic("implement me")
+	UpdateSaldoFunc: func(account *api.Account, f float64) error {
+		return nil
+	},
+	GetAllByIdsFunc: func(int32s []int32) (m map[int32]*api.Account, err error) {
+		return accountMap, nil
+	},
 }
 
 func TestTransactionModel_Create(t *testing.T) {
-	test.IsIntegrationTest(t)
-	is := isPkg.New(t)
-	db, dbSetup, dbTeardown := getTestDb(t)
-	defer db.Close()
+	is, teardown := initTransactionIntegrationTest(t)
+	defer teardown()
+
 	tests := []struct {
 		name        string
 		input       *api.CreateTransactionRequest
@@ -94,15 +101,10 @@ func TestTransactionModel_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			dbSetup(dataFor("transaction"))
-			defer dbTeardown()
+			td := initDbForTransactions(t)
+			defer td()
 
-			model := TransactionModel{
-				db:       db,
-				accounts: NewAccountModel(db, NewGroupModel(db)), //todo create mock
-			}
-
-			got, err := model.Create(context.Background(), tt.input.Amount, tt.input.AccountId)
+			got, err := _transactionModel.Create(context.Background(), tt.input.Amount, tt.input.AccountId)
 
 			if tt.wantErr {
 				if err != tt.expectedErr {
@@ -122,7 +124,7 @@ func TestTransactionModel_Create(t *testing.T) {
 			var created time.Time
 
 			stmt := `SELECT id, new_saldo, old_saldo, amount,created, account_id from transactions WHERE id=?`
-			err = db.QueryRow(stmt, 1).Scan(
+			err = _conn.QueryRow(stmt, 1).Scan(
 				&dbTransaction.Id, &dbTransaction.NewSaldo, &dbTransaction.OldSaldo, &dbTransaction.Amount, &created, &dbTransaction.Account.Id,
 			)
 			is.NoErr(err)
@@ -139,25 +141,20 @@ func TestTransactionModel_Create(t *testing.T) {
 }
 
 func TestTransactionModel_Get(t *testing.T) {
-	test.IsIntegrationTest(t)
-	is := isPkg.New(t)
+	is, teardown := initTransactionIntegrationTest(t)
+	defer teardown()
 
-	db, dbSetup, dbTeardown := getTestDb(t)
-	dbSetup(dataFor("transaction"), dataFor("transaction_list"))
-	defer db.Close()
-	defer dbTeardown()
+	td := initDbForTransactionList(t)
+	defer td()
 
 	t.Run("get a transaction", func(t *testing.T) {
 		is := is.New(t)
 
-		model := TransactionModel{
-			db: db,
-			accounts: &accountMockModel{
-				readFunc: func(ctx context.Context, id int32) (account *api.Account, err error) {
-					return &api.Account{
-						Id: id,
-					}, nil
-				},
+		_transactionModel.accounts = &mock.AccountRepository{
+			ReadFunc: func(id int32) (account *api.Account, err error) {
+				return &api.Account{
+					Id: id,
+				}, nil
 			},
 		}
 		created, _ := ptypes.TimestampProto(time.Date(2019, 01, 17, 16, 15, 14, 0, time.UTC))
@@ -173,7 +170,7 @@ func TestTransactionModel_Get(t *testing.T) {
 			},
 		}
 
-		transaction, err := model.Read(context.Background(), 1)
+		transaction, err := _transactionModel.Read(context.Background(), 1)
 		is.NoErr(err)
 
 		is.Equal(transaction, want)
@@ -182,10 +179,7 @@ func TestTransactionModel_Get(t *testing.T) {
 	t.Run("no transactions found", func(t *testing.T) {
 		is := is.New(t)
 
-		model := TransactionModel{
-			db: db,
-		}
-		transaction, err := model.Read(context.Background(), 100)
+		transaction, err := _transactionModel.Read(context.Background(), -45)
 		is.Equal(transaction, nil)
 
 		if err != repositories.ErrNotFound {
@@ -196,16 +190,8 @@ func TestTransactionModel_Get(t *testing.T) {
 }
 
 func TestTransactionModel_GetAll(t *testing.T) {
-	test.IsIntegrationTest(t)
-	is := isPkg.New(t)
-
-	setupScripts := []string{
-		dataFor("transaction"),
-		dataFor("transaction_list"),
-	}
-
-	db, dbSetup, dbTeardown := getTestDb(t)
-	defer db.Close()
+	is, teardown := initTransactionIntegrationTest(t)
+	defer teardown()
 
 	type args struct {
 		accountId, limit, offset int32
@@ -213,21 +199,18 @@ func TestTransactionModel_GetAll(t *testing.T) {
 	}
 	tests := []struct {
 		name      string
-		dbSetup   []string
 		input     args
 		want      []*api.Transaction
 		wantCount int
 	}{
 		{
 			name:      "get all transactions",
-			dbSetup:   setupScripts,
 			input:     args{},
 			want:      transisitonList(0),
 			wantCount: 9,
 		},
 		{
-			name:    "get all transactions for account id 1",
-			dbSetup: setupScripts,
+			name: "get all transactions for account id 1",
 			input: args{
 				accountId: 1,
 			},
@@ -235,13 +218,14 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			wantCount: 5,
 		},
 		{
-			name:      "no transactions found",
-			input:     args{},
+			name: "no transactions found",
+			input: args{
+				accountId: 9999,
+			},
 			wantCount: 0,
 		},
 		{
-			name:    "get transactions with limit",
-			dbSetup: setupScripts,
+			name: "get transactions with limit",
 			input: args{
 				limit: 5,
 			},
@@ -249,8 +233,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			wantCount: 9,
 		},
 		{
-			name:    "get all transactions for account id 1 with limit",
-			dbSetup: setupScripts,
+			name: "get all transactions for account id 1 with limit",
 			input: args{
 				accountId: 1,
 				limit:     3,
@@ -259,8 +242,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			wantCount: 5,
 		},
 		{
-			name:    "get transactions with limit and offset",
-			dbSetup: setupScripts,
+			name: "get transactions with limit and offset",
 			input: args{
 				limit:  3,
 				offset: 2,
@@ -269,8 +251,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			wantCount: 9,
 		},
 		{
-			name:    "get all transactions with order DESC",
-			dbSetup: setupScripts,
+			name: "get all transactions with order DESC",
 			input: args{
 				order: "DESC",
 			},
@@ -278,8 +259,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			wantCount: 9,
 		},
 		{
-			name:    "get all transactions with order desc",
-			dbSetup: setupScripts,
+			name: "get all transactions with order desc",
 			input: args{
 				order: "desc",
 			},
@@ -287,8 +267,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			wantCount: 9,
 		},
 		{
-			name:    "get all transactions default order is DESC",
-			dbSetup: setupScripts,
+			name: "get all transactions default order is DESC",
 			input: args{
 				order: "something invalid",
 			},
@@ -296,8 +275,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			wantCount: 9,
 		},
 		{
-			name:    "get all transactions with order ASC",
-			dbSetup: setupScripts,
+			name: "get all transactions with order ASC",
 			input: args{
 				order: "ASC",
 			},
@@ -309,8 +287,7 @@ func TestTransactionModel_GetAll(t *testing.T) {
 			wantCount: 9,
 		},
 		{
-			name:    "get all transactions with order asc",
-			dbSetup: setupScripts,
+			name: "get all transactions with order asc",
 			input: args{
 				order: "asc",
 			},
@@ -326,14 +303,10 @@ func TestTransactionModel_GetAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			dbSetup(tt.dbSetup...)
-			defer dbTeardown()
+			td := initDbForTransactionList(t)
+			defer td()
 
-			model := TransactionModel{
-				db:       db,
-				accounts: NewAccountModel(db, NewGroupModel(db)),
-			}
-			got, count, err := model.GetAll(context.Background(), tt.input.accountId, tt.input.order, tt.input.limit, tt.input.offset)
+			got, count, err := _transactionModel.GetAll(context.Background(), tt.input.accountId, tt.input.order, tt.input.limit, tt.input.offset)
 			is.NoErr(err)
 			is.Equal(got, tt.want)
 			is.Equal(count, tt.wantCount)
@@ -343,30 +316,19 @@ func TestTransactionModel_GetAll(t *testing.T) {
 }
 
 func TestTransactionModel_DeleteAllByAccount(t *testing.T) {
-	test.IsIntegrationTest(t)
-	is := isPkg.New(t)
-
-	setupScripts := []string{
-		dataFor("transaction"),
-		dataFor("transaction_list"),
-	}
-
-	db, dbSetup, dbTeardown := getTestDb(t)
-	defer db.Close()
+	is, teardown := initTransactionIntegrationTest(t)
+	defer teardown()
 
 	tests := []struct {
 		name      string
-		dbSetup   []string
 		accountId int32
 	}{
 		{
 			name:      "delete all transactions by account id 1",
-			dbSetup:   setupScripts,
 			accountId: 1,
 		},
 		{
 			name:      "delete all transactions by non existent account",
-			dbSetup:   setupScripts,
 			accountId: -45,
 		},
 	}
@@ -374,19 +336,14 @@ func TestTransactionModel_DeleteAllByAccount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			dbSetup(tt.dbSetup...)
-			defer dbTeardown()
+			td := initDbForTransactionList(t)
+			defer td()
 
-			model := TransactionModel{
-				db:       db,
-				accounts: NewAccountModel(db, NewGroupModel(db)),
-			}
-
-			err := model.DeleteAllByAccount(context.Background(), tt.accountId)
+			err := _transactionModel.DeleteAllByAccount(context.Background(), tt.accountId)
 			is.NoErr(err)
 
 			stmt := `SELECT id from transactions WHERE account_id=?`
-			rows, err := db.Query(stmt, tt.accountId)
+			rows, err := _conn.Query(stmt, tt.accountId)
 			is.NoErr(err) // could not query transactions
 			defer rows.Close()
 			if rows.Next() {
@@ -397,33 +354,7 @@ func TestTransactionModel_DeleteAllByAccount(t *testing.T) {
 
 }
 
-func timeStampMock(month int) *timestamp.Timestamp {
-	ts, _ := ptypes.TimestampProto(time.Date(2019, time.Month(month), 17, 16, 15, 14, 0, time.UTC))
-	return ts
-}
-
 func transisitonList(accountId int) []*api.Transaction {
-	accountOne := &api.Account{
-		Id:        1,
-		Name:      "testaccount",
-		Saldo:     12,
-		NfcChipId: "testchipid",
-		Group: &api.Group{
-			Id:   1,
-			Name: "testgroup1",
-		},
-	}
-	accountTwo := &api.Account{
-		Id:        2,
-		Name:      "testaccount1",
-		Saldo:     120,
-		NfcChipId: "testchipid2",
-		Group: &api.Group{
-			Id:   1,
-			Name: "testgroup1",
-		},
-	}
-
 	transactionsTwo := []*api.Transaction{
 		{
 			Id:       9,
@@ -525,4 +456,36 @@ func (s SortTransactions) Swap(i, j int) {
 
 func (s SortTransactions) Len() int {
 	return len(s)
+}
+
+func initDbForTransactions(t *testing.T) func() error {
+	t.Helper()
+	err := setupDB(_conn, dataFor("transaction"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return teardownDB(_conn)
+}
+
+func initDbForTransactionList(t *testing.T) func() error {
+	t.Helper()
+	err := setupDB(_conn, dataFor("transaction"), dataFor("transaction_list"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return teardownDB(_conn)
+}
+
+func initTransactionIntegrationTest(t *testing.T) (*isPkg.I, func()) {
+	test.IsIntegrationTest(t)
+	is := isPkg.New(t)
+	_transactionModel.accounts = accountMock
+	return is, func() {
+		_transactionModel.accounts = nil
+	}
+}
+
+func timeStampMock(month int) *timestamp.Timestamp {
+	ts, _ := ptypes.TimestampProto(time.Date(2019, time.Month(month), 17, 16, 15, 14, 0, time.UTC))
+	return ts
 }

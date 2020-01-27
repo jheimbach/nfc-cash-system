@@ -20,27 +20,19 @@ import (
 func TestUserModel_Create(t *testing.T) {
 	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
-	db, dbSetup, dbTeardown := getTestDb(t)
-	defer db.Close()
 
 	wantName, wantEmail, wantPassword := "test", "test@example.org", "test123!"
 	t.Run("inserts new userId to database", func(t *testing.T) {
 		is := is.New(t)
+		defer teardownDB(_conn)()
 
-		dbSetup()
-		defer dbTeardown()
-
-		model := UserModel{
-			db: db,
-		}
-
-		err := model.Create(context.Background(), wantName, wantEmail, wantPassword)
+		err := _userModel.Create(context.Background(), wantName, wantEmail, wantPassword)
 		if err != nil {
 			t.Fatalf("got error from inserting in usermodel, did not expect one %v", err)
 		}
 		gotName, gotEmail, gotPassword := "", "", ""
 
-		err = db.QueryRow("SELECT name,email,hashed_password from users WHERE id=1").Scan(&gotName, &gotEmail, &gotPassword)
+		err = _conn.QueryRow("SELECT name,email,hashed_password from users WHERE id=1").Scan(&gotName, &gotEmail, &gotPassword)
 		if err != nil {
 			t.Fatalf("got error from inserting in usermodel, did not expect one %v", err)
 		}
@@ -51,16 +43,11 @@ func TestUserModel_Create(t *testing.T) {
 	})
 
 	t.Run("returns error if userId with same email exists", func(t *testing.T) {
-		dbSetup()
-		defer dbTeardown()
-
-		model := UserModel{
-			db: db,
-		}
+		defer teardownDB(_conn)()
 
 		// insert first userId with same fields than insert again to test duplicate email errors
-		_ = model.Create(context.Background(), wantName, wantEmail, wantPassword)
-		err := model.Create(context.Background(), wantName, wantEmail, wantPassword)
+		_ = _userModel.Create(context.Background(), wantName, wantEmail, wantPassword)
+		err := _userModel.Create(context.Background(), wantName, wantEmail, wantPassword)
 		if err == nil {
 			t.Fatalf("got no error, expected one")
 		}
@@ -80,12 +67,10 @@ func assertEqualPasswords(t *testing.T, got, want string) {
 
 func TestUserModel_Get(t *testing.T) {
 	test.IsIntegrationTest(t)
-	db, dbSetup, dbTeardown := getTestDb(t)
-	defer db.Close()
 
 	t.Run("returns userId struct if userId with id exists", func(t *testing.T) {
-		dbSetup(dataFor("user"))
-		defer dbTeardown()
+		setupDB(_conn, dataFor("user"))
+		defer teardownDB(_conn)()
 
 		created, _ := ptypes.TimestampProto(time.Date(2003, 8, 14, 18, 0, 0, 0, time.UTC))
 
@@ -96,11 +81,7 @@ func TestUserModel_Get(t *testing.T) {
 			Created: created,
 		}
 
-		model := &UserModel{
-			db: db,
-		}
-
-		got, err := model.Get(context.Background(), 1)
+		got, err := _userModel.Get(context.Background(), 1)
 		if err != nil {
 			t.Errorf("got error from getting in usermodel, did not expect one %v", err)
 		}
@@ -110,14 +91,10 @@ func TestUserModel_Get(t *testing.T) {
 		}
 	})
 	t.Run("returns ErrNotFound if no userId with id is found", func(t *testing.T) {
-		dbSetup()
-		defer dbTeardown()
+		setupDB(_conn)
+		defer teardownDB(_conn)()
 
-		model := &UserModel{
-			db: db,
-		}
-
-		got, err := model.Get(context.Background(), 1)
+		got, err := _userModel.Get(context.Background(), 1)
 		if got != nil {
 			t.Errorf("got userId struct, did not expect one %v", got)
 		}
@@ -131,16 +108,6 @@ func TestUserModel_Get(t *testing.T) {
 func TestUserModel_Authenticate(t *testing.T) {
 	test.IsIntegrationTest(t)
 	is := isPkg.New(t)
-	db, dbSetup, dbTeardown := getTestDb(t)
-	dbSetup(dataFor("user"))
-	defer func() {
-		dbTeardown()
-		db.Close()
-	}()
-
-	model := &UserModel{
-		db: db,
-	}
 
 	mockUserOne := &api.User{
 		Id:    1,
@@ -194,8 +161,11 @@ func TestUserModel_Authenticate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("authenticate userId with %q and %q", tt.email, tt.password), func(t *testing.T) {
+			setupDB(_conn, dataFor("user"))
+			defer teardownDB(_conn)()
+
 			is := is.New(t)
-			got, err := model.Authenticate(context.Background(), tt.email, tt.password)
+			got, err := _userModel.Authenticate(context.Background(), tt.email, tt.password)
 			if tt.wantErr != nil {
 				is.Equal(err, tt.wantErr)
 				return
