@@ -69,7 +69,7 @@ func TestUserModel_Get(t *testing.T) {
 	test.IsIntegrationTest(t)
 
 	t.Run("returns userId struct if userId with id exists", func(t *testing.T) {
-		setupDB(_conn, dataFor("user"))
+		test.SetupDB(_conn, dataFor("user"))
 		defer teardownDB(_conn)()
 
 		created, _ := ptypes.TimestampProto(time.Date(2003, 8, 14, 18, 0, 0, 0, time.UTC))
@@ -91,7 +91,7 @@ func TestUserModel_Get(t *testing.T) {
 		}
 	})
 	t.Run("returns ErrNotFound if no userId with id is found", func(t *testing.T) {
-		setupDB(_conn)
+		test.SetupDB(_conn)
 		defer teardownDB(_conn)()
 
 		got, err := _userModel.Get(context.Background(), 1)
@@ -161,7 +161,7 @@ func TestUserModel_Authenticate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("authenticate userId with %q and %q", tt.email, tt.password), func(t *testing.T) {
-			setupDB(_conn, dataFor("user"))
+			test.SetupDB(_conn, dataFor("user"))
 			defer teardownDB(_conn)()
 
 			is := is.New(t)

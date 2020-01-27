@@ -1,4 +1,4 @@
-package handlers
+package e2e
 
 import (
 	"bytes"
@@ -11,16 +11,13 @@ import (
 	"testing"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
-	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
 	isPkg "github.com/matryer/is"
 )
 
 func TestAccountserver_E2E_ListAccounts(t *testing.T) {
-	test.IsIntegrationTest(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
 
-	aTkn, _ := login(t)
 
 	type want struct {
 		statusCode   int
@@ -45,7 +42,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 		},
 		{
 			name:        "get all accounts",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			want: want{
 				statusCode:   http.StatusOK,
 				accountsLen:  100,
@@ -54,7 +51,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 		},
 		{
 			name:        "get first 10 accounts",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			pagingLimit: 10,
 			want: want{
 				statusCode:   http.StatusOK,
@@ -64,7 +61,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 		},
 		{
 			name:         "get second 10 accounts",
-			accessToken:  aTkn,
+			accessToken:  _aTkn,
 			pagingLimit:  10,
 			pagingOffset: 10,
 			want: want{
@@ -75,7 +72,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 		},
 		{
 			name:        "filter by group",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			groupId:     1,
 			want: want{
 				statusCode:   http.StatusOK,
@@ -85,7 +82,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 		},
 		{
 			name:        "filter by group with limit",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			groupId:     1,
 			pagingLimit: 5,
 			want: want{
@@ -96,7 +93,7 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 		},
 		{
 			name:         "filter by group with limit and offset",
-			accessToken:  aTkn,
+			accessToken:  _aTkn,
 			groupId:      1,
 			pagingLimit:  5,
 			pagingOffset: 8,
@@ -110,9 +107,10 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path, err := url.Parse(RestUrlWithPath("v1/accounts"))
+			restPath := RestUrlWithPath("v1/accounts")
+			path, err := url.Parse(restPath)
 			if err != nil {
-				t.Fatalf("could not parse url: %s; %v", RestUrlWithPath("v1/accounts"), err)
+				t.Fatalf("could not parse url: %s; %v", restPath, err)
 			}
 
 			if tt.pagingLimit != 0 || tt.groupId != 0 {
@@ -174,12 +172,10 @@ func TestAccountserver_E2E_ListAccounts(t *testing.T) {
 }
 
 func TestAccountserver_E2E_GetAccount(t *testing.T) {
-	test.IsIntegrationTest(t)
-	is := isPkg.New(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
 
-	aTkn, _ := login(t)
+	is := isPkg.New(t)
 
 	type want struct {
 		statusCode int
@@ -202,7 +198,7 @@ func TestAccountserver_E2E_GetAccount(t *testing.T) {
 		},
 		{
 			name:        "get account with id 1",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			accountId:   1,
 			want: want{
 				statusCode: http.StatusOK,
@@ -223,7 +219,7 @@ func TestAccountserver_E2E_GetAccount(t *testing.T) {
 		},
 		{
 			name:        "account with invalid id",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			accountId:   -45,
 			want: want{
 				statusCode: http.StatusNotFound,
@@ -267,12 +263,10 @@ func TestAccountserver_E2E_GetAccount(t *testing.T) {
 }
 
 func TestAccountserver_E2E_CreateAccount(t *testing.T) {
-	test.IsIntegrationTest(t)
-	is := isPkg.New(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
 
-	aTkn, _ := login(t)
+	is := isPkg.New(t)
 
 	type want struct {
 		statusCode int
@@ -294,7 +288,7 @@ func TestAccountserver_E2E_CreateAccount(t *testing.T) {
 		},
 		{
 			name:        "create new account",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			body: &api.CreateAccountRequest{
 				Name:        "test account",
 				Description: "for testing",
@@ -319,7 +313,7 @@ func TestAccountserver_E2E_CreateAccount(t *testing.T) {
 		},
 		{
 			name:        "create new account with used nfc chip id",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			body: &api.CreateAccountRequest{
 				Name:        "test account",
 				Description: "for testing",
@@ -334,7 +328,7 @@ func TestAccountserver_E2E_CreateAccount(t *testing.T) {
 		},
 		{
 			name:        "create new account with nonexistent group",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			body: &api.CreateAccountRequest{
 				Name:        "test account",
 				Description: "for testing",
@@ -389,12 +383,10 @@ func TestAccountserver_E2E_CreateAccount(t *testing.T) {
 }
 
 func TestAccountserver_E2E_UpdateAccount(t *testing.T) {
-	test.IsIntegrationTest(t)
-	is := isPkg.New(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
 
-	aTkn, _ := login(t)
+	is := isPkg.New(t)
 
 	type want struct {
 		statusCode int
@@ -419,7 +411,7 @@ func TestAccountserver_E2E_UpdateAccount(t *testing.T) {
 		},
 		{
 			name:        "update account name",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			body: &api.Account{
 				Id:          1,
 				Name:        "Laverne",
@@ -448,7 +440,7 @@ func TestAccountserver_E2E_UpdateAccount(t *testing.T) {
 		},
 		{
 			name:        "update account description",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			body: &api.Account{
 				Id:          1,
 				Name:        "Laverne",
@@ -477,7 +469,7 @@ func TestAccountserver_E2E_UpdateAccount(t *testing.T) {
 		},
 		{
 			name:        "try to update account saldo",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			body: &api.Account{
 				Id:          1,
 				Name:        "Laverne",
@@ -495,7 +487,7 @@ func TestAccountserver_E2E_UpdateAccount(t *testing.T) {
 		},
 		{
 			name:        "move acccount to different group",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			body: &api.Account{
 				Id:          1,
 				Name:        "Laverne",
@@ -523,7 +515,7 @@ func TestAccountserver_E2E_UpdateAccount(t *testing.T) {
 		},
 		{
 			name:        "try to update to non existant group",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			body: &api.Account{
 				Id:          1,
 				Name:        "Laverne",
@@ -579,13 +571,12 @@ func TestAccountserver_E2E_UpdateAccount(t *testing.T) {
 		})
 	}
 }
+
 func TestAccountserver_E2E_DeleteAccount(t *testing.T) {
-	test.IsIntegrationTest(t)
-	is := isPkg.New(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
 
-	aTkn, _ := login(t)
+	is := isPkg.New(t)
 
 	tests := []struct {
 		name        string
@@ -602,13 +593,13 @@ func TestAccountserver_E2E_DeleteAccount(t *testing.T) {
 		},
 		{
 			name:        "delete account with id 1",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			accountId:   1,
 			statusCode:  http.StatusOK,
 		},
 		{
 			name:        "delete account with invalid id",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			accountId:   -45,
 			statusCode:  http.StatusOK,
 		},

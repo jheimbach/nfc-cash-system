@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package api;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+service HealthService {
+    rpc Health (google.protobuf.Empty) returns (HealthStatus) {
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+            operation_id: "Health check"
+            description: "Returns health response if server is running"
+        };
+        option (google.api.http) = {
+            get: "/v1/health"
+        };
+    };
+}
+
+message HealthStatus {
+    bool running = 1;
+}

@@ -1,4 +1,4 @@
-package handlers
+package e2e
 
 import (
 	"bytes"
@@ -11,16 +11,12 @@ import (
 	"testing"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
-	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
 	isPkg "github.com/matryer/is"
 )
 
 func TestGroupserver_E2E_ListGroups(t *testing.T) {
-	test.IsIntegrationTest(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
-
-	aTkn, _ := login(t)
 
 	type want struct {
 		statusCode int
@@ -44,7 +40,7 @@ func TestGroupserver_E2E_ListGroups(t *testing.T) {
 		},
 		{
 			name:        "get all groups",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			want: want{
 				statusCode: http.StatusOK,
 				groupsLen:  10,
@@ -53,7 +49,7 @@ func TestGroupserver_E2E_ListGroups(t *testing.T) {
 		},
 		{
 			name:        "get groups with limit",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			pagingLimit: 5,
 			want: want{
 				statusCode: http.StatusOK,
@@ -63,7 +59,7 @@ func TestGroupserver_E2E_ListGroups(t *testing.T) {
 		},
 		{
 			name:         "get groups with limit and offset",
-			accessToken:  aTkn,
+			accessToken:  _aTkn,
 			pagingLimit:  5,
 			pagingOffset: 8,
 			want: want{
@@ -138,12 +134,10 @@ func TestGroupserver_E2E_ListGroups(t *testing.T) {
 }
 
 func TestGroupserver_E2E_CreateGroup(t *testing.T) {
-	is := isPkg.New(t)
-	test.IsIntegrationTest(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
 
-	aTkn, _ := login(t)
+	is := isPkg.New(t)
 
 	type want struct {
 		statusCode int
@@ -165,7 +159,7 @@ func TestGroupserver_E2E_CreateGroup(t *testing.T) {
 		},
 		{
 			name:        "create minimal group",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			want: want{
 				statusCode: http.StatusOK,
 				group: api.Group{
@@ -179,7 +173,7 @@ func TestGroupserver_E2E_CreateGroup(t *testing.T) {
 		},
 		{
 			name:        "create group with description",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			want: want{
 				statusCode: http.StatusOK,
 				group: api.Group{
@@ -194,7 +188,7 @@ func TestGroupserver_E2E_CreateGroup(t *testing.T) {
 			},
 		}, {
 			name:        "create group with can overdraw",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			want: want{
 				statusCode: http.StatusOK,
 				group: api.Group{
@@ -250,12 +244,9 @@ func TestGroupserver_E2E_CreateGroup(t *testing.T) {
 }
 
 func TestGroupserver_E2E_GetGroup(t *testing.T) {
-	test.IsIntegrationTest(t)
-	is := isPkg.New(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
-
-	aTkn, _ := login(t)
+	is := isPkg.New(t)
 
 	type want struct {
 		statusCode int
@@ -278,7 +269,7 @@ func TestGroupserver_E2E_GetGroup(t *testing.T) {
 		},
 		{
 			name:        "get group with id 1",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			accountId:   1,
 			want: want{
 				statusCode: http.StatusOK,
@@ -290,7 +281,7 @@ func TestGroupserver_E2E_GetGroup(t *testing.T) {
 		},
 		{
 			name:        "get group that does not exist",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			accountId:   -45,
 			want: want{
 				statusCode: http.StatusNotFound,
@@ -334,12 +325,9 @@ func TestGroupserver_E2E_GetGroup(t *testing.T) {
 }
 
 func TestGroupserver_E2E_UpdateGroup(t *testing.T) {
-	test.IsIntegrationTest(t)
-	is := isPkg.New(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
-
-	aTkn, _ := login(t)
+	is := isPkg.New(t)
 
 	type want struct {
 		statusCode int
@@ -364,7 +352,7 @@ func TestGroupserver_E2E_UpdateGroup(t *testing.T) {
 		},
 		{
 			name:        "update group name",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			body: &api.Group{
 				Id:   1,
 				Name: "H20 Plus",
@@ -380,7 +368,7 @@ func TestGroupserver_E2E_UpdateGroup(t *testing.T) {
 
 		{
 			name:        "update group description",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			body: &api.Group{
 				Id:          1,
 				Name:        "H20 Plus",
@@ -397,7 +385,7 @@ func TestGroupserver_E2E_UpdateGroup(t *testing.T) {
 		},
 		{
 			name:        "update group can overdraw",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			body: &api.Group{
 				Id:          1,
 				Name:        "H20 Plus",
@@ -456,12 +444,9 @@ func TestGroupserver_E2E_UpdateGroup(t *testing.T) {
 }
 
 func TestGroupserver_E2E_DeleteGroup(t *testing.T) {
-	test.IsIntegrationTest(t)
-	is := isPkg.New(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
-
-	aTkn, _ := login(t)
+	is := isPkg.New(t)
 
 	tests := []struct {
 		name             string
@@ -479,20 +464,20 @@ func TestGroupserver_E2E_DeleteGroup(t *testing.T) {
 		},
 		{
 			name:             "delete empty group",
-			accessToken:      aTkn,
+			accessToken:      _aTkn,
 			createEmptyGroup: true,
 			statusCode:       http.StatusOK,
 		},
 		{
 			name:        "delete non empty group",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			groupId:     1,
 			statusCode:  http.StatusConflict,
 			errMsg:      "could not delete group, because it is not empty",
 		},
 		{
 			name:        "delete group with invalid id",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			groupId:     -45,
 			statusCode:  http.StatusOK,
 		},

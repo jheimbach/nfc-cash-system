@@ -1,5 +1,5 @@
 ### Basic authorization.
-GET localhost:8080/v1/user/login
+GET http://localhost:32935/v1/user/login
 Authorization: Basic briste0@angelfire.com lMvZARjM3pwe
 
 

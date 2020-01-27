@@ -12,7 +12,7 @@ import (
 
 func InitInterceptor(gen TokenGenerator) func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-		if info.FullMethod == "/api.UserService/AuthenticateUser" {
+		if info.FullMethod == "/api.UserService/AuthenticateUser" || info.FullMethod == "/api.HealthService/Health" {
 			return handler(ctx, req)
 		}
 		token, err := bearerAuthorization(ctx)

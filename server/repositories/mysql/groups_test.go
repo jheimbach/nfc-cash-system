@@ -433,7 +433,7 @@ func TestGroupModel_GetAllByIds(t *testing.T) {
 func initDBForGroupList(t *testing.T) func() error {
 	t.Helper()
 
-	err := setupDB(_conn, dataFor("group_list"))
+	err := test.SetupDB(_conn, dataFor("group_list"))
 	if err != nil {
 		t.Fatal(err)
 	}

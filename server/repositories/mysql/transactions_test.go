@@ -460,7 +460,7 @@ func (s SortTransactions) Len() int {
 
 func initDbForTransactions(t *testing.T) func() error {
 	t.Helper()
-	err := setupDB(_conn, dataFor("transaction"))
+	err := test.SetupDB(_conn, dataFor("transaction"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -469,7 +469,7 @@ func initDbForTransactions(t *testing.T) func() error {
 
 func initDbForTransactionList(t *testing.T) func() error {
 	t.Helper()
-	err := setupDB(_conn, dataFor("transaction"), dataFor("transaction_list"))
+	err := test.SetupDB(_conn, dataFor("transaction"), dataFor("transaction_list"))
 	if err != nil {
 		t.Fatal(err)
 	}

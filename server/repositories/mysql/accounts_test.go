@@ -658,16 +658,16 @@ func insertTestAccount(t *testing.T, account api.Account) error {
 
 func initDBForAccounts(t *testing.T) func() error {
 	t.Helper()
-	err := setupDB(_conn, dataFor("account"))
+	err := test.SetupDB(_conn, dataFor("account"))
 	if err != nil {
-		t.Fatal(err)
+		t.Log(err)
 	}
 	return teardownDB(_conn)
 }
 
 func initDBForAccountLists(t *testing.T) func() error {
 	t.Helper()
-	err := setupDB(_conn, dataFor("account"), dataFor("account_list"))
+	err := test.SetupDB(_conn, dataFor("account"), dataFor("account_list"))
 	if err != nil {
 		t.Fatal(err)
 	}

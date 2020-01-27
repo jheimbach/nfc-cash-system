@@ -12,7 +12,7 @@ import (
 )
 
 func GatewayHandler(ctx context.Context, grpcEndpoint, certFile string) (*runtime.ServeMux, error) {
-	creds, err := credentials.NewClientTLSFromFile(certFile, "")
+	creds, err := credentials.NewClientTLSFromFile(certFile, "nfc-cash-system.local")
 	if err != nil {
 		return nil, fmt.Errorf("could not create credentials from %q: %v", certFile, err)
 	}
@@ -23,6 +23,11 @@ func GatewayHandler(ctx context.Context, grpcEndpoint, certFile string) (*runtim
 	err = api.RegisterUserServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts)
 	if err != nil {
 		return nil, errCouldNotRegisterService("user", err)
+	}
+
+	err = api.RegisterHealthServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts)
+	if err != nil {
+		return nil, errCouldNotRegisterService("health", err)
 	}
 
 	err = api.RegisterGroupsServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts)

@@ -28,6 +28,8 @@ func NewGrpcServer(database *sql.DB, cert, certKey string, accessTknKey, refresh
 	}
 	s := grpc.NewServer(grpc.Creds(creds), grpc.UnaryInterceptor(auth.InitInterceptor(tokenGen)))
 
+	handlers.RegisterHealthServer(s)
+
 	userModel := mysql.NewUserModel(database)
 	handlers.RegisterUserServer(s, userModel, tokenGen)
 

@@ -1,12 +1,36 @@
-version: "3"
+version: "3.5"
 services:
+  server:
+    build:
+      context: server
+      dockerfile: Dockerfile-debug
+    networks:
+      - database
+    ports:
+      - 8080
+      - 50051
+      - 40000
+    secrets:
+      - source: cert.pem
+        target: /run/tls/cert.pem
+      - source: key.pem
+        target: /run/tls/cert-key.pem
+    depends_on:
+      - db
+    environment:
+      DB_HOST: ${PROJECT}.db
+      DB_USER: ${PROJECT}
+      DB_PASSWORD: ${PROJECT}
+      DB_NAME: ${PROJECT}
   db:
     image: mariadb:latest
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     ports:
       - 3306
     networks:
-      - database
+      database:
+        aliases:
+          - ${PROJECT}.db
     hostname: ${PROJECT}.db
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: '1'
@@ -15,24 +39,15 @@ services:
       MYSQL_PASSWORD: ${PROJECT}
     volumes:
       - db_data:/var/lib/mysql
-  db_test:
-    image: mariadb:latest
-    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-    ports:
-      - 3306
-    networks:
-      - database
-    hostname: ${PROJECT}-test.db
-    environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: '1'
-      MYSQL_DATABASE: ${PROJECT}
-      MYSQL_USER: ${PROJECT}
-      MYSQL_PASSWORD: ${PROJECT}
-    volumes:
-      - db_test_data:/var/lib/mysql
 networks:
   database:
 
 volumes:
   db_data:
   db_test_data:
+
+secrets:
+  cert.pem:
+    file: ./tls/cert.pem
+  key.pem:
+    file: ./tls/cert-key.pem

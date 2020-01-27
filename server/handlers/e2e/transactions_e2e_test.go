@@ -1,4 +1,4 @@
-package handlers
+package e2e
 
 import (
 	"bytes"
@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/JHeimbach/nfc-cash-system/server/api"
-	"github.com/JHeimbach/nfc-cash-system/server/internals/test"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -20,11 +19,8 @@ import (
 )
 
 func TestTransactionServer_E2E_ListTransactions(t *testing.T) {
-	test.IsIntegrationTest(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
-
-	aTkn, _ := login(t)
 
 	type want struct {
 		statusCode        int
@@ -49,7 +45,7 @@ func TestTransactionServer_E2E_ListTransactions(t *testing.T) {
 		},
 		{
 			name:        "get all transactions",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			want: want{
 				statusCode:        http.StatusOK,
 				transactionsLen:   1000,
@@ -58,7 +54,7 @@ func TestTransactionServer_E2E_ListTransactions(t *testing.T) {
 		},
 		{
 			name:        "get first 10 transactions",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			pagingLimit: 10,
 			want: want{
 				statusCode:        http.StatusOK,
@@ -68,7 +64,7 @@ func TestTransactionServer_E2E_ListTransactions(t *testing.T) {
 		},
 		{
 			name:         "get second 10 transactions",
-			accessToken:  aTkn,
+			accessToken:  _aTkn,
 			pagingLimit:  10,
 			pagingOffset: 10,
 			want: want{
@@ -79,7 +75,7 @@ func TestTransactionServer_E2E_ListTransactions(t *testing.T) {
 		},
 		{
 			name:        "order desc",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			order:       "desc",
 			want: want{
 				statusCode:        http.StatusOK,
@@ -89,7 +85,7 @@ func TestTransactionServer_E2E_ListTransactions(t *testing.T) {
 		},
 		{
 			name:        "order asc",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			order:       "asc",
 			want: want{
 				statusCode:        http.StatusOK,
@@ -99,7 +95,7 @@ func TestTransactionServer_E2E_ListTransactions(t *testing.T) {
 		},
 		{
 			name:        "order by desc with limit",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			order:       "desc",
 			pagingLimit: 5,
 			want: want{
@@ -110,7 +106,7 @@ func TestTransactionServer_E2E_ListTransactions(t *testing.T) {
 		},
 		{
 			name:        "order by asc with limit",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			order:       "asc",
 			pagingLimit: 5,
 			want: want{
@@ -121,7 +117,7 @@ func TestTransactionServer_E2E_ListTransactions(t *testing.T) {
 		},
 		{
 			name:         "order by desc with limit and offset",
-			accessToken:  aTkn,
+			accessToken:  _aTkn,
 			order:        "desc",
 			pagingLimit:  5,
 			pagingOffset: 8,
@@ -133,7 +129,7 @@ func TestTransactionServer_E2E_ListTransactions(t *testing.T) {
 		},
 		{
 			name:         "order by asc with limit and offset",
-			accessToken:  aTkn,
+			accessToken:  _aTkn,
 			order:        "asc",
 			pagingLimit:  5,
 			pagingOffset: 8,
@@ -207,11 +203,9 @@ func TestTransactionServer_E2E_ListTransactions(t *testing.T) {
 }
 
 func TestTransactionServer_E2E_ListTransactionsByAccount(t *testing.T) {
-	test.IsIntegrationTest(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
 
-	aTkn, _ := login(t)
 
 	type want struct {
 		statusCode        int
@@ -237,7 +231,7 @@ func TestTransactionServer_E2E_ListTransactionsByAccount(t *testing.T) {
 		},
 		{
 			name:        "get all transactions for account id 1",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			accountID:   1,
 			want: want{
 				statusCode:        http.StatusOK,
@@ -247,7 +241,7 @@ func TestTransactionServer_E2E_ListTransactionsByAccount(t *testing.T) {
 		},
 		{
 			name:        "get first 10 transactions",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			accountID:   1,
 			pagingLimit: 10,
 			want: want{
@@ -258,7 +252,7 @@ func TestTransactionServer_E2E_ListTransactionsByAccount(t *testing.T) {
 		},
 		{
 			name:         "get second 5 transactions",
-			accessToken:  aTkn,
+			accessToken:  _aTkn,
 			accountID:    1,
 			pagingLimit:  10,
 			pagingOffset: 5,
@@ -270,7 +264,7 @@ func TestTransactionServer_E2E_ListTransactionsByAccount(t *testing.T) {
 		},
 		{
 			name:        "order desc",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			accountID:   1,
 			order:       "desc",
 			want: want{
@@ -281,7 +275,7 @@ func TestTransactionServer_E2E_ListTransactionsByAccount(t *testing.T) {
 		},
 		{
 			name:        "order asc",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			accountID:   1,
 			order:       "asc",
 			want: want{
@@ -292,7 +286,7 @@ func TestTransactionServer_E2E_ListTransactionsByAccount(t *testing.T) {
 		},
 		{
 			name:        "order by desc with limit",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			accountID:   1,
 			order:       "desc",
 			pagingLimit: 5,
@@ -304,7 +298,7 @@ func TestTransactionServer_E2E_ListTransactionsByAccount(t *testing.T) {
 		},
 		{
 			name:        "order by asc with limit",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			accountID:   1,
 			order:       "asc",
 			pagingLimit: 5,
@@ -316,7 +310,7 @@ func TestTransactionServer_E2E_ListTransactionsByAccount(t *testing.T) {
 		},
 		{
 			name:         "order by desc with limit and offset",
-			accessToken:  aTkn,
+			accessToken:  _aTkn,
 			accountID:    1,
 			order:        "desc",
 			pagingLimit:  5,
@@ -329,7 +323,7 @@ func TestTransactionServer_E2E_ListTransactionsByAccount(t *testing.T) {
 		},
 		{
 			name:         "order by asc with limit and offset",
-			accessToken:  aTkn,
+			accessToken:  _aTkn,
 			accountID:    1,
 			order:        "asc",
 			pagingLimit:  5,
@@ -406,11 +400,9 @@ func TestTransactionServer_E2E_ListTransactionsByAccount(t *testing.T) {
 }
 
 func TestTransactionServer_E2E_GetTransaction(t *testing.T) {
-	test.IsIntegrationTest(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
 
-	aTkn, _ := login(t)
 
 	type want struct {
 		statusCode  int
@@ -433,7 +425,7 @@ func TestTransactionServer_E2E_GetTransaction(t *testing.T) {
 		},
 		{
 			name:          "get transaction with id 1 and account id 20",
-			accessToken:   aTkn,
+			accessToken:   _aTkn,
 			accountID:     20,
 			transactionID: 1,
 			want: want{
@@ -463,7 +455,7 @@ func TestTransactionServer_E2E_GetTransaction(t *testing.T) {
 		},
 		{
 			name:          "get transaction with id 1 and account id 2 returns 404 err",
-			accessToken:   aTkn,
+			accessToken:   _aTkn,
 			accountID:     2,
 			transactionID: 1,
 			want: want{
@@ -473,7 +465,7 @@ func TestTransactionServer_E2E_GetTransaction(t *testing.T) {
 		},
 		{
 			name:          "transaction with id 1111 and account id 2 returns 404 err",
-			accessToken:   aTkn,
+			accessToken:   _aTkn,
 			accountID:     2,
 			transactionID: 1111,
 			want: want{
@@ -529,13 +521,12 @@ func TestTransactionServer_E2E_GetTransaction(t *testing.T) {
 		})
 	}
 }
+
 func TestTransactionServer_E2E_CreateTransaction(t *testing.T) {
-	test.IsIntegrationTest(t)
-	is := isPkg.New(t)
-	teardown := startServers(t)
+	teardown := prepareTest(t)
 	defer teardown()
 
-	aTkn, _ := login(t)
+	is := isPkg.New(t)
 
 	type want struct {
 		statusCode int
@@ -560,7 +551,7 @@ func TestTransactionServer_E2E_CreateTransaction(t *testing.T) {
 		},
 		{
 			name:        "create new transaction",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			body: api.CreateTransactionRequest{
 				Amount:    6,
 				AccountId: 1,
@@ -590,7 +581,7 @@ func TestTransactionServer_E2E_CreateTransaction(t *testing.T) {
 		},
 		{
 			name:        "create new transaction with unkown account",
-			accessToken: aTkn,
+			accessToken: _aTkn,
 			body: api.CreateTransactionRequest{
 				Amount:    6,
 				AccountId: -45,

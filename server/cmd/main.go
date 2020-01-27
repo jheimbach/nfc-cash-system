@@ -15,8 +15,8 @@ import (
 )
 
 func main() {
-	grpcEndpoint := flag.String("grpc-host", "localhost:50051", "Host address for grpc server")
-	restEndpoint := flag.String("rest-host", "localhost:8080", "Host address for rest server")
+	grpcEndpoint := flag.String("grpc-host", ":50051", "Host address for grpc server")
+	restEndpoint := flag.String("rest-host", ":8080", "Host address for rest server")
 	certFile := flag.String("grpc-cert", "./tls/cert.pem", "TLS certificate for grpc server")
 	keyFile := flag.String("grpc-key", "./tls/cert-key.pem", "TLS key for grpc server")
 	accessTknKey := flag.String("access-token-key", "7QC/y4Dkke2izCGyArkfH074ETD9Hyf6PxIV/D7L2Nw=", "TLS key for grpc server")
@@ -28,12 +28,15 @@ func main() {
 	if err := database.CheckEnvVars(); err != nil {
 		log.Fatalf("could not connect to database: %v", err)
 	}
+	log.Println("connecting to database...")
 	db, err := database.OpenDatabase(database.DefaultDSN)
 	if err != nil {
 		log.Fatalf("could not connect to database, %v", err)
 	}
 	defer db.Close()
+	log.Println("connected to database")
 
+	log.Println("start grpc server...")
 	// start grpc server
 	grpcSrv, err := server.NewGrpcServer(db, *certFile, *keyFile, *accessTknKey, *refreshTknKey)
 	if err != nil {
@@ -44,12 +47,15 @@ func main() {
 			log.Fatalf("could not start grpc server: %v", err)
 		}
 	}()
+	log.Println("grpc server started")
 
 	// start rest server
 	restCtx, restCancel := context.WithCancel(context.Background())
 	defer restCancel()
 
+	log.Println("start rest server...")
 	srv, err := server.NewGatewayServer(restCtx, *restEndpoint, *grpcEndpoint, *certFile)
+	srv.ErrorLog = log.New(os.Stdout, "REST-GATEWAY", log.Flags())
 	if err != nil {
 		log.Fatalf("could not create rest gateway server: %v", err)
 	}
@@ -59,6 +65,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
+	log.Println("rest server started")
 
 	// stop server gracefully on sigterm
 	signals := make(chan os.Signal, 1)

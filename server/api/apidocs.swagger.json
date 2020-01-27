@@ -639,6 +639,35 @@
         ]
       }
     },
+    "/v1/health": {
+      "get": {
+        "description": "Returns health response if server is running",
+        "operationId": "Health check",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/apiHealthStatus"
+            }
+          },
+          "403": {
+            "description": "Returned when the user does not have permission to access the resource.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          },
+          "404": {
+            "description": "Returned when the resource does not exist.",
+            "schema": {
+              "$ref": "#/definitions/apiStatus"
+            }
+          }
+        },
+        "tags": [
+          "HealthService"
+        ]
+      }
+    },
     "/v1/transactions": {
       "get": {
         "description": "Lists all transactions, can be limited with paging options",
@@ -952,6 +981,15 @@
         }
       },
       "title": "Group"
+    },
+    "apiHealthStatus": {
+      "type": "object",
+      "properties": {
+        "running": {
+          "type": "boolean",
+          "format": "boolean"
+        }
+      }
     },
     "apiListAccountsResponse": {
       "type": "object",
