@@ -50,9 +50,9 @@ jobs:
         uses: actions/checkout@v1
 
       - name: Get dependencies
-      run: |
-        cd nfcreader
-        go get -v -t -d ./...
+        run: |
+          cd nfcreader
+          go get -v -t -d ./...
 
       - name: Run tests
         run: |
