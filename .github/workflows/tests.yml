@@ -19,17 +19,9 @@ jobs:
           cd server
           go get -v -t -d ./...
 
-      - name: Create Mysql Database
-        env:
-          TEST_DB_NAME: nfc-cash-system
-        run: mysql -uroot -proot -e "CREATE DATABASE \`$TEST_DB_NAME\` CHARACTER SET UTF8mb4 COLLATE utf8mb4_bin"
-
       - name: Run tests
         env:
           RUN_INTEGRATION: 1
-          PROJECT: nfc-cash-system
-          TEST_DB_NAME: nfc-cash-system
-          TEST_DB_DSN: "root:root@tcp/${TEST_DB_NAME}?parseTime=true&multiStatements=true"
         run: |
           cd server
           go test -v ./...
