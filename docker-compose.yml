@@ -3,7 +3,6 @@ services:
   server:
     build:
       context: server
-      dockerfile: Dockerfile-debug
     networks:
       - database
     ports:
@@ -18,10 +17,10 @@ services:
     depends_on:
       - db
     environment:
-      DB_HOST: ${PROJECT}.db
-      DB_USER: ${PROJECT}
-      DB_PASSWORD: ${PROJECT}
-      DB_NAME: ${PROJECT}
+      DB_HOST: ${DB_HOST}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
   db:
     image: mariadb:latest
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
@@ -30,13 +29,13 @@ services:
     networks:
       database:
         aliases:
-          - ${PROJECT}.db
-    hostname: ${PROJECT}.db
+          - ${DB_HOST}
+    hostname: ${DB_HOST}
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: '1'
-      MYSQL_DATABASE: ${PROJECT}
-      MYSQL_USER: ${PROJECT}
-      MYSQL_PASSWORD: ${PROJECT}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
 networks:
