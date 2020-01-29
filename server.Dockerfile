@@ -3,7 +3,7 @@ ENV CGO_ENABLED 0
 WORKDIR /src
 COPY . .
 
-RUN go build -o build/server cmd/server/main.go
+RUN go build -o build/server ./cmd/server
 
 FROM alpine
 WORKDIR run

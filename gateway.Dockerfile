@@ -2,7 +2,7 @@ FROM golang:alpine as builder
 ENV CGO_ENABLED 0
 WORKDIR /src
 COPY . .
-RUN go build -o build/gateway cmd/gateway/main.go
+RUN go build -o build/gateway ./cmd/gateway
 
 FROM alpine
 WORKDIR run

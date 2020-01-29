@@ -1,0 +1,5 @@
+grpc_host: ""
+grpc_port: "50051"
+rest_host: ""
+rest_port: "8080"
+tls_cert: ../../tls/cert.pem

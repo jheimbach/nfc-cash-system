@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"flag"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,24 +11,33 @@ import (
 	"time"
 
 	"github.com/jheimbach/nfc-cash-system/pkg/gateway"
-	"github.com/jheimbach/nfc-cash-system/pkg/server/internals/test"
+	"github.com/spf13/viper"
 )
 
 func main() {
-	restEndpoint := flag.String("rest-host", ":8080", "Host address for rest server")
-	grpcEndpoint := flag.String("grpc-host", ":50051", "Host address for grpc server")
-	certFile := flag.String("grpc-cert", "./tls/cert.pem", "TLS certificate for grpc server")
-	flag.Parse()
+	/*
+		restEndpoint := flag.String("rest-host", ":8080", "Host address for rest server")
+		grpcEndpoint := flag.String("grpc-host", ":50051", "Host address for grpc server")
+		certFile := flag.String("grpc-cert", "./tls/cert.pem", "TLS certificate for grpc server")
+		flag.Parse()
+	*/
 
-	certPath := test.EnvWithDefault("TLS_CERT", *certFile)
-	grpcHost := test.EnvWithDefault("GRPC_HOST", *grpcEndpoint)
+	err := initConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// start rest server
 	restCtx, restCancel := context.WithCancel(context.Background())
 	defer restCancel()
 
 	log.Println("start rest server...")
-	srv, err := gateway.NewGatewayServer(restCtx, *restEndpoint, grpcHost, certPath)
+	srv, err := gateway.NewGatewayServer(
+		restCtx,
+		net.JoinHostPort(viper.GetString("rest_host"), viper.GetString("rest_port")),
+		net.JoinHostPort(viper.GetString("grpc_host"), viper.GetString("grpc_port")),
+		viper.GetString("tls_cert"))
+
 	if err != nil {
 		log.Fatalf("could not create rest gateway server: %v", err)
 	}
@@ -39,12 +48,14 @@ func main() {
 		signals := make(chan os.Signal, 1)
 		signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 		s := <-signals
-		log.Printf("recieved signal %s, closing rest server...\n", s)
+		log.Printf("recieved signal %s, shutting rest server down...\n", s)
 		// closing rest server
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
 			log.Fatalf("could not shutdown server gracefully: %v", err)
+		} else {
+			log.Println("rest server shutdown, goodbye")
 		}
 	}()
 	log.Println("rest server started")
