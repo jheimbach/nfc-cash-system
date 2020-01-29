@@ -1,14 +1,33 @@
 version: "3.5"
 services:
-  server:
+  gateway:
     build:
-      context: pkg/server
+      context: .
+      dockerfile: gateway.Dockerfile
     networks:
-      - database
+      - server
     ports:
       - 8080
+    secrets:
+      - source: cert.pem
+        target: /run/tls/cert.pem
+    depends_on:
+      - server
+    hostname: ${PROJECT}.local
+    environment:
+      TLS_CERT: /run/tls/cert.pem
+      GRPC_HOST: grpc-endpoint:50051
+  server:
+    build:
+      context: .
+      dockerfile: server.Dockerfile
+    networks:
+      database:
+      server:
+        aliases:
+          - grpc-endpoint
+    ports:
       - 50051
-      - 40000
     secrets:
       - source: cert.pem
         target: /run/tls/cert.pem
@@ -21,6 +40,8 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
+      TLS_CERT: /run/tls/cert.pem
+      TLS_KEY: /run/tls/cert-key.pem
   db:
     image: mariadb:latest
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
@@ -40,6 +61,7 @@ services:
       - db_data:/var/lib/mysql
 networks:
   database:
+  server:
 
 volumes:
   db_data:
