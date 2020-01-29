@@ -36,7 +36,7 @@ func TestMain(m *testing.M) {
 }
 
 func dataFor(t string) string {
-	return path.Join("../../testdata", strings.Join([]string{t, "sql"}, "."))
+	return path.Join("./testdata", strings.Join([]string{t, "sql"}, "."))
 }
 
 func teardownDB(db *sql.DB) func() error {
