@@ -21,7 +21,7 @@ var (
 
 func TestMain(m *testing.M) {
 	var err error
-	_conn, _, err = test.DbConnection()
+	_conn, _, err = test.DbConnection("../../../../migrations")
 	if err != nil {
 		log.Fatal(err)
 	}

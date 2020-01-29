@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	MysqlUser     = "test"
-	MysqlPassword = "test"
-	MysqlDatabase = "mysql_test"
-	migrationDir  = "../../../migrations"
+	MysqlUser           = "test"
+	MysqlPassword       = "test"
+	MysqlDatabase       = "mysql_test"
+	defaultMigrationDir = "./migrations"
 )
 
 func createDSN(server string) string {
@@ -72,9 +72,9 @@ func StartDbContainer(networkName string) (local, network string, err error) {
 	return net.JoinHostPort("localhost", mappedPort.Port()), net.JoinHostPort("mysql-server", mappedPort.Port()), nil
 }
 
-func DbConnection() (db *sql.DB, teardown func(), err error) {
+func DbConnection(migrationsPath string) (db *sql.DB, teardown func(), err error) {
 	addr, _, err := StartDbContainer("")
-	db, err = OpenAndMigrateDatabase(addr)
+	db, err = OpenAndMigrateDatabase(addr, migrationsPath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -84,10 +84,14 @@ func DbConnection() (db *sql.DB, teardown func(), err error) {
 	}, nil
 }
 
-func OpenAndMigrateDatabase(addr string) (*sql.DB, error) {
+func OpenAndMigrateDatabase(addr string, migrationDir string) (*sql.DB, error) {
 	db, err := database.OpenDatabase(createDSN(addr))
 	if err != nil {
 		return nil, fmt.Errorf("could not conntect to database: %w", err)
+	}
+
+	if migrationDir == "" {
+		migrationDir = defaultMigrationDir
 	}
 
 	err = database.UpdateDatabase(db, MysqlDatabase, migrationDir, false)

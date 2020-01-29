@@ -91,7 +91,7 @@ func startServers() (*sql.DB, string, func(), error) {
 		return nil, "", nil, fmt.Errorf("could not start db container: %w", err)
 	}
 	log.Println("db container started")
-	db, err := test.OpenAndMigrateDatabase(laddr)
+	db, err := test.OpenAndMigrateDatabase(laddr, "../../../migrations")
 	if err != nil {
 		return nil, "", nil, fmt.Errorf("could not migrate db container: %w", err)
 	}
@@ -246,12 +246,11 @@ func createAndStartRestServer(networkName string, certFiles []string) (string, e
 			},
 			Networks: []string{networkName},
 			Env: map[string]string{
-				"DB_USER":     test.MysqlUser,
-				"DB_PASSWORD": test.MysqlPassword,
-				"DB_HOST":     "mysql-server",
-				"DB_NAME":     test.MysqlDatabase,
-				"TLS_CERT":    certPath,
-				"GRPC_HOST":   "grpc-endpoint:50051",
+				"GATEWAY_REST_HOST": "",
+				"GATEWAY_REST_PORT": restPort.Port(),
+				"GATEWAY_TLS_CERT":  certPath,
+				"GATEWAY_GRPC_HOST": "grpc-endpoint",
+				"GATEWAY_GRPC_PORT": "50051",
 			},
 			ExposedPorts: []string{restPort.Port()},
 			WaitingFor:   wait.ForLog("rest server started"),
