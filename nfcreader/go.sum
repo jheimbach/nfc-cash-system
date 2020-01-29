@@ -1,8 +1,0 @@
-github.com/fuzxxl/nfc v0.0.0-20190417091618-0367c7e548d9 h1:YmnraLXfLW44zsTVNBDOcORFXQpQX9+hIniJ/rQuEk8=
-github.com/fuzxxl/nfc v0.0.0-20190417091618-0367c7e548d9/go.mod h1:0U2jcRxCoqW7jJDpqbW1EnWh4/nYR1v0e5ELyYHfPr0=
-github.com/google/go-cmp v0.4.0 h1:xsAVV57WRhGj6kEIi8ReJzQlHHqcBYCElAvkovg3B/4=
-github.com/google/go-cmp v0.4.0/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
-github.com/matryer/is v1.2.0 h1:92UTHpy8CDwaJ08GqLDzhhuixiBUUD1p3AU6PHddz4A=
-github.com/matryer/is v1.2.0/go.mod h1:2fLPjFQM9rhQ15aVEtbuwhJinnOqrmgXPNdZsdwlWXA=
-golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 h1:E7g+9GITq07hpfrRu66IVDexMakfv52eLZ2CXBWiKr4=
-golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
