@@ -13,6 +13,7 @@ require (
 	github.com/google/go-cmp v0.4.0
 	github.com/grpc-ecosystem/grpc-gateway v1.12.2
 	github.com/matryer/is v1.2.0
+	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.6.2
 	github.com/testcontainers/testcontainers-go v0.0.10
 	golang.org/x/crypto v0.0.0-20200128174031-69ecbb4d6d5d

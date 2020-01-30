@@ -24,7 +24,12 @@ import (
 )
 
 const (
-	testDataDir = "./testdata"
+	grpcServerName = "grpc-endpoint"
+	grpcPort       = "50051"
+	restPort       = "8080"
+	testDataDir    = "./testdata"
+	certPath       = "/run/tls/cert.pem"
+	keyPath        = "/run/tls/cert-key.pem"
 )
 
 // login returns jwt access and refresh token
@@ -184,12 +189,10 @@ func prepareTest(t *testing.T) func() error {
 func createAndStartGrpcServer(networkName string, certFiles []string) (string, error) {
 	dir, _ := os.Getwd()
 	ctx := context.Background()
-	port, err := nat.NewPort("tcp", "50051")
+	port, err := nat.NewPort("tcp", grpcPort)
 	if err != nil {
 		return "", fmt.Errorf("could not create port: %w", err)
 	}
-	const certPath = "/run/tls/cert.pem"
-	const keyPath = "/run/tls/cert-key.pem"
 	container, err := tc.GenericContainer(ctx, tc.GenericContainerRequest{
 		ContainerRequest: tc.ContainerRequest{
 			FromDockerfile: tc.FromDockerfile{
@@ -197,28 +200,32 @@ func createAndStartGrpcServer(networkName string, certFiles []string) (string, e
 				Dockerfile: "server.Dockerfile",
 			},
 			Networks:       []string{networkName},
-			NetworkAliases: map[string][]string{networkName: {"grpc-endpoint"}},
+			NetworkAliases: map[string][]string{networkName: {grpcServerName}},
 			Env: map[string]string{
-				"DB_USER":     test.MysqlUser,
-				"DB_PASSWORD": test.MysqlPassword,
-				"DB_HOST":     "mysql-server",
-				"DB_NAME":     test.MysqlDatabase,
-				"TLS_CERT":    certPath,
-				"TLS_KEY":     keyPath,
+				"SERVER_DATABASE.USER":     test.MysqlUser,
+				"SERVER_DATABASE.PASSWORD": test.MysqlPassword,
+				"SERVER_DATABASE.HOST":     "mysql-server",
+				"SERVER_DATABASE.NAME":     test.MysqlDatabase,
+				"SERVER_PORT":              port.Port(),
+				"SERVER_TLS_CERT":          certPath,
+				"SERVER_TLS_KEY":           keyPath,
 			},
 			ExposedPorts: []string{port.Port()},
-			WaitingFor:   wait.ForLog("grpc server started"),
+			WaitingFor:   wait.ForLog("starting grpc server"),
 			BindMounts: map[string]string{
 				certFiles[0]: certPath,
 				certFiles[1]: keyPath,
 			},
 		},
-		Started: true,
+		Started: false,
 	})
 
 	if err != nil {
 		return "", fmt.Errorf("failed to create container %w", err)
-
+	}
+	err = container.Start(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to start container %w", err)
 	}
 
 	mappedPort, err := container.MappedPort(ctx, port)
@@ -233,11 +240,11 @@ func createAndStartRestServer(networkName string, certFiles []string) (string, e
 	dir, _ := os.Getwd()
 	ctx := context.Background()
 
-	restPort, err := nat.NewPort("tcp", "8080")
+	port, err := nat.NewPort("tcp", restPort)
 	if err != nil {
 		return "", fmt.Errorf("could not create port: %w", err)
 	}
-	const certPath = "/run/tls/cert.pem"
+
 	container, err := tc.GenericContainer(ctx, tc.GenericContainerRequest{
 		ContainerRequest: tc.ContainerRequest{
 			FromDockerfile: tc.FromDockerfile{
@@ -247,12 +254,12 @@ func createAndStartRestServer(networkName string, certFiles []string) (string, e
 			Networks: []string{networkName},
 			Env: map[string]string{
 				"GATEWAY_REST_HOST": "",
-				"GATEWAY_REST_PORT": restPort.Port(),
+				"GATEWAY_REST_PORT": port.Port(),
 				"GATEWAY_TLS_CERT":  certPath,
-				"GATEWAY_GRPC_HOST": "grpc-endpoint",
-				"GATEWAY_GRPC_PORT": "50051",
+				"GATEWAY_GRPC_HOST": grpcServerName,
+				"GATEWAY_GRPC_PORT": grpcPort,
 			},
-			ExposedPorts: []string{restPort.Port()},
+			ExposedPorts: []string{port.Port()},
 			WaitingFor:   wait.ForLog("rest server started"),
 			BindMounts: map[string]string{
 				certFiles[0]: certPath,
@@ -265,7 +272,7 @@ func createAndStartRestServer(networkName string, certFiles []string) (string, e
 		return "", fmt.Errorf("failed to create container %w", err)
 	}
 
-	restEndpoint, err := container.MappedPort(ctx, restPort)
+	restEndpoint, err := container.MappedPort(ctx, port)
 	if err != nil {
 		return "", fmt.Errorf("could not get endpoint address %w", err)
 	}

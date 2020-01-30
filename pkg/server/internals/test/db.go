@@ -20,10 +20,6 @@ const (
 	defaultMigrationDir = "./migrations"
 )
 
-func createDSN(server string) string {
-	return fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true&multiStatements=true", MysqlUser, MysqlPassword, server, MysqlDatabase)
-}
-
 func StartDbContainer(networkName string) (local, network string, err error) {
 	ctx := context.Background()
 	mysqlPort, err := nat.NewPort("tcp", "3306")
@@ -85,7 +81,7 @@ func DbConnection(migrationsPath string) (db *sql.DB, teardown func(), err error
 }
 
 func OpenAndMigrateDatabase(addr string, migrationDir string) (*sql.DB, error) {
-	db, err := database.OpenDatabase(createDSN(addr))
+	db, err := database.OpenDatabase(database.CreateDsn(MysqlUser, MysqlPassword, addr, MysqlDatabase))
 	if err != nil {
 		return nil, fmt.Errorf("could not conntect to database: %w", err)
 	}

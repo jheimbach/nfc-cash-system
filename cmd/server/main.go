@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"log"
 	"net"
 	"os"
@@ -10,28 +9,23 @@ import (
 
 	"github.com/jheimbach/nfc-cash-system/pkg/server"
 	"github.com/jheimbach/nfc-cash-system/pkg/server/internals/database"
-	"github.com/jheimbach/nfc-cash-system/pkg/server/internals/test"
+	"github.com/spf13/viper"
 )
 
 func main() {
-	address := flag.String("address", "", "Host address for server")
-	port := flag.String("port", "50051", "Host port for server")
-	certFile := flag.String("grpc-cert", "../../tls/cert.pem", "TLS certificate for grpc server")
-	keyFile := flag.String("grpc-key", "../../tls/cert-key.pem", "TLS key for grpc server")
-	accessTknKey := flag.String("access-token-key", "7QC/y4Dkke2izCGyArkfH074ETD9Hyf6PxIV/D7L2Nw=", "TLS key for grpc server")
-	refreshTknKey := flag.String("refresh-token-key", "tA2ZFqRCgYBEX4Y9/Q4Au9U0qrbW2oBcqJ8uRPavj9g=", "TLS key for grpc server")
-
-	flag.Parse()
-
-	certPath := test.EnvWithDefault("TLS_CERT", *certFile)
-	keyPath := test.EnvWithDefault("TLS_KEY", *keyFile)
-
-	// start Database
-	if err := database.CheckEnvVars(); err != nil {
-		log.Fatalf("could not connect to database: %v", err)
+	err := initConfig()
+	if err != nil {
+		log.Fatalf("could not load config: %v\n", err)
 	}
 	log.Println("connecting to database...")
-	db, err := database.OpenDatabase(database.DefaultDSN)
+	db, err := database.OpenDatabase(
+		database.CreateDsn(
+			viper.GetString("database.user"),
+			viper.GetString("database.password"),
+			viper.GetString("database.host"),
+			viper.GetString("database.name"),
+		),
+	)
 	if err != nil {
 		log.Fatalf("could not connect to database, %v", err)
 	}
@@ -40,7 +34,13 @@ func main() {
 
 	log.Println("start grpc server...")
 	// start grpc server
-	grpcSrv, err := server.NewGrpcServer(db, certPath, keyPath, *accessTknKey, *refreshTknKey)
+	grpcSrv, err := server.NewGrpcServer(
+		db,
+		viper.GetString("tls_cert"),
+		viper.GetString("tls_key"),
+		viper.GetString("access_token_key"),
+		viper.GetString("refresh_token_key"),
+	)
 	if err != nil {
 		log.Fatalf("could not create grpc server: %v", err)
 	}
@@ -50,14 +50,15 @@ func main() {
 		signals := make(chan os.Signal, 1)
 		signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 		s := <-signals
+
 		// closing grpc server
 		log.Printf("recieved signal %s, closing grpc server...\n", s)
-
 		grpcSrv.GracefulStop()
 	}()
 
-	log.Println("grpc server started")
-	if err := grpcSrv.Start(net.JoinHostPort(*address, *port)); err != nil {
-		log.Fatalf("could not start grpc server: %v", err)
+	endpointAddr := net.JoinHostPort(viper.GetString("host"), viper.GetString("port"))
+	log.Printf("starting grpc server at: %s", endpointAddr)
+	if err := grpcSrv.Start(endpointAddr); err != nil {
+		log.Fatalf("could not start grpc server at %s: %v", endpointAddr, err)
 	}
 }

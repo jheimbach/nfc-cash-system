@@ -7,7 +7,9 @@ import (
 	"time"
 )
 
-const DefaultDSN = "${DB_USER}:${DB_PASSWORD}@tcp(${DB_HOST})/${DB_NAME}?parseTime=true&multiStatements=true"
+func CreateDsn(user, password, host, name string) string {
+	return fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true&multiStatements=true", user, password, host, name)
+}
 
 func OpenDatabase(dsn string) (*sql.DB, error) {
 	populated := os.ExpandEnv(dsn)
@@ -31,12 +33,12 @@ func ping(db *sql.DB) error {
 	return nil
 }
 
-func repeatedPing(db *sql.DB, times int) error {
+func repeatedPing(db *sql.DB, times int64) error {
 	if err := db.Ping(); err != nil {
-		if times == 10 {
+		if times == 5 {
 			return err
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(time.Duration(times) * time.Second)
 		return repeatedPing(db, times+1)
 	}
 	return nil

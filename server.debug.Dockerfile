@@ -4,7 +4,7 @@ WORKDIR /src
 COPY . .
 
 # The -gcflags "all=-N -l" flag helps us get a better debug experience
-RUN go build -gcflags "all=-N -l" -o build/server cmd/server/main.go
+RUN go build -gcflags "all=-N -l" -o build/server ./cmd/server
 RUN apk add --no-cache git
 RUN go get github.com/go-delve/delve/cmd/dlv
 
