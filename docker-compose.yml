@@ -3,7 +3,7 @@ services:
   gateway:
     build:
       context: .
-      dockerfile: gateway.Dockerfile
+      dockerfile: docker/gateway.Dockerfile
     networks:
       - server
     ports:
@@ -20,7 +20,7 @@ services:
   server:
     build:
       context: .
-      dockerfile: server.Dockerfile
+      dockerfile: docker/server.Dockerfile
     networks:
       database:
       server:

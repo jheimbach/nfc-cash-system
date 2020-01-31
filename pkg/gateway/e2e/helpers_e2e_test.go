@@ -197,7 +197,7 @@ func createAndStartGrpcServer(networkName string, certFiles []string) (string, e
 		ContainerRequest: tc.ContainerRequest{
 			FromDockerfile: tc.FromDockerfile{
 				Context:    filepath.Join(dir, "../../../"),
-				Dockerfile: "server.Dockerfile",
+				Dockerfile: "docker/server.Dockerfile",
 			},
 			Networks:       []string{networkName},
 			NetworkAliases: map[string][]string{networkName: {grpcServerName}},
@@ -249,7 +249,7 @@ func createAndStartRestServer(networkName string, certFiles []string) (string, e
 		ContainerRequest: tc.ContainerRequest{
 			FromDockerfile: tc.FromDockerfile{
 				Context:    filepath.Join(dir, "../../../"),
-				Dockerfile: "gateway.Dockerfile",
+				Dockerfile: "docker/gateway.Dockerfile",
 			},
 			Networks: []string{networkName},
 			Env: map[string]string{
