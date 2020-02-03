@@ -1,21 +1,22 @@
-GET localhost:8080/v1/groups
+GET http://nfc-cash-system.local:8080/v1/groups
+Accept: application/json
+Cache-Control: no-cache
+Authorization: Bearer {{auth_token}}
+
+###
+
+GET http://nfc-cash-system.local:8080/v1/groups?paging.limit=5
 Accept: application/json
 Cache-Control: no-cache
 
 ###
 
-GET localhost:8080/v1/groups?paging.limit=5
+GET http://nfc-cash-system.local:8080/v1/groups?paging.limit=5&paging.offset=5
 Accept: application/json
 Cache-Control: no-cache
 
 ###
-
-GET localhost:8080/v1/groups?paging.limit=5&paging.offset=5
-Accept: application/json
-Cache-Control: no-cache
-
-###
-POST localhost:8080/v1/groups
+POST http://nfc-cash-system.local:8080/v1/groups
 Accept: application/json
 Cache-Control: no-cache
 Content-Type: application/json
@@ -28,13 +29,13 @@ Content-Type: application/json
 
 ###
 
-GET localhost:8080/v1/group/11
+GET http://nfc-cash-system.local:8080/v1/group/11
 Accept: application/json
 Cache-Control: no-cache
 
 ###
 
-PUT localhost:8080/v1/group/11
+PUT http://nfc-cash-system.local:8080/v1/group/11
 Accept: application/json
 Cache-Control: no-cache
 Content-Type: application/json
@@ -48,7 +49,7 @@ Content-Type: application/json
 
 ###
 
-DELETE localhost:8080/v1/group/11
+DELETE http://nfc-cash-system.local:8080/v1/group/11
 Accept: application/json
 Cache-Control: no-cache
 

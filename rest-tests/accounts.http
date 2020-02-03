@@ -1,35 +1,35 @@
 ###
-GET localhost:8080/v1/accounts
+GET http://nfc-cash-system.local:8080/v1/accounts
 Accept: application/json
 Cache-Control: no-cache
 Authorization: Bearer {{auth_token}}
 
 ###
-GET localhost:8080/v1/accounts?group_id=1
+GET http://nfc-cash-system.local:8080/v1/accounts?group_id=1
 Accept: application/json
 Cache-Control: no-cache
 Authorization: Bearer {{auth_token}}
 
 ###
-GET localhost:8080/v1/accounts?paging.limit=10
+GET http://nfc-cash-system.local:8080/v1/accounts?paging.limit=10
 Accept: application/json
 Cache-Control: no-cache
 Authorization: Bearer {{auth_token}}
 
 ###
-GET localhost:8080/v1/accounts?paging.limit=10&paging.offset=10
+GET http://nfc-cash-system.local:8080/v1/accounts?paging.limit=10&paging.offset=10
 Accept: application/json
 Cache-Control: no-cache
 Authorization: Bearer {{auth_token}}
 
 ###
-GET localhost:8080/v1/accounts?group_id=1&paging.limit=5&paging.offset=5
+GET http://nfc-cash-system.local:8080/v1/accounts?group_id=1&paging.limit=5&paging.offset=5
 Accept: application/json
 Cache-Control: no-cache
 Authorization: Bearer {{auth_token}}
 
 ###
-POST localhost:8080/v1/accounts
+POST http://nfc-cash-system.local:8080/v1/accounts
 Accept: application/json
 Cache-Control: no-cache
 Content-Type: application/json
@@ -44,13 +44,13 @@ Authorization: Bearer {{auth_token}}
 }
 ###
 
-GET localhost:8080/v1/account/101
+GET http://nfc-cash-system.local:8080/v1/account/101
 Accept: application/json
 Cache-Control: no-cache
 Authorization: Bearer {{auth_token}}
 ###
 
-PUT localhost:8080/v1/account/101
+PUT http://nfc-cash-system.local:8080/v1/account/101
 Accept: application/json
 Cache-Control: no-cache
 Content-Type: application/json
@@ -72,7 +72,7 @@ Authorization: Bearer {{auth_token}}
 
 ###
 
-DELETE localhost:8080/v1/account/101
+DELETE http://nfc-cash-system.local:8080/v1/account/101
 Accept: application/json
 Cache-Control: no-cache
 Authorization: Bearer {{auth_token}}

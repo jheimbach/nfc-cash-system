@@ -1,26 +1,29 @@
-GET localhost:8080/v1/transactions
+GET http://nfc-cash-system.local:8080/v1/transactions
+Accept: application/json
+Authorization: Bearer {{auth_token}}
+Cache-Control: no-cache
+
+###
+GET http://nfc-cash-system.local:8080/v1/transactions?order=asc
+Accept: application/json
+Authorization: Bearer {{auth_token}}
+Cache-Control: no-cache
+
+
+###
+GET http://nfc-cash-system.local:8080/v1/transactions?paging.limit=100&order=asc
+Accept: application/json
+Authorization: Bearer {{auth_token}}
+Cache-Control: no-cache
+
+###
+GET http://nfc-cash-system.local:8080/v1/transactions?paging.limit=100&paging.offset=10
 Accept: application/json
 Cache-Control: no-cache
 
 ###
-GET localhost:8080/v1/transactions?order=asc
-Accept: application/json
-Cache-Control: no-cache
 
-
-###
-GET localhost:8080/v1/transactions?paging.limit=100
-Accept: application/json
-Cache-Control: no-cache
-
-###
-GET localhost:8080/v1/transactions?paging.limit=100&paging.offset=10
-Accept: application/json
-Cache-Control: no-cache
-
-###
-
-POST localhost:8080/v1/account/1/transactions
+POST http://nfc-cash-system.local:8080/v1/account/1/transactions
 Accept: application/json
 Cache-Control: no-cache
 Content-Type: application/json
@@ -34,13 +37,13 @@ Content-Type: application/json
 
 ###
 
-GET localhost:8080/v1/account/1/transactions
+GET http://nfc-cash-system.local:8080/v1/account/1/transactions
 Accept: application/json
 Cache-Control: no-cache
 
 ###
 
-GET localhost:8080/v1/account/1/transactions/1
+GET http://nfc-cash-system.local:8080/v1/account/1/transactions/1
 Accept: application/json
 Cache-Control: no-cache
 
