@@ -802,7 +802,7 @@
       }
     },
     "/v1/user/refresh": {
-      "post": {
+      "get": {
         "operationId": "Refresh Access Token",
         "responses": {
           "200": {
@@ -824,16 +824,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "properties": {}
-            }
-          }
-        ],
         "tags": [
           "UserService"
         ],

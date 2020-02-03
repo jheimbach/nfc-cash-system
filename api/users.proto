@@ -15,8 +15,7 @@ service UserService {
             security: {
                 security_requirement: {
                     key: "BasicAuth"
-                    value: {}
-                }
+                };
             }
         };
         option (google.api.http) = {
@@ -47,15 +46,14 @@ service UserService {
             }
         }
         extensions: {
-		key: "x-refresh-token";
-		value {
-			string_value: "<refresh_token>";
-		}
-	}
+            key: "x-refresh-token";
+            value {
+                string_value: "<refresh_token>";
+            }
+        }
     };
     option (google.api.http) = {
-                post: "/v1/user/refresh"
-                body: "*"
+                get: "/v1/user/refresh"
             };
     }
 }
