@@ -15,8 +15,9 @@ services:
       - server
     hostname: ${PROJECT}.local
     environment:
-      TLS_CERT: /run/tls/cert.pem
-      GRPC_HOST: grpc-endpoint:50051
+      GATEWAY_TLS_CERT: /run/tls/cert.pem
+      GATEWAY_GRPC_HOST: grpc-endpoint
+      GATEWAY_GRPC_PORT: 50051
   server:
     build:
       context: .
@@ -36,12 +37,12 @@ services:
     depends_on:
       - db
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      TLS_CERT: /run/tls/cert.pem
-      TLS_KEY: /run/tls/cert-key.pem
+      SERVER_DATABASE.HOST: ${DB_HOST}
+      SERVER_DATABASE.USER: ${DB_USER}
+      SERVER_DATABASE.PASSWORD: ${DB_PASSWORD}
+      SERVER_DATABASE.NAME: ${DB_NAME}
+      SERVER_TLS_CERT: /run/tls/cert.pem
+      SERVER_TLS_KEY: /run/tls/cert-key.pem
   db:
     image: mariadb:latest
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
