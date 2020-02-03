@@ -23,19 +23,19 @@
           </div>
         </md-toolbar>
         <md-list>
-          <md-list-item to="/" exact>
+          <md-list-item to="/" exact @click="toggleMenu">
             <md-icon>move_to_inbox</md-icon>
             <span class="md-list-item-text">Home</span>
           </md-list-item>
-          <md-list-item to="/accounts">
+          <md-list-item to="/accounts"  @click="toggleMenu">
             <md-icon>account_box</md-icon>
             <span class="md-list-item-text">Accounts</span>
           </md-list-item>
-          <md-list-item to="/groups">
+          <md-list-item to="/groups"  @click="toggleMenu">
             <md-icon>group</md-icon>
             <span class="md-list-item-text">Groups</span>
           </md-list-item>
-          <md-list-item to="/transactions">
+          <md-list-item to="/transactions"  @click="toggleMenu">
             <md-icon>account_balance_wallet</md-icon>
             <span class="md-list-item-text">Transactions</span>
           </md-list-item>
