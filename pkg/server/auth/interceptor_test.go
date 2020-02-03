@@ -3,11 +3,13 @@ package auth
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/jheimbach/nfc-cash-system/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -202,10 +204,13 @@ func TestUnaryInterceptor(t *testing.T) {
 			},
 		},
 		{
-			name:    "invalid token",
-			info:    &grpc.UnaryServerInfo{FullMethod: "test/url"},
-			header:  map[string]string{"authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxLCJuYW1lIjoidGVzdHVzZXIxIiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiY3JlYXRlZCI6eyJzZWNvbmRzIjoxNTQ3ODMxNzc1fX0sImV4cCI6NTE3Njg1OTQ3OCwianRpIjoiNmQ0NGFlNmY3MzBiMmJhZDMwYmY3MGM3NzQ1Nzc2YmIiLCJzdWIiOiJ1c2VyX3Rlc3R1c2VyMV8xIn0.y5r3D4NuQa53gHAk79HF1N9OUuRhWwNF5Dj-vXxWMgY"},
-			wantErr: ErrCouldNotAuthorize,
+			name:   "invalid token",
+			info:   &grpc.UnaryServerInfo{FullMethod: "test/url"},
+			header: map[string]string{"authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxLCJuYW1lIjoidGVzdHVzZXIxIiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiY3JlYXRlZCI6eyJzZWNvbmRzIjoxNTQ3ODMxNzc1fX0sImV4cCI6NTE3Njg1OTQ3OCwianRpIjoiNmQ0NGFlNmY3MzBiMmJhZDMwYmY3MGM3NzQ1Nzc2YmIiLCJzdWIiOiJ1c2VyX3Rlc3R1c2VyMV8xIn0.y5r3D4NuQa53gHAk79HF1N9OUuRhWwNF5Dj-vXxWMgY"},
+			wantErr: &jwt.ValidationError{
+				Inner:  errors.New("token is not from type access-tkn"),
+				Errors: jwt.ValidationErrorUnverifiable,
+			},
 			handler: mockHandler,
 		},
 		{
@@ -254,7 +259,14 @@ func TestUnaryInterceptor(t *testing.T) {
 
 			if tt.wantErr != nil {
 				if err != tt.wantErr {
-					t.Errorf("got err %v;wanted %v", err, tt.wantErr)
+					e, ok := compareValidationError(err, tt.wantErr)
+					if e != nil {
+						t.Error(e)
+					}
+
+					if !ok {
+						t.Errorf("got err %v; wanted %v", err, tt.wantErr)
+					}
 				}
 				return
 			}
@@ -263,4 +275,19 @@ func TestUnaryInterceptor(t *testing.T) {
 			}
 		})
 	}
+}
+
+func compareValidationError(got, want error) (error, bool) {
+	if err, ok := got.(*jwt.ValidationError); ok {
+		if wantErr, ok := want.(*jwt.ValidationError); ok {
+			if err.Inner.Error() != wantErr.Inner.Error() {
+				return fmt.Errorf("got inner %#v; wanted %#v", err.Inner, wantErr.Inner), true
+			}
+			if err.Errors != wantErr.Errors {
+				return fmt.Errorf("got error code %v; wanted %v", err.Errors, wantErr.Errors), true
+			}
+		}
+		return nil, true
+	}
+	return nil, false
 }

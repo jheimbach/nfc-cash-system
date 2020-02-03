@@ -19,7 +19,12 @@ func handler(ctx context.Context, grpcEndpoint, certFile string) (*runtime.Serve
 
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
 
-	mux := runtime.NewServeMux()
+	mux := runtime.NewServeMux(runtime.WithIncomingHeaderMatcher(func(s string) (string, bool) {
+		if s == "x-refresh-token" || s == "X-Refresh-Token" {
+			return "x-refresh-token", true
+		}
+		return "", false
+	}))
 	err = api.RegisterUserServiceHandlerFromEndpoint(ctx, mux, grpcEndpoint, opts)
 	if err != nil {
 		return nil, errCouldNotRegisterService("user", err)

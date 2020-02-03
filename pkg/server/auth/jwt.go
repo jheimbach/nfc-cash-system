@@ -10,12 +10,6 @@ import (
 	"github.com/jheimbach/nfc-cash-system/api"
 )
 
-const (
-	accessTokenKey   = "7QC/y4Dkke2izCGyArkfH074ETD9Hyf6PxIV/D7L2Nw="
-	refreshTokenKey  = "tA2ZFqRCgYBEX4Y9/Q4Au9U0qrbW2oBcqJ8uRPavj9g="
-	refreshTokenName = "refresh-tkn"
-)
-
 type TokenType string
 
 const (
@@ -23,7 +17,7 @@ const (
 	RefreshToken TokenType = "refresh-tkn"
 )
 
-func (t TokenType) name() string {
+func (t TokenType) String() string {
 	return string(t)
 }
 
@@ -63,11 +57,11 @@ func (JWTAuthenticator) ExpirationTime(duration time.Duration) time.Time {
 }
 
 func (j JWTAuthenticator) CreateToken(user *api.User, expirationTime time.Time, tokenType TokenType) (string, error) {
-	tokenName := tokenType.name()
+	tokenName := tokenType
 	idHash := md5.New()
 	io.WriteString(idHash, user.Name)
 	io.WriteString(idHash, user.Email)
-	io.WriteString(idHash, tokenName)
+	io.WriteString(idHash, tokenName.String())
 
 	claims := &claims{
 		User: *user,
@@ -81,16 +75,16 @@ func (j JWTAuthenticator) CreateToken(user *api.User, expirationTime time.Time, 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	token.Header["type"] = tokenName
 
-	return token.SignedString(j.keyStorage[tokenName])
+	return token.SignedString(j.keyStorage[tokenName.String()])
 }
 
 func (j JWTAuthenticator) VerifyToken(token string, tokenType TokenType) (user *api.User, expires time.Time, err error) {
 	claims := &claims{}
 	_, e := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (i interface{}, err error) {
 		headerType := token.Header["type"]
-		tokenName := tokenType.name()
+		tokenName := tokenType.String()
 		if headerType != tokenName {
-			return nil, fmt.Errorf("token is not from type %s", tokenType.name())
+			return nil, fmt.Errorf("token is not from type %s", tokenType)
 		}
 		key := j.keyStorage[tokenName]
 		return key, nil

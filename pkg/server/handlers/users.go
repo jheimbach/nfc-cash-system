@@ -62,18 +62,13 @@ func (a *userServer) LogoutUser(ctx context.Context, e *empty.Empty) (*empty.Emp
 	return &empty.Empty{}, nil
 }
 
-func (a *userServer) RefreshToken(ctx context.Context, e *empty.Empty) (*api.AuthenticateResponse, error) {
-	user, err := auth.RetrieveUserFromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (a *userServer) RefreshToken(ctx context.Context, _ *empty.Empty) (*api.AuthenticateResponse, error) {
 	rToken, err := refreshTokenFromHeader(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	_, expires, err := a.tokenGenerator.VerifyToken(rToken, auth.RefreshToken)
+	user, expires, err := a.tokenGenerator.VerifyToken(rToken, auth.RefreshToken)
 	if err != nil {
 		return nil, auth.ErrCouldNotAuthorize
 	}

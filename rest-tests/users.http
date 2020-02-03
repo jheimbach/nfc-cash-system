@@ -3,14 +3,14 @@ GET http://nfc-cash-system.local:8080/v1/user/login
 Authorization: Basic briste0@angelfire.com lMvZARjM3pwe
 
 
-> {% client.global.set("auth_token", response.body.access_token); client.global.set("refresh_token", response.body.refresh_token); %}
+> {% client.global.set("auth_token", response.body.access_token); client.global.set("refresh_token", response.body.refresh_token);%}
 
 ###
 GET http://nfc-cash-system.local:8080/v1/user/refresh
 Authorization: Bearer {{auth_token}}
 X-Refresh-Token: {{refresh_token}}
 
-> {% client.global.set("auth_token", response.body.access_token); client.global.set("refresh_token", response.body.refresh_token); %}
+> {% client.global.set("auth_token", response.body.access_token); client.global.set("refresh_token", response.body.refresh_token);%}
 
 ###
 POST http://nfc-cash-system.local:8080/v1/user/logout
