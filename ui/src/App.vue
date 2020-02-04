@@ -27,15 +27,15 @@
             <md-icon>move_to_inbox</md-icon>
             <span class="md-list-item-text">Home</span>
           </md-list-item>
-          <md-list-item to="/accounts"  @click="toggleMenu">
+          <md-list-item to="/accounts" @click="toggleMenu">
             <md-icon>account_box</md-icon>
             <span class="md-list-item-text">Accounts</span>
           </md-list-item>
-          <md-list-item to="/groups"  @click="toggleMenu">
+          <md-list-item to="/groups" @click="toggleMenu">
             <md-icon>group</md-icon>
             <span class="md-list-item-text">Groups</span>
           </md-list-item>
-          <md-list-item to="/transactions"  @click="toggleMenu">
+          <md-list-item to="/transactions" @click="toggleMenu">
             <md-icon>account_balance_wallet</md-icon>
             <span class="md-list-item-text">Transactions</span>
           </md-list-item>
@@ -48,18 +48,19 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'App',
-  data: () => ({
-    menuVisible: false
-  }),
-  methods: {
-    toggleMenu () {
-      this.menuVisible = !this.menuVisible
-    }
+<script lang="ts">
+import Vue from 'vue'
+import { Component } from 'vue-property-decorator'
+
+@Component
+export default class App extends Vue {
+  menuVisible: boolean = false
+
+  toggleMenu() {
+    this.menuVisible = !this.menuVisible
   }
 }
+
 </script>
 
 <style lang="scss">

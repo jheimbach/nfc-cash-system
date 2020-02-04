@@ -1,0 +1,10 @@
+@import "~vue-material/dist/theme/engine";
+
+@include md-register-theme("default", (
+        primary: #003b6b,
+        accent: #f3712a,
+        alert: md-get-palette-color(red, 500),
+        grey:#6b6b68,
+));
+
+@import "~vue-material/dist/theme/all";

@@ -8,7 +8,7 @@ import router from './router'
 import formatDate from '@/filters/format-date'
 
 import 'vue-material/dist/vue-material.min.css'
-import 'vue-material/dist/theme/default.css'
+import './styles/main.scss'
 
 Vue.config.productionTip = false
 Vue.use(VueMaterial)
