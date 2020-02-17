@@ -1,7 +1,8 @@
 import Vue from 'vue'
 import VueRouter, { RouteConfig, RouterOptions } from 'vue-router'
 import Home from '../views/Home.vue'
-
+import Accounts from '@/views/Accounts.vue'
+import AccountDetails from '@/views/Account.vue'
 Vue.use(VueRouter)
 
 const routes: RouteConfig[] = [
@@ -13,18 +14,12 @@ const routes: RouteConfig[] = [
   {
     path: '/accounts',
     name: 'accounts',
-    component: () => import(/* webpackChunkName: "accounts" */ '../views/Accounts.vue'),
-    children: [
-      {
-        path: '/:id',
-        component: () => import(/* webpackChunkName: "account_detail" */ '../views/Account.vue'),
-        children: [
-          {
-            path: '/edit'
-          }
-        ]
-      }
-    ]
+    component: Accounts
+  },
+  {
+    path: '/account/:id',
+    name: 'account',
+    component: AccountDetails
   },
   {
     path: '/groups',

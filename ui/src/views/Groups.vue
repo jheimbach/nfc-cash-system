@@ -20,7 +20,7 @@
         <md-table-cell md-label="ID" md-sort-by="id" md-numeric>{{ item.id }}</md-table-cell>
         <md-table-cell md-label="Name" md-sort-by="name">{{ item.name }}</md-table-cell>
         <md-table-cell md-label="Descripion" md-sort-by="description">{{ item.description }}</md-table-cell>
-        <md-table-cell md-label="Can overdraw" md-sort-by="can_overdraw">{{ item.can_overdraw ? 'Yes' :'No' }}
+        <md-table-cell md-label="Can overdraw" md-sort-by="can_overdraw">{{ item.canOverdraw ? 'Yes' :'No' }}
         </md-table-cell>
         <md-table-cell md-label="Actions">
           <md-button :to="accountsRoute(item.id)" class="md-icon-button ncs-secondary">
@@ -45,9 +45,60 @@ import Group from '../data/group'
 
 @Component
 export default class Groups extends Vue {
-  search?: string
+  search?: string = ''
   searched: Group[] = []
-  groups: Group[] = []
+  groups: Group[] = [
+    {
+      id: 1,
+      name: 'H2O Plus'
+    },
+    {
+      id: 2,
+      name: 'A-S Medication Solutions LLC',
+      description: 'E.E.S',
+      canOverdraw: true
+    },
+    {
+      id: 3,
+      name: 'Mylan Pharmaceuticals Inc.'
+    },
+    {
+      id: 4,
+      name: 'Mylan Pharmaceuticals Inc.',
+      description: 'Enalapril Maleate and Hydrochlorothiazide'
+    },
+    {
+      id: 5,
+      name: 'REMEDYREPACK INC.',
+      description: 'CELEBREX'
+    },
+    {
+      id: 6,
+      name: 'H E B',
+      description: 'night time'
+    },
+    {
+      id: 7,
+      name: 'PSS World Medical, Inc.',
+      canOverdraw: true
+    },
+    {
+      id: 8,
+      name: 'Kareway Product, Inc.',
+      description: 'Acetaminophen',
+      canOverdraw: true
+    },
+    {
+      id: 9,
+      name: 'Pharmacia and Upjohn Company'
+    },
+    {
+      id: 10,
+      name: 'Dolgencorp, Inc. (DOLLAR GENERAL & REXALL)',
+      description: 'Allergy Relief',
+      canOverdraw: true
+    }
+  ]
 
   searchOnTable() {
     if (this.search) {

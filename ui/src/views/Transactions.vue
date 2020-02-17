@@ -1477,7 +1477,7 @@ export default {
       this.searched = searchByName(this.groups, this.search)
     },
     accountsRoute (groupId) {
-      return `/accounts/${groupId}`
+      return `/accounts/details/${groupId}`
     }
   },
   created () {

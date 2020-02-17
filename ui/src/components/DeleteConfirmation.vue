@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="delete-btn">
     <md-dialog-confirm
       :md-active.sync="active"
       :md-title=title
@@ -29,5 +29,7 @@ export default class DeleteConfirmation extends Vue {
 </script>
 
 <style scoped>
-
+  .delete-btn {
+    display: inline-block;
+  }
 </style>
