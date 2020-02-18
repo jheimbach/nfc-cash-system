@@ -1,6 +1,6 @@
 import Account from '@/data/account'
 
-interface Transaction {
+export interface Transaction {
   id: number,
   oldSaldo: number,
   newSaldo: number,
