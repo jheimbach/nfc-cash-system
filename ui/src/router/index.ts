@@ -2,7 +2,10 @@ import Vue from 'vue'
 import VueRouter, { RouteConfig, RouterOptions } from 'vue-router'
 import Home from '../views/Home.vue'
 import Accounts from '@/views/Accounts.vue'
-import AccountDetails from '@/views/Account.vue'
+import Account from '@/views/Account.vue'
+import AccountDetail from '@/views/Account/Detail.vue'
+import TestView from '@/views/Test.vue'
+
 Vue.use(VueRouter)
 
 const routes: RouteConfig[] = [
@@ -18,13 +21,28 @@ const routes: RouteConfig[] = [
   },
   {
     path: '/account/:id',
-    name: 'account',
-    component: AccountDetails
+    component: Account,
+    children: [
+      {
+        path: 'edit',
+        name: 'account_edit',
+        component: TestView
+      },
+      {
+        path: '',
+        name: 'account',
+        component: AccountDetail
+      }]
   },
   {
     path: '/groups',
     name: 'groups',
     component: () => import(/* webpackChunkName: "groups" */ '../views/Groups.vue')
+  },
+  {
+    path: '/group/:id',
+    name: 'group',
+    component: AccountDetail
   },
   {
     path: '/transactions',

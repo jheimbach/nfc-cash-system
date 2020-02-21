@@ -1,12 +1,12 @@
 <template>
   <div class="transactions">
-    <transaction-list :transactions="transactions"/>
+    <transaction-list :transactions="transactions" show-actions show-search/>
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
-import TransactionList from '@/components/transactions/list.vue'
+import TransactionList from '@/components/transactions/List.vue'
 import { Transaction } from '@/data/transaction'
 
 @Component({

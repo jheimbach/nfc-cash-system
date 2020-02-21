@@ -1,5 +1,6 @@
 <template>
-  <div class="delete-btn">
+  <md-button @click="active = true" class="md-icon-button md-accent">
+    <md-icon>delete</md-icon>
     <md-dialog-confirm
       :md-active.sync="active"
       :md-title=title
@@ -7,10 +8,7 @@
       md-confirm-text="Yes"
       md-cancel-text="No"
       @md-confirm="onConfirm"/>
-    <md-button @click="active = true" class="md-icon-button md-accent">
-      <md-icon>delete</md-icon>
-    </md-button>
-  </div>
+  </md-button>
 </template>
 
 <script lang="ts">
