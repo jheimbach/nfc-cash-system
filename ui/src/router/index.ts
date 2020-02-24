@@ -2,13 +2,16 @@ import Vue from 'vue'
 import VueRouter, { RouteConfig, RouterOptions } from 'vue-router'
 import Home from '../views/Home.vue'
 import Accounts from '@/views/Accounts.vue'
-import Account from '@/views/Account.vue'
-import AccountDetail from '@/views/Account/Detail.vue'
-import TestView from '@/views/Test.vue'
+import AccountDetail from '@/views/Account.vue'
 
 Vue.use(VueRouter)
 
 const routes: RouteConfig[] = [
+  {
+    path: '/',
+    name: 'home',
+    component: Home
+  },
   {
     path: '/accounts',
     name: 'accounts',
@@ -16,18 +19,7 @@ const routes: RouteConfig[] = [
   },
   {
     path: '/account/:id',
-    component: AccountDetail,
-    children: [
-      {
-        path: 'edit',
-        name: 'account_edit',
-        component: TestView
-      },
-      {
-        path: '',
-        name: 'account',
-        component: AccountDetail
-      }]
+    component: AccountDetail
   },
   {
     path: '/groups',
@@ -43,11 +35,6 @@ const routes: RouteConfig[] = [
     path: '/transactions',
     name: 'transactions',
     component: () => import(/* webpackChunkName: "transactions" */ '../views/Transactions.vue')
-  },
-  {
-    path: '/',
-    name: 'home',
-    component: Home
   }
 ]
 

@@ -1,42 +1,59 @@
 <template>
-  <div class="account-form">
-    <div class="row">
-      <md-field>
-        <label>Name</label>
-        <md-input v-model="model.name"></md-input>
-      </md-field>
-    </div>
-    <div class="row">
-      <md-field>
-        <label>Description</label>
-        <md-textarea v-model="model.description"></md-textarea>
-      </md-field>
-    </div>
-    <div class="row" v-if="model.id === 0">
-      <md-field>
-        <label>Saldo</label>
-        <md-input v-model="model.saldo" type="number"></md-input>
-      </md-field>
-    </div>
-    <div class="row">
-      <md-field>
-        <label>NFC Chip ID</label>
-        <md-input v-model="model.nfcChipId"></md-input>
-      </md-field>
-    </div>
-    <div class="row">
-      <md-field>
-        <label>Group</label>
-        <md-select v-model="groupModel" name="group" id="group" @md-selected="groupIdToGroup">
-          <md-option :value="group.id" v-for="group in groups" v-bind:key="group.id">{{group.name}}</md-option>
-        </md-select>
-      </md-field>
-    </div>
-    <div class="row button-row" v-if="!noButtons">
-      <md-button @click="cancel" class="md-raised md-accent">Cancel</md-button>
-      <md-button @click="save" class="md-raised md-primary">Save</md-button>
-    </div>
-  </div>
+  <v-form ref="form" v-model="valid" lazy-validation>
+    <v-text-field
+      v-model="account.id"
+      label="ID"
+      disabled
+      prepend-icon="vpn_key"
+      v-if="account.id !== 0"
+    />
+    <v-text-field
+      v-model="account.name"
+      :counter="255"
+      :rules="[(v) => !!v || 'Name is required']"
+      label="Name"
+      required
+      prepend-icon="person"
+    />
+    <v-textarea
+      v-model="account.description"
+      label="Description"
+      prepend-icon="subject"
+      required
+    />
+    <v-text-field
+      v-model="account.saldo"
+      type="number"
+      label="Saldo"
+      prepend-icon="attach_money"
+      :disabled="account.id !== 0"
+    />
+    <v-select
+      v-model="account.group"
+      :items="groups"
+      item-text="name"
+      item-value="id"
+      return-object
+      :rules="[v => !!v || 'Group is required']"
+      label="Group"
+      required
+      prepend-icon="group"
+    />
+    <v-text-field
+      v-model="account.nfcChipId"
+      :counter="20"
+      :rules="chipRules"
+      label="NFC Chip ID"
+      required
+      prepend-icon="nfc"
+    />
+    <v-btn :disabled="!valid" color="success" class="mr-4" @click="save">Save</v-btn>
+    <v-btn color="error" class="mr-4" @click="cancel">Clear Changes</v-btn>
+    <v-snackbar v-model="snackbar">
+      Account {{account.name }} successfully saved
+      <v-btn color="pink" text @click="snackbar = false">Close</v-btn>
+    </v-snackbar>
+  </v-form>
 </template>
 
 <script lang="ts">
@@ -61,31 +78,33 @@ export default class AccountForm extends Vue {
     type: Object
   })
   account!: Account
-  @Prop({
-    default: false,
-    type: Boolean
-  })
-  noButtons!: boolean
-  model!:Account
   groups: Group[] = []
-  mappedGroups: any = {}
-  groupModel: number = 0
   unchangedAccount!: Account
+  valid: boolean = true
+  snackbar: boolean = false
+  chipRules = [
+    (v: string) => !!v || 'NFC Chip ID is required',
+    (v: string) => (v || '').length <= 20 || 'NFC Chip ID should be max. 20 characters'
+  ]
 
   @Emit('save')
-  save(): Account {
-    return JSON.parse(JSON.stringify(this.model))
+  save() {
+    // @ts-ignore
+    if (this.$refs.form.validate()) {
+      setTimeout(() => {
+        this.snackbar = true
+      }, 500)
+    }
+    return this.account
   }
 
   @Emit('cancel')
   cancel() {
-    const js = JSON.parse(JSON.stringify(this.unchangedAccount))
-    this.model = js
-    return js
-  }
-
-  groupIdToGroup(val: number) {
-    this.model.group = this.mappedGroups[val]
+    this.account.name = this.unchangedAccount.name
+    this.account.description = this.unchangedAccount.description
+    this.account.nfcChipId = this.unchangedAccount.nfcChipId
+    this.account.group = this.unchangedAccount.group
+    return this.account
   }
 
   created() {
@@ -141,12 +160,7 @@ export default class AccountForm extends Vue {
         canOverdraw: true
       }
     ]
-    this.groups.forEach((el) => {
-      this.mappedGroups[el.id] = el
-    })
-    this.model = this.account
-    this.unchangedAccount = JSON.parse(JSON.stringify(this.model))
-    this.groupModel = this.model.group.id
+    this.unchangedAccount = JSON.parse(JSON.stringify(this.account))
   }
 }
 </script>

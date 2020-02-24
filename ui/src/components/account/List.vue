@@ -4,22 +4,11 @@
       <v-spacer/>
       <v-text-field v-model="search" append-icon="search" label="Search" single-line hide-details/>
     </v-card-title>
-    <v-data-table :headers="headers" :items="searched" :items-per-page="50" fixed-header item-key="id" :search="search"
-                  :loading="loading">
+    <v-data-table :headers="headers" :items="searched" :items-per-page="itemsPerPage" fixed-header item-key="id" :search="search"
+                  :loading="loading" :hide-default-footer="searched.length < itemsPerPage">
       <template v-slot:item.action="{ item }">
-        <v-icon
-          small
-          class="mr-2"
-          @click="editItem(item)"
-        >
-          edit
-        </v-icon>
-        <v-icon
-          small
-          @click="deleteItem(item)"
-        >
-          delete
-        </v-icon>
+        <v-icon small class="mr-2" @click="editItem(item)">edit</v-icon>
+        <v-icon small @click="deleteItem(item)">delete</v-icon>
       </template>
     </v-data-table>
   </v-card>
@@ -27,7 +16,7 @@
 
 <script lang="ts">
 
-import { Component, Emit, Prop, Vue } from 'vue-property-decorator'
+import { Component, Emit, Prop, Vue, Watch } from 'vue-property-decorator'
 import Account from '@/data/account'
 import { DataTableHeader } from 'vuetify'
 
@@ -81,6 +70,7 @@ export default class AccountList extends Vue {
   accounts!: Account[]
   searched: Account[] = []
   search: string = ''
+  itemsPerPage: number = 25
 
   @Prop({
     type: Boolean,
@@ -88,14 +78,19 @@ export default class AccountList extends Vue {
   })
   loading!: boolean
 
+  @Watch('accounts')
+  updateSearched() {
+    console.log('update accounts')
+    this.searched = this.accounts
+  }
+
   editItem(item: Account) {
     this.$router.push({ name: 'account', params: { id: item.id.toString() } })
   }
 
   deleteItem(item: Account) {
-    this.searched = this.accounts.filter((el) => {
-      return el.id !== item.id
-    })
+    const index = this.searched.indexOf(item)
+    confirm('Are you sure you want to delete this item?') && this.searched.splice(index, 1)
   }
 
   created() {

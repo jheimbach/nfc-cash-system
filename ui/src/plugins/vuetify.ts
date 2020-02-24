@@ -21,7 +21,12 @@ export default new Vuetify({
     themes: {
       light: {
         primary: '#003b6b',
-        secondary: '#f3712a'
+        secondary: '#f3712a',
+        accent: colors.teal.base,
+        error: colors.red.base,
+        warning: colors.amber.base,
+        info: colors.blueGrey.base,
+        success: colors.lightGreen.base
       }
     }
   }
