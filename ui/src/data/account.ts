@@ -6,5 +6,5 @@ export default interface Account extends Named {
   description?: string,
   saldo: number,
   nfcChipId: string,
-  group: Group,
+  group: Group
 }

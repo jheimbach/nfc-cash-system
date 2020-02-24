@@ -1,7 +1,5 @@
 <template>
-  <div>
-    <account-list :accounts="accounts"/>
-  </div>
+  <account-list :accounts="accounts" :loading="loading"/>
 </template>
 
 <script lang="ts">
@@ -10,6 +8,7 @@ import { Component, Vue } from 'vue-property-decorator'
 import DeleteConfirmation from '@/components/DeleteConfirmation.vue'
 import Account from '@/data/account'
 import AccountList from '@/components/account/List.vue'
+import formatDate from '@/filters/format-date'
 
 @Component({
   components: { DeleteConfirmation, AccountList }
@@ -17,6 +16,7 @@ import AccountList from '@/components/account/List.vue'
 
 export default class Accounts extends Vue {
   accounts: Account[] = []
+  loading: boolean = false
 
   getAccounts() {
     this.accounts = [
@@ -586,7 +586,11 @@ export default class Accounts extends Vue {
   }
 
   created() {
-    this.getAccounts()
+    this.loading = true
+    setTimeout(() => {
+      this.loading = false
+      this.getAccounts()
+    }, 500)
   }
 }
 </script>

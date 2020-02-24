@@ -10,18 +10,13 @@ Vue.use(VueRouter)
 
 const routes: RouteConfig[] = [
   {
-    path: '/',
-    name: 'home',
-    component: Home
-  },
-  {
     path: '/accounts',
     name: 'accounts',
     component: Accounts
   },
   {
     path: '/account/:id',
-    component: Account,
+    component: AccountDetail,
     children: [
       {
         path: 'edit',
@@ -48,6 +43,11 @@ const routes: RouteConfig[] = [
     path: '/transactions',
     name: 'transactions',
     component: () => import(/* webpackChunkName: "transactions" */ '../views/Transactions.vue')
+  },
+  {
+    path: '/',
+    name: 'home',
+    component: Home
   }
 ]
 
@@ -57,9 +57,4 @@ const routerOptions: RouterOptions = {
   routes: routes
 }
 
-const router = (linkClass: string) => {
-  routerOptions.linkActiveClass = linkClass
-  return new VueRouter(routerOptions)
-}
-
-export default router
+export default new VueRouter(routerOptions)

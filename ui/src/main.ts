@@ -9,17 +9,16 @@ import formatDate from '@/filters/format-date'
 
 import 'vue-material/dist/vue-material.min.css'
 import './styles/main.scss'
+import vuetify from './plugins/vuetify'
 
 Vue.config.productionTip = false
 Vue.use(VueMaterial)
 
 Vue.filter('formatDate', formatDate)
 
-const linkActiveClass: string = 'ncs-active-class'
-// @ts-ignore
-Vue.material.router.linkActiveClass = linkActiveClass
-
 new Vue({
-  router: router(linkActiveClass),
-  render: h => h(App)
+  router: router,
+  render: h => h(App),
+  // @ts-ignore
+  vuetify
 }).$mount('#app')
