@@ -10,9 +10,9 @@ export default interface Account extends Named {
 }
 export const emptyAccount = {
   id: 0,
-  name: '11',
+  name: '',
   description: '',
-  group: { id: 1, name: 'test' },
+  group: null,
   saldo: 0,
-  nfcChipId: '11'
+  nfcChipId: ''
 }

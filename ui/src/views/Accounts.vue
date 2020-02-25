@@ -55,12 +55,12 @@ export default class Accounts extends Vue {
     {
       title: 'Add multiple Accounts',
       icon: 'playlist_add',
-      to: { name: 'account_create', query: { multiple: true } }
+      to: { name: 'account_create_multiple' }
     },
     {
       title: 'Upload CSV File',
       icon: 'cloud_upload',
-      to: { name: 'account_create', query: { upload: true } }
+      to: { name: 'account_create_upload' }
     }
   ]
 

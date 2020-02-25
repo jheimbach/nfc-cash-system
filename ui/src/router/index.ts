@@ -4,7 +4,10 @@ import Home from '../views/Home.vue'
 import Accounts from '@/views/Accounts.vue'
 import AccountDetail from '@/views/Account.vue'
 import GroupDetail from '@/views/Group.vue'
-import AccountCreate from '@/views/AccountCreate.vue'
+import AccountCreate from '@/views/Account/Create.vue'
+import AccountCreateSingle from '@/views/Account/Create/Single.vue'
+import AccountCreateMultiple from '@/views/Account/Create/Multiple.vue'
+import AccountCreateUpload from '@/views/Account/Create/Upload.vue'
 
 Vue.use(VueRouter)
 
@@ -20,9 +23,21 @@ const routes: RouteConfig[] = [
     component: Accounts
   },
   {
-    path: '/account/create',
-    name: 'account_create',
-    component: AccountCreate
+    path: '/accounts/create',
+    component: AccountCreate,
+    children: [{
+      path: '',
+      name: 'account_create',
+      component: AccountCreateSingle
+    }, {
+      path: 'multiple',
+      name: 'account_create_multiple',
+      component: AccountCreateMultiple
+    }, {
+      path: 'upload',
+      name: 'account_create_upload',
+      component: AccountCreateUpload
+    }]
   },
   {
     path: '/account/:id',
