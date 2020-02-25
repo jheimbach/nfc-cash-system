@@ -16,7 +16,7 @@ import { Component, Vue } from 'vue-property-decorator'
 import Account from '@/data/account'
 import TransactionList from '@/components/transactions/List.vue'
 import Transactions from '@/views/Transactions.vue'
-import { Transaction } from '@/data/transaction'
+import Transaction from '@/data/transaction'
 import AccountForm from '@/components/account/Form.vue'
 
 @Component({
@@ -25,7 +25,6 @@ import AccountForm from '@/components/account/Form.vue'
 export default class AccountDetail extends Vue {
   account!: Account
   transactions: Transaction[] = []
-  editView: boolean = false
 
   created() {
     this.account = {
@@ -56,25 +55,6 @@ export default class AccountDetail extends Vue {
         account: this.account
       }
     ]
-  }
-
-  passSaveToForm() {
-    const form = this.$refs['form'] as AccountForm
-    form.save()
-  }
-
-  passCancelToForm() {
-    const form = this.$refs['form'] as AccountForm
-    form.cancel()
-  }
-
-  closeEditView(account: Account) {
-    this.account = account
-    this.editView = false
-  }
-
-  openEditView() {
-    this.editView = true
   }
 }
 </script>

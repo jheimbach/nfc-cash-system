@@ -3,6 +3,7 @@ import VueRouter, { RouteConfig, RouterOptions } from 'vue-router'
 import Home from '../views/Home.vue'
 import Accounts from '@/views/Accounts.vue'
 import AccountDetail from '@/views/Account.vue'
+import GroupDetail from '@/views/Group.vue'
 
 Vue.use(VueRouter)
 
@@ -19,6 +20,7 @@ const routes: RouteConfig[] = [
   },
   {
     path: '/account/:id',
+    name: 'account',
     component: AccountDetail
   },
   {
@@ -29,7 +31,7 @@ const routes: RouteConfig[] = [
   {
     path: '/group/:id',
     name: 'group',
-    component: AccountDetail
+    component: GroupDetail
   },
   {
     path: '/transactions',

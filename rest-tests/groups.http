@@ -8,18 +8,21 @@ Authorization: Bearer {{auth_token}}
 GET http://nfc-cash-system.local:8080/v1/groups?paging.limit=5
 Accept: application/json
 Cache-Control: no-cache
+Authorization: Bearer {{auth_token}}
 
 ###
 
 GET http://nfc-cash-system.local:8080/v1/groups?paging.limit=5&paging.offset=5
 Accept: application/json
 Cache-Control: no-cache
+Authorization: Bearer {{auth_token}}
 
 ###
 POST http://nfc-cash-system.local:8080/v1/groups
 Accept: application/json
 Cache-Control: no-cache
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "name": "testgroup1",
@@ -29,19 +32,21 @@ Content-Type: application/json
 
 ###
 
-GET http://nfc-cash-system.local:8080/v1/group/11
+GET http://nfc-cash-system.local:8080/v1/group/13
 Accept: application/json
 Cache-Control: no-cache
+Authorization: Bearer {{auth_token}}
 
 ###
 
-PUT http://nfc-cash-system.local:8080/v1/group/11
+PUT http://nfc-cash-system.local:8080/v1/group/13
 Accept: application/json
 Cache-Control: no-cache
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
-  "id": 11,
+  "id": 13,
   "name": "testgroup1",
   "description": "with description",
   "can_overdraw": false
@@ -52,5 +57,6 @@ Content-Type: application/json
 DELETE http://nfc-cash-system.local:8080/v1/group/11
 Accept: application/json
 Cache-Control: no-cache
+Authorization: Bearer {{auth_token}}
 
 ###

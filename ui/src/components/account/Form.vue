@@ -19,7 +19,6 @@
       v-model="account.description"
       label="Description"
       prepend-icon="subject"
-      required
     />
     <v-text-field
       v-model="account.saldo"

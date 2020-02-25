@@ -1,10 +1,12 @@
 <template>
   <v-card width="100%">
-    <v-card-title>Accounts
-      <v-spacer/>
-      <v-text-field v-model="search" append-icon="search" label="Search" single-line hide-details/>
+    <v-card-title>
+      <template v-if="showTitle">Accounts</template>
+      <v-spacer v-if="showTitle && showSearch"/>
+      <v-text-field v-model="search" append-icon="search" label="Search" single-line hide-details v-if="showSearch"/>
     </v-card-title>
-    <v-data-table :headers="headers" :items="searched" :items-per-page="itemsPerPage" fixed-header item-key="id" :search="search"
+    <v-data-table :headers="headers" :items="searched" :items-per-page="itemsPerPage" fixed-header item-key="id"
+                  :search="search" sort-by="id"
                   :loading="loading" :hide-default-footer="searched.length < itemsPerPage">
       <template v-slot:item.action="{ item }">
         <v-icon small class="mr-2" @click="editItem(item)">edit</v-icon>
@@ -22,7 +24,7 @@ import { DataTableHeader } from 'vuetify'
 
 @Component
 export default class AccountList extends Vue {
-  headers: DataTableHeader[] = [
+  defaultHeaders: DataTableHeader[] = [
     {
       text: 'ID',
       align: 'end',
@@ -45,22 +47,33 @@ export default class AccountList extends Vue {
       filterable: false
     },
     {
-      text: 'Group',
-      value: 'group.name',
-      sortable: false
-    },
-    {
       text: 'NFC Chip ID',
       align: 'end',
       value: 'nfcChipId',
       sortable: false
-    },
-    {
-      text: 'Actions',
-      value: 'action',
-      sortable: false
     }
   ]
+
+  get headers() {
+    if (this.showGroup) {
+      this.defaultHeaders.splice(3, 0,
+        {
+          text: 'Group',
+          value: 'group.name',
+          sortable: false
+        })
+    }
+    if (this.showActions) {
+      this.defaultHeaders.push(
+        {
+          text: 'Actions',
+          value: 'action',
+          sortable: false
+        })
+    }
+    return this.defaultHeaders
+  }
+
   @Prop({
     required: true,
     default: () => {
@@ -78,9 +91,32 @@ export default class AccountList extends Vue {
   })
   loading!: boolean
 
+  @Prop({
+    type: Boolean,
+    default: false
+  })
+  showGroup!: boolean
+
+  @Prop({
+    type: Boolean,
+    default: false
+  })
+  showActions!: boolean
+
+  @Prop({
+    type: Boolean,
+    default: false
+  })
+  showSearch!: boolean
+
+  @Prop({
+    type: Boolean,
+    default: false
+  })
+  showTitle!: boolean
+
   @Watch('accounts')
   updateSearched() {
-    console.log('update accounts')
     this.searched = this.accounts
   }
 
