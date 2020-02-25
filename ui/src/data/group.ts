@@ -5,3 +5,10 @@ export default interface Group extends Named {
   description?: string,
   canOverdraw?: boolean,
 }
+
+export const emptyGroup: Group = {
+  name: '',
+  id: 0,
+  description: '',
+  canOverdraw: false
+}

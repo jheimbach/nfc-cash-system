@@ -8,6 +8,10 @@ import AccountCreate from '@/views/Account/Create.vue'
 import AccountCreateSingle from '@/views/Account/Create/Single.vue'
 import AccountCreateMultiple from '@/views/Account/Create/Multiple.vue'
 import AccountCreateUpload from '@/views/Account/Create/Upload.vue'
+import GroupCreate from '@/views/Group/Create.vue'
+import GroupCreateSingle from '@/views/Group/Create/Single.vue'
+import GroupCreateMultiple from '@/views/Group/Create/Multiple.vue'
+import GroupCreateUpload from '@/views/Group/Create/Upload.vue'
 
 Vue.use(VueRouter)
 
@@ -48,6 +52,23 @@ const routes: RouteConfig[] = [
     path: '/groups',
     name: 'groups',
     component: () => import(/* webpackChunkName: "groups" */ '../views/Groups.vue')
+  },
+  {
+    path: '/groups/create',
+    component: GroupCreate,
+    children: [{
+      path: '',
+      name: 'group_create',
+      component: GroupCreateSingle
+    }, {
+      path: 'multiple',
+      name: 'group_create_multiple',
+      component: GroupCreateMultiple
+    }, {
+      path: 'upload',
+      name: 'group_create_upload',
+      component: GroupCreateUpload
+    }]
   },
   {
     path: '/group/:id',

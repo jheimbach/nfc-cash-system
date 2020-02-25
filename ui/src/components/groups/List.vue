@@ -1,9 +1,9 @@
 <template>
   <v-card width="100%">
     <v-card-title>
-      Groups
-      <v-spacer/>
-      <v-text-field v-model="search" append-icon="search" label="Search" single-line hide-details/>
+      <template v-if="showTitle">Groups</template>
+      <v-spacer v-if="showTitle && showSearch"/>
+      <v-text-field v-model="search" append-icon="search" label="Search" single-line hide-details v-if="showSearch"/>
     </v-card-title>
     <v-data-table :headers="headers" :items="searched" :items-per-page="itemsPerPage" fixed-header item-key="id"
                   :search="search"
@@ -39,6 +39,16 @@ export default class GroupList extends Vue {
     type: Boolean
   })
   loading!: boolean
+  @Prop({
+    default: false,
+    type: Boolean
+  })
+  showTitle!: boolean
+  @Prop({
+    default: false,
+    type: Boolean
+  })
+  showSearch!: boolean
   searched: Group[] = []
   search: string = ''
   itemsPerPage: number = 25

@@ -5,7 +5,7 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import TransactionList from '@/components/transactions/List.vue'
-import { Transaction } from '@/data/transaction'
+import Transaction from '@/data/transaction'
 
 @Component({
   components: { TransactionList }

@@ -19,7 +19,7 @@
 import { Component, Prop, Vue } from 'vue-property-decorator'
 
 @Component
-export default class AccountFieldDescription extends Vue {
+export default class FieldDescription extends Vue {
   @Prop({
     type: String,
     required: true

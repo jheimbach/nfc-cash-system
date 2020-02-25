@@ -45,7 +45,6 @@ import AccountList from '@/components/account/List.vue'
 export default class Accounts extends Vue {
   accounts: Account[] = []
   loading: boolean = false
-  // todo: add routes to creation page
   addOptions: any = [
     {
       title: 'Add single Account',

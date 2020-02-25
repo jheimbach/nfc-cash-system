@@ -7,23 +7,12 @@
       prepend-icon="vpn_key"
       v-if="group.id !== 0"
     />
-    <v-text-field
-      v-model="group.name"
-      :counter="255"
-      :rules="[(v) => !!v || 'Name is required']"
-      label="Name"
-      required
-      prepend-icon="person"
-    />
-    <v-textarea
-      v-model="group.description"
-      label="Description"
-      prepend-icon="subject"
-    />
-    <v-switch v-model="group.canOverdraw" label="Can Overdraw" prepend-icon="trending_down"/>
+    <group-field-name v-model="group.name"/>
+    <field-description v-model="group.description" textarea/>
+    <group-field-can-overdraw v-model="group.canOverdraw"/>
 
-    <v-btn :disabled="!valid" color="success" class="mr-4" @click="save">Save</v-btn>
-    <v-btn color="error" class="mr-4" @click="cancel">Clear Changes</v-btn>
+    <v-btn :disabled="!valid" color="success" class="mr-4" @click="save">{{saveBtnTxt}}</v-btn>
+    <v-btn color="error" class="mr-4" @click="cancel">{{cancelBtnTxt}}</v-btn>
 
     <v-snackbar v-model="snackbar">
       Group {{group.name }} successfully saved
@@ -35,8 +24,13 @@
 <script lang="ts">
 import { Component, Prop, Vue, Emit } from 'vue-property-decorator'
 import Group from '@/data/group'
+import GroupFieldName from '@/components/form/Group/Name.vue'
+import GroupFieldCanOverdraw from '@/components/form/Group/Overdraw.vue'
+import FieldDescription from '@/components/form/Description.vue'
 
-@Component
+@Component({
+  components: { GroupFieldName, GroupFieldCanOverdraw, FieldDescription }
+})
 export default class GroupForm extends Vue {
   @Prop({
     default: () => {
@@ -54,6 +48,18 @@ export default class GroupForm extends Vue {
   unchangedGroup!: Group
   valid: boolean = false
   snackbar: boolean = false
+
+  @Prop({
+    default: 'save',
+    type: String
+  })
+  saveBtnTxt!: string
+
+  @Prop({
+    default: 'Cancel Changes',
+    type: String
+  })
+  cancelBtnTxt!: string
 
   @Emit('save')
   save() {

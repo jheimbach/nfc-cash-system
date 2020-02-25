@@ -8,7 +8,7 @@
       v-if="account.id !== 0"
     />
     <account-field-name v-model="account.name"/>
-    <account-field-description v-model="account.description" textarea/>
+    <field-description v-model="account.description" textarea/>
     <account-field-saldo v-model="account.saldo" :disabled="account.id !== 0"/>
     <account-field-group v-model="account.group"/>
     <account-field-nfc-chip-id v-model="account.nfcChipId"/>
@@ -25,27 +25,20 @@
 
 <script lang="ts">
 import { Component, Emit, Prop, Vue } from 'vue-property-decorator'
-import Account from '@/data/account'
+import Account, { emptyAccount } from '@/data/account'
 import AccountFieldName from '@/components/form/Account/Name.vue'
-import AccountFieldDescription from '@/components/form/Account/Description.vue'
 import AccountFieldNfcChipId from '@/components/form/Account/NfcChipId.vue'
 import AccountFieldGroup from '@/components/form/Account/Group.vue'
 import AccountFieldSaldo from '@/components/form/Account/Saldo.vue'
+import FieldDescription from '@/components/form/Description.vue'
 
 @Component({
-  components: { AccountFieldName, AccountFieldDescription, AccountFieldNfcChipId, AccountFieldGroup, AccountFieldSaldo }
+  components: { AccountFieldName, FieldDescription, AccountFieldNfcChipId, AccountFieldGroup, AccountFieldSaldo }
 })
 export default class AccountForm extends Vue {
   @Prop({
     default: () => {
-      return {
-        id: 0,
-        name: '',
-        description: '',
-        saldo: 0,
-        nfcChipId: '',
-        group: null
-      }
+      return emptyAccount
     },
     required: true,
     type: Object

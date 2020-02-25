@@ -1,5 +1,35 @@
 <template>
-  <group-list :groups="groups" :loading="loading"/>
+  <div class="group-overview">
+    <v-toolbar class="account-toolbar">
+      <v-toolbar-title>Groups</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-menu offset-y>
+        <template v-slot:activator="{ on }">
+          <v-btn
+            color="success"
+            dark
+            v-on="on"
+          >
+            <v-icon left>add_box</v-icon>
+            Add Group
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item
+            v-for="(item, index) in addOptions"
+            :key="index"
+            :to="item.to"
+          >
+            <v-list-item-title>
+              <v-icon left>{{item.icon}}</v-icon>
+              {{ item.title }}
+            </v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+    </v-toolbar>
+    <group-list :groups="groups" :loading="loading" show-search/>
+  </div>
 </template>
 
 <script lang="ts">
@@ -14,6 +44,23 @@ import GroupList from '@/components/groups/List.vue'
 export default class Groups extends Vue {
   groups: Group[] = []
   loading: boolean = false
+  addOptions: any = [
+    {
+      title: 'Add single Group',
+      icon: 'add_box',
+      to: { name: 'group_create' }
+    },
+    {
+      title: 'Add multiple Groups',
+      icon: 'playlist_add',
+      to: { name: 'group_create_multiple' }
+    },
+    {
+      title: 'Upload CSV File',
+      icon: 'cloud_upload',
+      to: { name: 'group_create_upload' }
+    }
+  ]
 
   getGroups() {
     this.groups = [
@@ -80,4 +127,7 @@ export default class Groups extends Vue {
 </script>
 
 <style lang="scss" scoped>
+  .group-overview {
+    width: 100%;
+  }
 </style>
