@@ -4,6 +4,7 @@ import Home from '../views/Home.vue'
 import Accounts from '@/views/Accounts.vue'
 import AccountDetail from '@/views/Account.vue'
 import GroupDetail from '@/views/Group.vue'
+import AccountCreate from '@/views/AccountCreate.vue'
 
 Vue.use(VueRouter)
 
@@ -17,6 +18,11 @@ const routes: RouteConfig[] = [
     path: '/accounts',
     name: 'accounts',
     component: Accounts
+  },
+  {
+    path: '/account/create',
+    name: 'account_create',
+    component: AccountCreate
   },
   {
     path: '/account/:id',

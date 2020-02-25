@@ -50,17 +50,17 @@ export default class Accounts extends Vue {
     {
       title: 'Add single Account',
       icon: 'add_box',
-      to: { name: 'account', params: { id: '1' } }
+      to: { name: 'account_create' }
     },
     {
       title: 'Add multiple Accounts',
       icon: 'playlist_add',
-      to: { name: 'account', params: { id: '1' } }
+      to: { name: 'account_create', query: { multiple: true } }
     },
     {
       title: 'Upload CSV File',
       icon: 'cloud_upload',
-      to: { name: 'account', params: { id: '1' } }
+      to: { name: 'account_create', query: { upload: true } }
     }
   ]
 

@@ -7,60 +7,34 @@
       prepend-icon="vpn_key"
       v-if="account.id !== 0"
     />
-    <v-text-field
-      v-model="account.name"
-      :counter="255"
-      :rules="[(v) => !!v || 'Name is required']"
-      label="Name"
-      required
-      prepend-icon="person"
-    />
-    <v-textarea
-      v-model="account.description"
-      label="Description"
-      prepend-icon="subject"
-    />
-    <v-text-field
-      v-model="account.saldo"
-      type="number"
-      label="Saldo"
-      prepend-icon="attach_money"
-      :disabled="account.id !== 0"
-    />
-    <v-select
-      v-model="account.group"
-      :items="groups"
-      item-text="name"
-      item-value="id"
-      return-object
-      :rules="[v => !!v || 'Group is required']"
-      label="Group"
-      required
-      prepend-icon="group"
-    />
-    <v-text-field
-      v-model="account.nfcChipId"
-      :counter="20"
-      :rules="chipRules"
-      label="NFC Chip ID"
-      required
-      prepend-icon="nfc"
-    />
-    <v-btn :disabled="!valid" color="success" class="mr-4" @click="save">Save</v-btn>
-    <v-btn color="error" class="mr-4" @click="cancel">Clear Changes</v-btn>
-    <v-snackbar v-model="snackbar">
-      Account {{account.name }} successfully saved
-      <v-btn color="pink" text @click="snackbar = false">Close</v-btn>
-    </v-snackbar>
+    <account-field-name v-model="account.name"/>
+    <account-field-description v-model="account.description" textarea/>
+    <account-field-saldo v-model="account.saldo" :disabled="account.id !== 0"/>
+    <account-field-group v-model="account.group"/>
+    <account-field-nfc-chip-id v-model="account.nfcChipId"/>
+    <v-btn :disabled="!valid" color="success" class="mr-4" @click="save">{{saveBtn}}</v-btn>
+    <v-btn color="error" class="mr-4" @click="cancel">{{clearBtn}}</v-btn>
+    <slot name="snackbar" v-bind:activator="snackbar" v-bind:hideSnackbar="hideSnackbar">
+      <v-snackbar :value="snackbar" @input="hideSnackbar">
+        Account {{account.name }} successfully saved
+        <v-btn color="pink" text @click="hideSnackbar">Close</v-btn>
+      </v-snackbar>
+    </slot>
   </v-form>
 </template>
 
 <script lang="ts">
 import { Component, Emit, Prop, Vue } from 'vue-property-decorator'
 import Account from '@/data/account'
-import Group from '@/data/group'
+import AccountFieldName from '@/components/form/Account/Name.vue'
+import AccountFieldDescription from '@/components/form/Account/Description.vue'
+import AccountFieldNfcChipId from '@/components/form/Account/NfcChipId.vue'
+import AccountFieldGroup from '@/components/form/Account/Group.vue'
+import AccountFieldSaldo from '@/components/form/Account/Saldo.vue'
 
-@Component
+@Component({
+  components: { AccountFieldName, AccountFieldDescription, AccountFieldNfcChipId, AccountFieldGroup, AccountFieldSaldo }
+})
 export default class AccountForm extends Vue {
   @Prop({
     default: () => {
@@ -77,14 +51,19 @@ export default class AccountForm extends Vue {
     type: Object
   })
   account!: Account
-  groups: Group[] = []
+  @Prop({
+    type: String,
+    default: 'Clear Changes'
+  })
+  clearBtn!: string
+  @Prop({
+    type: String,
+    default: 'Save'
+  })
+  saveBtn!: string
   unchangedAccount!: Account
   valid: boolean = true
   snackbar: boolean = false
-  chipRules = [
-    (v: string) => !!v || 'NFC Chip ID is required',
-    (v: string) => (v || '').length <= 20 || 'NFC Chip ID should be max. 20 characters'
-  ]
 
   @Emit('save')
   save() {
@@ -106,59 +85,11 @@ export default class AccountForm extends Vue {
     return this.account
   }
 
+  hideSnackbar() {
+    this.snackbar = false
+  }
+
   created() {
-    this.groups = [
-      {
-        id: 1,
-        name: 'H2O Plus'
-      },
-      {
-        id: 2,
-        name: 'A-S Medication Solutions LLC',
-        description: 'E.E.S',
-        canOverdraw: true
-      },
-      {
-        id: 3,
-        name: 'Mylan Pharmaceuticals Inc.'
-      },
-      {
-        id: 4,
-        name: 'Mylan Pharmaceuticals Inc.',
-        description: 'Enalapril Maleate and Hydrochlorothiazide'
-      },
-      {
-        id: 5,
-        name: 'REMEDYREPACK INC.',
-        description: 'CELEBREX'
-      },
-      {
-        id: 6,
-        name: 'H E B',
-        description: 'night time'
-      },
-      {
-        id: 7,
-        name: 'PSS World Medical, Inc.',
-        canOverdraw: true
-      },
-      {
-        id: 8,
-        name: 'Kareway Product, Inc.',
-        description: 'Acetaminophen',
-        canOverdraw: true
-      },
-      {
-        id: 9,
-        name: 'Pharmacia and Upjohn Company'
-      },
-      {
-        id: 10,
-        name: 'Dolgencorp, Inc. (DOLLAR GENERAL & REXALL)',
-        description: 'Allergy Relief',
-        canOverdraw: true
-      }
-    ]
     this.unchangedAccount = JSON.parse(JSON.stringify(this.account))
   }
 }
