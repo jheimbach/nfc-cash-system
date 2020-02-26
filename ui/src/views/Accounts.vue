@@ -10,7 +10,7 @@
             dark
             v-on="on"
           >
-            <v-icon left>add_box</v-icon>
+            <v-icon left>person_add</v-icon>
             Add Account
           </v-btn>
         </template>

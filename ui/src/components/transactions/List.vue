@@ -14,13 +14,22 @@
       <template v-slot:item.created="{ item }">
         {{item.created|formatDate}}
       </template>
+      <template v-slot:item.amount="{ item }">
+        {{item.amount|formatMoney}}
+      </template>
+      <template v-slot:item.oldSaldo="{ item }">
+        {{item.oldSaldo|formatMoney}}
+      </template>
+      <template v-slot:item.newSaldo="{ item }">
+        {{item.newSaldo|formatMoney}}
+      </template>
     </v-data-table>
   </v-card>
 </template>
 
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator'
-import { Transaction } from '@/data/transaction'
+import Transaction from '@/data/transaction'
 import { DataTableHeader } from 'vuetify'
 
 @Component

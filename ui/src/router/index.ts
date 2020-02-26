@@ -12,6 +12,7 @@ import GroupCreate from '@/views/Group/Create.vue'
 import GroupCreateSingle from '@/views/Group/Create/Single.vue'
 import GroupCreateMultiple from '@/views/Group/Create/Multiple.vue'
 import GroupCreateUpload from '@/views/Group/Create/Upload.vue'
+import Calculator from '@/views/Calculator.vue'
 
 Vue.use(VueRouter)
 
@@ -25,6 +26,11 @@ const routes: RouteConfig[] = [
     path: '/accounts',
     name: 'accounts',
     component: Accounts
+  },
+  {
+    path: '/calculator',
+    name: 'calculator',
+    component: Calculator
   },
   {
     path: '/accounts/create',

@@ -1,6 +1,6 @@
 import Vue from 'vue'
 // @ts-ignore
-import Vuetify from 'vuetify/lib'
+import Vuetify from 'vuetify/lib/framework'
 import de from 'vuetify/src/locale/de'
 import en from 'vuetify/src/locale/en'
 
@@ -18,6 +18,9 @@ export default new Vuetify({
     iconfont: 'md'
   },
   theme: {
+    options: {
+      customProperties: true
+    },
     themes: {
       light: {
         primary: '#003b6b',

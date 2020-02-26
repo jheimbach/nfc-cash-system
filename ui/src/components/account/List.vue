@@ -12,13 +12,16 @@
         <v-icon small class="mr-2" @click="editItem(item)">edit</v-icon>
         <v-icon small @click="deleteItem(item)">delete</v-icon>
       </template>
+      <template v-slot:item.saldo="{ item }">
+        {{item.saldo|formatMoney}}
+      </template>
     </v-data-table>
   </v-card>
 </template>
 
 <script lang="ts">
 
-import { Component, Emit, Prop, Vue, Watch } from 'vue-property-decorator'
+import { Component, Prop, Vue, Watch } from 'vue-property-decorator'
 import Account from '@/data/account'
 import { DataTableHeader } from 'vuetify'
 

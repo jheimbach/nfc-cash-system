@@ -56,6 +56,13 @@ export default class App extends Vue {
       }
     },
     {
+      icon: 'monetization_on',
+      title: 'Calculator',
+      to: {
+        name: 'calculator'
+      }
+    },
+    {
       icon: 'account_box',
       title: 'Accounts',
       to: { name: 'accounts' }
