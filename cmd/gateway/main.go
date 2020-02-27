@@ -26,12 +26,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	logger := log.New(os.Stdout, "[REST-GATEWAY] ", log.Flags())
 
 	// start rest server
 	restCtx, restCancel := context.WithCancel(context.Background())
 	defer restCancel()
 
-	log.Println("start rest server...")
+	logger.Println("start rest server...")
 	srv, err := gateway.NewGatewayServer(
 		restCtx,
 		net.JoinHostPort(viper.GetString("rest_host"), viper.GetString("rest_port")),
@@ -39,27 +40,30 @@ func main() {
 		viper.GetString("tls_cert"))
 
 	if err != nil {
-		log.Fatalf("could not create rest gateway server: %v", err)
+		logger.Fatalf("could not create rest gateway server: %v", err)
 	}
-	srv.ErrorLog = log.New(os.Stdout, "REST-GATEWAY", log.Flags())
+	srv.ErrorLog = logger
 
-	go func() {
-		// stop server gracefully on sigterm
-		signals := make(chan os.Signal, 1)
-		signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-		s := <-signals
-		log.Printf("recieved signal %s, shutting rest server down...\n", s)
-		// closing rest server
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		if err := srv.Shutdown(ctx); err != nil {
-			log.Fatalf("could not shutdown server gracefully: %v", err)
-		} else {
-			log.Println("rest server shutdown, goodbye")
-		}
-	}()
-	log.Println("rest server started")
+	go handleShutdown(srv)
+
+	logger.Println("rest server started")
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatal(err)
+		logger.Fatal(err)
+	}
+}
+
+func handleShutdown(srv *http.Server) {
+	// stop server gracefully on sigterm
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+	s := <-signals
+	log.Printf("recieved signal %s, shutting rest server down...\n", s)
+	// closing rest server
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("could not shutdown server gracefully: %v", err)
+	} else {
+		log.Println("rest server shutdown, goodbye")
 	}
 }

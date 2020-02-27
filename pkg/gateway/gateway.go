@@ -62,11 +62,27 @@ func NewGatewayServer(ctx context.Context, restEndpoint, grpcEndpoint, certFile 
 
 	srv := &http.Server{
 		Addr:    restEndpoint,
-		Handler: mux,
+		Handler: secureHeaders(mux),
 	}
 	return srv, nil
 }
 
 func errCouldNotRegisterService(service string, err error) error {
 	return fmt.Errorf("could not register %sservice: %v", service, err)
+}
+
+func secureHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-XSS-Protection", "1;mode=block")
+		w.Header().Set("X-Frame-Options", "deny")
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:8080")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Add("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }

@@ -6,6 +6,8 @@
     label="Saldo"
     prepend-icon="attach_money"
     :disabled="disabled"
+    :persistent-hint="disabled"
+    :hint="saldoHint"
   />
 </template>
 
@@ -24,6 +26,9 @@ export default class AccountFieldSaldo extends Vue {
     default: false
   })
   disabled!: boolean
+  get saldoHint() {
+    return this.disabled ? 'Saldo can only be updated via transactions' : ''
+  }
 }
 </script>
 

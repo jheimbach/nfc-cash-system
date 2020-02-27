@@ -1,5 +1,5 @@
 ###
-GET http://nfc-cash-system.local:8080/v1/user/login
+GET http://localhost:8088/v1/user/login
 Authorization: Basic briste0@angelfire.com lMvZARjM3pwe
 
 
@@ -15,5 +15,10 @@ X-Refresh-Token: {{refresh_token}}
 ###
 POST http://nfc-cash-system.local:8080/v1/user/logout
 Authorization: Bearer {{auth_token}}
+
+###
+
+OPTIONS http://localhost:8088/v1/user/login
+Authorization: Basic briste0@angelfire.com lMvZARjM3pwe
 
 ###
