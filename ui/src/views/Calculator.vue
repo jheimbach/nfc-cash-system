@@ -1,15 +1,17 @@
 <template>
   <div class="calculator">
-    <v-container>
-      <v-row v-for="(entry, index) in entries" :key="`entry-${index}`">
-        <v-col cols="1" class="calc-entry-method text-right">{{entry.method}}</v-col>
-        <v-col class="display-3 text-right">
-          <!--suppress EqualityComparisonWithCoercionJS -->
-          <span class="calc-entry-text blue-grey--text lighten-5"
-                v-if="entry.text != entry.value">{{entry.text}} =</span>
-          {{entry.value|formatMoney}}
-        </v-col>
-      </v-row>
+    <v-container v-if="calcInput !== '' || entries.length > 0" class="order-container">
+      <div ref="entrylist" class="entrylist">
+        <v-row v-for="(entry, index) in entries" :key="`entry-${index}`">
+          <v-col cols="1" class="calc-entry-method text-right">{{entry.method}}</v-col>
+          <v-col class="display-3 text-right" cols="11">
+            <span class="calc-entry-text blue-grey--text lighten-5"
+                  v-if="entry.text !== entry.value.toString()">{{entry.text}} =
+            </span>
+            {{entry.value|formatMoney}}
+          </v-col>
+        </v-row>
+      </div>
       <v-row v-if="sum !== 0" class="calc-total-row">
         <v-col cols="1" class=" display-3 text-right">
           Total:
@@ -18,6 +20,15 @@
           {{sum|formatMoney}}
         </v-col>
       </v-row>
+    </v-container>
+    <v-container class="order-container empty" v-else>
+      <v-row>
+        <v-col class="display-4">
+          {{emptyText}}
+        </v-col>
+      </v-row>
+    </v-container>
+    <v-container>
       <v-row>
         <v-text-field ref="inputField" v-model="calcInput" reverse height="100" class="calc-input-field"
                       @keydown="checkInput" autofocus :error-messages="errMsgs" outlined label="Enter Amount"/>
@@ -53,6 +64,10 @@
         </v-container>
       </v-card-text>
     </v-card>
+    <v-snackbar :value="snackbar" @input="hideSnackbar">
+      Transaction for {{account.name}} created
+      <v-btn color="pink" text @click="hideSnackbar">Close</v-btn>
+    </v-snackbar>
   </div>
 </template>
 
@@ -90,6 +105,8 @@ export default class Calculator extends Vue {
   errMsgs: string[] = []
   commandKeys: string[] = []
   allowedKeys: string[] = []
+  snackbar: boolean = false
+  emptyText: string = 'Hello! Your order please!'
 
   created() {
     this.commandKeys = '+-'.split('')
@@ -104,6 +121,16 @@ export default class Calculator extends Vue {
       this.errMsgs = ['Can not divide by zero']
     } else {
       this.errMsgs = []
+    }
+  }
+
+  @Watch('entries')
+  scrollToBottomOfList() {
+    const list = this.$refs.entrylist as HTMLElement
+    if (list) {
+      this.$nextTick(() => {
+        list.scrollTo({ top: list.scrollHeight })
+      })
     }
   }
 
@@ -124,19 +151,21 @@ export default class Calculator extends Vue {
   }
 
   checkInput(ev: KeyboardEvent) {
-    console.log(ev.key)
-    console.log(this.allowedKeys.indexOf(ev.key))
     if (this.allowedKeys.indexOf(ev.key) === -1) {
       ev.preventDefault()
       return
     }
     if (this.commandKeys.indexOf(ev.key) !== -1) {
       if (ev.key === 'Backspace') {
-        this.retrieveLastLine()
+        this.retrieveLastLine(ev)
         return
       }
       if (ev.key === 'Escape') {
         this.handleEscape()
+        return
+      }
+      if (ev.key === 'Enter') {
+        this.handleSave()
         return
       }
     }
@@ -158,7 +187,7 @@ export default class Calculator extends Vue {
     }
   }
 
-  retrieveLastLine() {
+  retrieveLastLine(ev:KeyboardEvent) {
     if (this.calcInput === '' && this.entries.length !== 0) {
       const lastEntry = this.entries[this.entries.length - 1]
       this.entries = this.entries.slice(0, this.entries.length - 1)
@@ -168,10 +197,14 @@ export default class Calculator extends Vue {
         this.sum = this.sum + lastEntry.value
       }
       this.calcInput = lastEntry.text
+      ev.preventDefault()
     }
   }
 
   createCalcEntry(method: EntryMethod) {
+    if (this.calcInput === '') {
+      return
+    }
     const val = this.parseInputVal(this.calcInput)
     if (method === EntryMethod.Plus) {
       this.sum += val
@@ -213,6 +246,21 @@ export default class Calculator extends Vue {
     }
     return dVal
   }
+
+  handleSave() {
+    // create entry if calcInput is not empty
+    this.createCalcEntry(EntryMethod.Plus)
+    setTimeout(() => {
+      this.snackbar = true
+      this.calcInput = ''
+      this.entries = []
+      this.sum = 0
+    }, 500)
+  }
+
+  hideSnackbar() {
+    this.snackbar = false
+  }
 }
 </script>
 
@@ -239,6 +287,21 @@ export default class Calculator extends Vue {
 
   .calc-input-field {
     font-size: 80px;
+  }
+
+  .entrylist {
+    height: 50vh;
+    overflow-y: auto;
+    width: calc(100% + 24px);
+    margin-left: -12px;
+
+    .row {
+      width: calc(100% - 24px);
+    }
+  }
+
+  .order-container.empty {
+    height: 50vh;
   }
 
   .calc-total-row {

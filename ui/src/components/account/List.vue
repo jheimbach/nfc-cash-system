@@ -69,7 +69,7 @@ export default class AccountList extends Vue {
     if (this.showActions) {
       this.defaultHeaders.push(
         {
-          text: 'Actions',
+          text: '',
           value: 'action',
           sortable: false
         })

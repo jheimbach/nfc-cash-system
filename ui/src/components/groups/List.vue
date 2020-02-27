@@ -72,7 +72,7 @@ export default class GroupList extends Vue {
       value: 'canOverdraw'
     },
     {
-      text: 'Actions',
+      text: '',
       value: 'action',
       sortable: false
     }

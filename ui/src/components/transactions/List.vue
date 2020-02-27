@@ -75,7 +75,7 @@ export default class TransactionList extends Vue {
       // push as last element the actions column
       this.defaultHeaders.push(
         {
-          text: 'Actions',
+          text: '',
           value: 'action',
           sortable: false
         })
