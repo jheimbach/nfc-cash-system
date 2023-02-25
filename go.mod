@@ -3,7 +3,6 @@ module github.com/jheimbach/nfc-cash-system
 go 1.13
 
 require (
-	github.com/JHeimbach/nfc-cash-system/server v0.0.0-20200128105927-bc1b5b894626
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/fuzxxl/nfc v0.0.0-20190417091618-0367c7e548d9
@@ -16,7 +15,7 @@ require (
 	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.6.2
 	github.com/testcontainers/testcontainers-go v0.0.10
-	golang.org/x/crypto v0.0.0-20200128174031-69ecbb4d6d5d
+	golang.org/x/crypto v0.1.0
 	google.golang.org/genproto v0.0.0-20200128133413-58ce757ed39b
 	google.golang.org/grpc v1.27.0
 )
